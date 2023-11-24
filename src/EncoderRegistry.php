@@ -33,6 +33,20 @@ final class EncoderRegistry
         return new self(new Map([
             // Strings:
             $qNameFormatter($xsd, 'string') => new StringEncoder(),
+            $qNameFormatter($xsd, 'anyURI') => new StringEncoder(),
+            $qNameFormatter($xsd, 'qname') => new StringEncoder(),
+            $qNameFormatter($xsd, 'NOTATION') => new StringEncoder(),
+            $qNameFormatter($xsd, 'normalizedString') => new StringEncoder(),
+            $qNameFormatter($xsd, 'token') => new StringEncoder(),
+            $qNameFormatter($xsd, 'language') => new StringEncoder(),
+            $qNameFormatter($xsd, 'NMTOKEN') => new StringEncoder(),
+            $qNameFormatter($xsd, 'Name') => new StringEncoder(),
+            $qNameFormatter($xsd, 'NCName') => new StringEncoder(),
+            $qNameFormatter($xsd, 'ID') => new StringEncoder(),
+            $qNameFormatter($xsd, 'IDREF') => new StringEncoder(),
+            $qNameFormatter($xsd, 'ENTITY') => new StringEncoder(),
+
+            // Encoded strings
             $qNameFormatter($xsd, 'base64Binary') => new Base64BinaryEncoder(),
 
             // Integers:
