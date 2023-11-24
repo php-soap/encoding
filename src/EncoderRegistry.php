@@ -6,6 +6,7 @@ namespace Soap\Encoding;
 use Psl\Collection\Map;
 use Psl\Option\Option;
 use Soap\Encoding\Encoder\Base64BinaryEncoder;
+use Soap\Encoding\Encoder\BoolEncoder;
 use Soap\Encoding\Encoder\FloatEncoder;
 use Soap\Encoding\Encoder\IntEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -48,6 +49,9 @@ final class EncoderRegistry
 
             // Encoded strings
             $qNameFormatter($xsd, 'base64Binary') => new Base64BinaryEncoder(),
+
+            // Bools
+            $qNameFormatter($xsd, 'boolean') => new BoolEncoder(),
 
             // Integers:
             $qNameFormatter($xsd, 'int') => new IntEncoder(),
