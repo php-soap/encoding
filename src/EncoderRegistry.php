@@ -6,6 +6,7 @@ namespace Soap\Encoding;
 use Psl\Collection\Map;
 use Psl\Option\Option;
 use Soap\Encoding\Encoder\Base64BinaryEncoder;
+use Soap\Encoding\Encoder\FloatEncoder;
 use Soap\Encoding\Encoder\IntEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Encoder\StringEncoder;
@@ -27,6 +28,8 @@ final class EncoderRegistry
     {
         $qNameFormatter = new QNameFormatter();
         $xsd = Xmlns::xsd()->value();
+        $xsd1999 = '.????';
+
         return new self(new Map([
             // Strings:
             $qNameFormatter($xsd, 'string') => new StringEncoder(),
@@ -47,6 +50,10 @@ final class EncoderRegistry
             $qNameFormatter($xsd, 'unsignedInt') => new IntEncoder(),
             $qNameFormatter($xsd, 'unsignedLong') => new IntEncoder(),
             $qNameFormatter($xsd, 'integer') => new IntEncoder(),
+
+            // Floats:
+            $qNameFormatter($xsd, 'float') => new FloatEncoder(),
+            $qNameFormatter($xsd, 'double') => new FloatEncoder(),
 
         ]));
     }
