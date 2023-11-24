@@ -1,0 +1,27 @@
+{
+    "name": "php-soap/encoding",
+    "description": "SOAP encoding and decoding package",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Soap\\Encoding\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Toon Verwerft",
+            "email": "toonverwerft@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
+        "veewee/reflecta": "^0.1.0",
+        "veewee/xml": "^2.12",
+        "php-soap/engine": "^2.5"
+    },
+    "require-dev": {
+        "php-soap/wsdl-reader": "^0.7.0",
+        "vimeo/psalm": "^5.16"
+    }
+}
