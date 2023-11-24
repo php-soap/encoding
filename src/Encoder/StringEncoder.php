@@ -26,13 +26,13 @@ class StringEncoder implements XmlEncoder
         return new Iso(
             static function(string $raw): string {
                 $doc = Document::empty();
-                $doc->manipulate(append(
+                $doc->manipulate(append( // TODO --> Shortcut for building xml.
                     ...$doc->build(
-                        element('root', buildValue($raw))
+                        element('root', buildValue($raw)) // TODO --> Root
                     )
                 ));
 
-                return xml_string()($doc->toUnsafeDocument()->documentElement);
+                return xml_string()($doc->toUnsafeDocument()->documentElement); // TODO : shortcut for element XMl
             },
             static function(string $xml): string {
                 return readValue(Document::fromXmlString($xml)->map(document_element()), string());
