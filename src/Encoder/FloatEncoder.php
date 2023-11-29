@@ -14,13 +14,13 @@ class FloatEncoder implements XmlEncoder
     /**
      * @return Iso<string, float>
      */
-    public function iso(): Iso
+    public function iso(Context $context): Iso
     {
         return (new Iso(
             static fn (float $value): string => (string)$value,
             static fn (string $value): float => float()->coerce($value),
         ))->compose(
-            (new StringEncoder())->iso()
+            (new StringEncoder())->iso($context)
         );
     }
 }

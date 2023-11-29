@@ -15,13 +15,13 @@ class IntEncoder implements XmlEncoder
     /**
      * @return Iso<string, int>
      */
-    public function iso(): Iso
+    public function iso(Context $context): Iso
     {
         return (new Iso(
             static fn (int $value): string => string()->coerce($value),
             static fn (string $value): int => int()->coerce($value),
         ))->compose(
-            (new StringEncoder())->iso()
+            (new StringEncoder())->iso($context)
         );
     }
 }

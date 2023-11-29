@@ -13,13 +13,13 @@ class Base64BinaryEncoder implements XmlEncoder
     /**
      * @return Iso<string, string>
      */
-    public function iso(): Iso
+    public function iso(Context $context): Iso
     {
         return (new Iso(
             base64_encode(...),
             base64_decode(...),
         ))->compose(
-            (new StringEncoder())->iso()
+            (new StringEncoder())->iso($context)
         );
     }
 }

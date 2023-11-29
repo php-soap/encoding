@@ -15,5 +15,5 @@ interface XmlEncoder
     /**
      * @return Iso<I, O>
      */
-    public function iso(): Iso;
+    public function iso(Context $context): Iso;
 }

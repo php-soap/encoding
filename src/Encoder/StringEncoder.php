@@ -7,6 +7,7 @@ use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Type\string;
 use function VeeWee\Xml\Dom\Builder\element;
+use function VeeWee\Xml\Dom\Builder\namespaced_element;
 use function VeeWee\Xml\Dom\Locator\document_element;
 use function VeeWee\Xml\Dom\Manipulator\append;
 use function VeeWee\Xml\Dom\Mapper\xml_string;
@@ -21,14 +22,21 @@ class StringEncoder implements XmlEncoder
     /**
      * @return Iso<string, string>
      */
-    public function iso(): Iso
+    public function iso(Context $context): Iso
     {
+        $type = $context->type;
+
         return new Iso(
-            static function(string $raw): string {
+            static function(string $raw) use ($type): string {
                 $doc = Document::empty();
+                $value = buildValue($raw);
+                $name = $type->getXmlNamespaceName() ? $type->getXmlNamespaceName().':'.$type->getName() : $type->getName();
+
                 $doc->manipulate(append( // TODO --> Shortcut for building xml.
                     ...$doc->build(
-                        element('root', buildValue($raw)) // TODO --> Root
+                        $type->getXmlNamespace()
+                            ? namespaced_element($type->getXmlNamespace(), $name, $value)
+                            : element($type->getName(), $value)
                     )
                 ));
 
