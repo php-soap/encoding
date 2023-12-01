@@ -17,7 +17,7 @@
     "require": {
         "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
         "veewee/reflecta": "^0.1.0",
-        "veewee/xml": "^2.12",
+        "veewee/xml": "^2.13",
         "php-soap/engine": "^2.5"
     },
     "require-dev": {

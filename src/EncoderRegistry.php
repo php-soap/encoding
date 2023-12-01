@@ -4,16 +4,16 @@ declare(strict_types=1);
 namespace Soap\Encoding;
 
 use Psl\Collection\Map;
-use Psl\Option\Option;
 use Soap\Encoding\Encoder\Base64BinaryEncoder;
 use Soap\Encoding\Encoder\BoolEncoder;
 use Soap\Encoding\Encoder\FloatEncoder;
 use Soap\Encoding\Encoder\IntEncoder;
+use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Encoder\StringEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
+use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
-use function Psl\Option\from_nullable;
 
 final class EncoderRegistry
 {
@@ -77,14 +77,27 @@ final class EncoderRegistry
     }
 
     /**
+     * @return XmlEncoder<string, mixed>
+     */
+    public function findByXsdType(XsdType $type): XmlEncoder
+    {
+        return $this->findByNamespaceName($type->getXmlNamespace(), $type->getBaseTypeOrFallbackToName());
+    }
+
+    /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @return Option<XmlEncoder>
+     * @return XmlEncoder<string, mixed>
      */
-    public function findByXsdType(string $namespace, string $name): Option
+    public function findByNamespaceName(string $namespace, string $name): XmlEncoder
     {
         $qNameFormatter = new QNameFormatter();
 
-        return from_nullable($this->registry->get($qNameFormatter($namespace, $name)));
+        $found = $this->registry->get($qNameFormatter($namespace, $name));
+        if ($found) {
+            return $found;
+        }
+
+        return new ObjectEncoder(\stdClass::class); // TODO --> Guess encoder... ;)
     }
 }
