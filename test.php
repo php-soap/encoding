@@ -14,10 +14,6 @@ use Soap\Xml\Xmlns;
 
 require_once __DIR__.'/vendor/autoload.php';
 
-$registry = EncoderRegistry::default();
-//$encoder = $registry->findByXsdType(Xmlns::xsd()->value(), 'boolean');
-$encoder = new ObjectEncoder(User::class);
-
 class User {
     public function __construct(
         public bool $active,
@@ -33,7 +29,9 @@ class Hat {
     }
 }
 
-
+$registry = EncoderRegistry::default()
+    ->addClassMap('https://test', 'user', \User::class)
+    ->addClassMap('https://test', 'hat', \Hat::class);
 
 $context = new Context(
     XsdType::create('user')
@@ -84,9 +82,11 @@ $context = new Context(
 
 
 $user = new User(active: true, hat: new Hat('green'));
-$encoder = new ObjectEncoder(User::class);
+$encoder = $registry->findByXsdType($context->type);
 
 var_dump(
     $xml = $encoder->iso($context)->to($user),
     $encoder->iso($context)->from($xml),
 );
+
+

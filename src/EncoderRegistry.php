@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding;
 
 use Psl\Collection\Map;
+use Psl\Collection\MutableMap;
 use Soap\Encoding\Encoder\Base64BinaryEncoder;
 use Soap\Encoding\Encoder\BoolEncoder;
 use Soap\Encoding\Encoder\FloatEncoder;
@@ -18,10 +19,10 @@ use Soap\Xml\Xmlns;
 final class EncoderRegistry
 {
     /**
-     * @param Map<string, XmlEncoder> $registry
+     * @param MutableMap<string, XmlEncoder> $registry
      */
     private function __construct(
-        private Map $registry
+        private MutableMap $registry
     ) {
     }
 
@@ -31,7 +32,7 @@ final class EncoderRegistry
         $xsd = Xmlns::xsd()->value();
         $xsd1999 = '.????';
 
-        return new self(new Map([
+        return new self(new MutableMap([
             // Strings:
             $qNameFormatter($xsd, 'string') => new StringEncoder(),
             $qNameFormatter($xsd, 'anyURI') => new StringEncoder(),
@@ -74,6 +75,37 @@ final class EncoderRegistry
             $qNameFormatter($xsd, 'double') => new FloatEncoder(),
 
         ]));
+    }
+
+    /**
+     * @param non-empty-string $namespace
+     * @param non-empty-string $name
+     * @param class-string $class
+     * @return $this
+     */
+    public function addClassMap(string $namespace, string $name, string $class): self
+    {
+        $this->registry->add(
+            (new QNameFormatter())($namespace, $name),
+            new ObjectEncoder($class)
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param non-empty-string $namespace
+     * @param non-empty-string $name
+     * @return $this
+     */
+    public function addTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
+    {
+        $this->registry->add(
+            (new QNameFormatter())($namespace, $name),
+            $encoder
+        );
+
+        return $this;
     }
 
     /**
