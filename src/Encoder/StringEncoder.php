@@ -12,7 +12,7 @@ use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @implements XmlEncoder<String, String>
+ * @implements XmlEncoder<string, string>
  */
 class StringEncoder implements XmlEncoder
 {

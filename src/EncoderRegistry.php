@@ -8,8 +8,10 @@ use Psl\Collection\MutableMap;
 use Soap\Encoding\Encoder\Base64BinaryEncoder;
 use Soap\Encoding\Encoder\BoolEncoder;
 use Soap\Encoding\Encoder\FloatEncoder;
+use Soap\Encoding\Encoder\GuessEncoder;
 use Soap\Encoding\Encoder\IntEncoder;
 use Soap\Encoding\Encoder\ObjectEncoder;
+use Soap\Encoding\Encoder\ScalarEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Encoder\StringEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
@@ -74,6 +76,8 @@ final class EncoderRegistry
             $qNameFormatter($xsd, 'float') => new FloatEncoder(),
             $qNameFormatter($xsd, 'double') => new FloatEncoder(),
 
+            // Scalar:
+            $qNameFormatter($xsd, 'anySimpleType') => new ScalarEncoder(),
         ]));
     }
 
@@ -130,6 +134,6 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new ObjectEncoder(\stdClass::class); // TODO --> Guess encoder... ;)
+        return new GuessEncoder();
     }
 }
