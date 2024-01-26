@@ -95,6 +95,22 @@ final class EncoderRegistry
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
+     * @param enum-class $enumClass
+     * @return $this
+     */
+    public function addBackedEnum(string $namespace, string $name, string $enumClass): self
+    {
+        $this->registry->add(
+            (new QNameFormatter())($namespace, $name),
+            new ElementEncoder(new SimpleType\BackedEnumTypeEncoder($enumClass))
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param non-empty-string $namespace
+     * @param non-empty-string $name
      * @return $this
      */
     public function addTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
