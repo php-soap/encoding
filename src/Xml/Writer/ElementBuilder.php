@@ -7,15 +7,19 @@ use Generator;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Xml\Writer\Builder\Builder;
 use XMLWriter;
-use function VeeWee\Xml\Writer\Builder\attribute;
-use function VeeWee\Xml\Writer\Builder\namespaced_attribute;
+use function VeeWee\Xml\Writer\Builder\element;
+use function VeeWee\Xml\Writer\Builder\namespaced_element;
 
 
-final class AttributeBuilder implements Builder
+final class ElementBuilder implements Builder
 {
+    /**
+     * @param XsdType $type
+     * @param \Closure(XMLWriter): \Generator<bool> $children
+     */
     public function __construct(
         private readonly XsdType $type,
-        private readonly string $value
+        private readonly \Closure $children
     ) {
     }
 
@@ -25,18 +29,18 @@ final class AttributeBuilder implements Builder
     public function __invoke(XMLWriter $writer): Generator
     {
         if ($this->type->getXmlTargetNamespace()) {
-            yield from namespaced_attribute(
+            yield from namespaced_element(
                 $this->type->getXmlTargetNamespace(),
                 $this->type->getXmlTargetNamespaceName() ?: null,
                 $this->type->getXmlTargetNodeName(),
-                $this->value
+                $this->children
             )($writer);
             return;
         }
 
-        yield from attribute(
+        yield from element(
             $this->type->getXmlTargetNodeName(),
-            $this->value
+            $this->children
         )($writer);
     }
 }

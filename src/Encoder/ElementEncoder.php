@@ -36,9 +36,10 @@ final class ElementEncoder implements XmlEncoder
         return $this->typeEncoder->iso($context)->compose(
             new Iso(
                 static function(string $raw) use ($type): string {
-                    $value = buildValue($raw);
-
-                    return (new XsdTypeXmlElementWriter($type))($value);
+                    return (new XsdTypeXmlElementWriter())(
+                        $type,
+                        buildValue($raw)
+                    );
                 },
                 static function(string $xml): string {
                     return readValue(

@@ -17,7 +17,7 @@ class GuessEncoder implements XmlEncoder
 
         $encoder =  match (true) {
             $meta->isList()->unwrapOr(false) => new ListEncoder(),
-            $meta->isSimple()->unwrapOr(false) => new SimpleType\ExtendingBaseTypeEncoder(),
+            $meta->isSimple()->unwrapOr(false) => new ExtendedSimpleTypeEncoder(),
             default => new ObjectEncoder(\stdClass::class)
         };
 

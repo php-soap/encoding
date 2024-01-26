@@ -1,17 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace Soap\Encoding\Encoder\SimpleType;
+namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\Encoder\ElementEncoder;
-use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
  * @implements XmlEncoder<string, string>
  */
-final class ExtendingBaseTypeEncoder implements XmlEncoder
+final class ExtendedSimpleTypeEncoder implements XmlEncoder
 {
     public function iso(Context $context): Iso
     {

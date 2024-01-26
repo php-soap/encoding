@@ -14,6 +14,7 @@ use function Psl\invariant;
 use function Psl\Dict\map;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
+use function VeeWee\Xml\Dom\Builder\value;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Reflecta\Lens\property;
@@ -70,7 +71,8 @@ final class ObjectEncoder implements XmlEncoder
      */
     private function to(Context $context, array $properties, object $data): string
     {
-        return (new XsdTypeXmlElementWriter($context->type))(
+        return (new XsdTypeXmlElementWriter())(
+            $context->type,
             writeChildren(
                 map(
                     $properties,
@@ -81,8 +83,12 @@ final class ObjectEncoder implements XmlEncoder
 
                         return match(true) {
                             $meta->isAttribute()->unwrapOr(false) => new AttributeBuilder(
-                                $context->withType($property->getType()),
-                                $value
+                                $type,
+                                $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)
+                            ),
+                            // TODO -> meta->isElementValue() (fix multiple child elements to be isElementValue=false)
+                            $property->getName() === '_' => value(
+                                $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)
                             ),
                             default => raw(
                                 $this->grabIsoForProperty($context, $property)->to($value)
@@ -119,9 +125,7 @@ final class ObjectEncoder implements XmlEncoder
                         ->getResult();
 
                     return match(true) {
-                        $meta->isAttribute()->unwrapOr(false) => (new GuessTypeEncoder())->iso(
-                            $context->withType($property->getType())
-                        )->from($value),
+                        $meta->isAttribute()->unwrapOr(false) => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
                         default => $this->grabIsoForProperty($context, $property)->from($value)
                     };
                 }
@@ -134,6 +138,13 @@ final class ObjectEncoder implements XmlEncoder
         $encoder = $context->registry->findByXsdType($property->getType());
 
         return $encoder->iso(
+            $context->withType($property->getType())
+        );
+    }
+
+    private function grabSimpleTypeIsoForProperty(Context $context, Property $property): Iso
+    {
+        return (new GuessTypeEncoder())->iso(
             $context->withType($property->getType())
         );
     }
