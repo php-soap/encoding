@@ -76,24 +76,16 @@ final class ObjectEncoder implements XmlEncoder
             writeChildren(
                 map(
                     $properties,
-                    function (Property $property) use ($context, $data) : callable {
+                    function (Property $property) use ($context, $data) : \Closure {
                         $type = $property->getType();
-                        $meta = $type->getMeta();
                         $value = property($property->getName())->get($data);
 
-                        return match(true) {
-                            $meta->isAttribute()->unwrapOr(false) => new AttributeBuilder(
-                                $type,
-                                $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)
-                            ),
-                            // TODO -> meta->isElementValue() (fix multiple child elements to be isElementValue=false)
-                            $property->getName() === '_' => value(
-                                $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)
-                            ),
-                            default => raw(
-                                $this->grabIsoForProperty($context, $property)->to($value)
-                            )
-                        };
+                        return $this->handleProperty(
+                            $property,
+                            onAttribute: fn (): \Closure => (new AttributeBuilder($type, $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)))(...),
+                            onValue: fn (): \Closure => value($this->grabSimpleTypeIsoForProperty($context, $property)->from($value)),
+                            onElements: fn (): \Closure =>raw($this->grabElementIsoForProperty($context, $property)->to($value)),
+                        );
                     }
                 )
             )
@@ -112,7 +104,6 @@ final class ObjectEncoder implements XmlEncoder
             map(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
-                    $meta = $property->getType()->getMeta();
                     $value = index($property->getName())
                         ->tryGet($nodes)
                         ->catch(static function () use ($property) {
@@ -124,16 +115,18 @@ final class ObjectEncoder implements XmlEncoder
                         })
                         ->getResult();
 
-                    return match(true) {
-                        $meta->isAttribute()->unwrapOr(false) => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
-                        default => $this->grabIsoForProperty($context, $property)->from($value)
-                    };
+                    return $this->handleProperty(
+                        $property,
+                        onAttribute: fn (): mixed => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
+                        onValue: fn (): mixed => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
+                        onElements: fn (): mixed => $this->grabElementIsoForProperty($context, $property)->from($value),
+                    );
                 }
             )
         );
     }
 
-    private function grabIsoForProperty(Context $context, Property $property): Iso
+    private function grabElementIsoForProperty(Context $context, Property $property): Iso
     {
         $encoder = $context->registry->findByXsdType($property->getType());
 
@@ -147,5 +140,30 @@ final class ObjectEncoder implements XmlEncoder
         return (new GuessTypeEncoder())->iso(
             $context->withType($property->getType())
         );
+    }
+
+    /**
+     * @template T
+     *
+     * @param Property $property
+     * @param \Closure(): T $onAttribute
+     * @param \Closure(): T $onValue
+     * @param \Closure(): T $onElements
+     * @return T
+     */
+    private function handleProperty(
+        Property $property,
+        \Closure $onAttribute,
+        \Closure $onValue,
+        \Closure $onElements,
+    ) {
+        $meta = $property->getType()->getMeta();
+
+        return match(true) {
+            $meta->isAttribute()->unwrapOr(false) => $onAttribute(),
+            // TODO -> meta->isElementValue() (fix multiple child elements to be isElementValue=false)
+            $property->getName() === '_' => $onValue(),
+            default => $onElements()
+        };
     }
 }
