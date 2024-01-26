@@ -26,7 +26,7 @@ class GuessEncoder implements XmlEncoder
                     $extends['namespace'],
                     $extends['type'],
                 ))
-                ->unwrapOr(new ScalarEncoder())
+                ->unwrapOr(new ElementEncoder())
                 ->iso($context);
         }
 

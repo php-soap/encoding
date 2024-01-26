@@ -86,7 +86,15 @@ final class ObjectEncoder implements XmlEncoder
                     map(
                         $properties,
                         fn (Property $property) => $this->grabIsoForProperty($context, $property)->from(
-                            index($property->getName())->get($elements)
+                            index($property->getName())
+                                ->tryGet($elements)
+                                ->catch(static function () {
+                                    // TODO : Improve logic based on 'list' or 'nullable' or ...
+                                    // TODO : - what with nullables that are not there e.g.
+                                    // TODO : - what with nullable?
+                                    return '';
+                                })
+                                ->getResult()
                         )
                     )
                 );

@@ -5,15 +5,10 @@ namespace Soap\Encoding;
 
 use Psl\Collection\Map;
 use Psl\Collection\MutableMap;
-use Soap\Encoding\Encoder\Base64BinaryEncoder;
-use Soap\Encoding\Encoder\BoolEncoder;
-use Soap\Encoding\Encoder\FloatEncoder;
+use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\GuessEncoder;
-use Soap\Encoding\Encoder\IntEncoder;
-use Soap\Encoding\Encoder\ObjectEncoder;
-use Soap\Encoding\Encoder\ScalarEncoder;
+use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\Encoder\StringEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
@@ -36,48 +31,48 @@ final class EncoderRegistry
 
         return new self(new MutableMap([
             // Strings:
-            $qNameFormatter($xsd, 'string') => new StringEncoder(),
-            $qNameFormatter($xsd, 'anyURI') => new StringEncoder(),
-            $qNameFormatter($xsd, 'qname') => new StringEncoder(),
-            $qNameFormatter($xsd, 'NOTATION') => new StringEncoder(),
-            $qNameFormatter($xsd, 'normalizedString') => new StringEncoder(),
-            $qNameFormatter($xsd, 'token') => new StringEncoder(),
-            $qNameFormatter($xsd, 'language') => new StringEncoder(),
-            $qNameFormatter($xsd, 'NMTOKEN') => new StringEncoder(),
-            $qNameFormatter($xsd, 'Name') => new StringEncoder(),
-            $qNameFormatter($xsd, 'NCName') => new StringEncoder(),
-            $qNameFormatter($xsd, 'ID') => new StringEncoder(),
-            $qNameFormatter($xsd, 'IDREF') => new StringEncoder(),
-            $qNameFormatter($xsd, 'ENTITY') => new StringEncoder(),
+            $qNameFormatter($xsd, 'string') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'anyURI') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'qname') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'NOTATION') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'normalizedString') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'token') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'language') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'NMTOKEN') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'Name') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'NCName') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'ID') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'IDREF') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+            $qNameFormatter($xsd, 'ENTITY') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
 
             // Encoded strings
-            $qNameFormatter($xsd, 'base64Binary') => new Base64BinaryEncoder(),
+            $qNameFormatter($xsd, 'base64Binary') => new ElementEncoder(new SimpleType\Base64BinaryTypeEncoder()),
 
             // Bools
-            $qNameFormatter($xsd, 'boolean') => new BoolEncoder(),
+            $qNameFormatter($xsd, 'boolean') => new ElementEncoder(new SimpleType\BoolTypeEncoder()),
 
             // Integers:
-            $qNameFormatter($xsd, 'int') => new IntEncoder(),
-            $qNameFormatter($xsd, 'long') => new IntEncoder(),
-            $qNameFormatter($xsd, 'short') => new IntEncoder(),
-            $qNameFormatter($xsd, 'byte') => new IntEncoder(),
-            $qNameFormatter($xsd, 'nonPositiveInteger') => new IntEncoder(),
-            $qNameFormatter($xsd, 'positiveInteger') => new IntEncoder(),
-            $qNameFormatter($xsd, 'nonNegativeInteger') => new IntEncoder(),
-            $qNameFormatter($xsd, 'negativeInteger') => new IntEncoder(),
-            $qNameFormatter($xsd, 'unsignedLong') => new IntEncoder(),
-            $qNameFormatter($xsd, 'unsignedByte') => new IntEncoder(),
-            $qNameFormatter($xsd, 'unsignedShort') => new IntEncoder(),
-            $qNameFormatter($xsd, 'unsignedInt') => new IntEncoder(),
-            $qNameFormatter($xsd, 'unsignedLong') => new IntEncoder(),
-            $qNameFormatter($xsd, 'integer') => new IntEncoder(),
+            $qNameFormatter($xsd, 'int') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'long') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'short') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'byte') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'nonPositiveInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'positiveInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'nonNegativeInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'negativeInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'unsignedLong') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'unsignedByte') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'unsignedShort') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'unsignedInt') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'unsignedLong') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'integer') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
 
             // Floats:
-            $qNameFormatter($xsd, 'float') => new FloatEncoder(),
-            $qNameFormatter($xsd, 'double') => new FloatEncoder(),
+            $qNameFormatter($xsd, 'float') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+            $qNameFormatter($xsd, 'double') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
 
             // Scalar:
-            $qNameFormatter($xsd, 'anySimpleType') => new ScalarEncoder(),
+            $qNameFormatter($xsd, 'anySimpleType') => new ElementEncoder(new SimpleType\ScalarTypeEncoder()),
         ]));
     }
 
