@@ -43,8 +43,6 @@ final class DocumentToLookupArrayReader
             $nodes[$attribute->localName] = $attribute->value;
         }
 
-        var_dump($nodes);
-
         return $nodes;
     }
 }

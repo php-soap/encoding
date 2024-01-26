@@ -7,6 +7,7 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
+use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use function VeeWee\Reflecta\Lens\index;
 
 final class Encoder implements SoapEncoder
@@ -32,7 +33,7 @@ final class Encoder implements SoapEncoder
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry);
             $argument = index($index)->get($arguments);
-            $request[] = $this->registry->findByXsdType($type)->iso($context)->from($argument);
+            $request[] = $this->registry->findByXsdType($type)->iso($context)->to($argument);
         }
 
         // TODO Wrap envelope
@@ -41,7 +42,11 @@ final class Encoder implements SoapEncoder
             implode('', $request),
             $meta->location()->unwrap(),
             $meta->action()->unwrap(),
-            $meta->soapVersion()->unwrap(),
+            // TODO : Dont use constants. Make them available through enum directly.
+            match(SoapVersion::from($meta->soapVersion()->unwrap())) {
+                SoapVersion::SOAP_11 => \SOAP_1_1,
+                SoapVersion::SOAP_12 => \SOAP_1_2,
+            },
             $meta->isOneWay()->unwrapOr(false)
         );
     }
