@@ -70,7 +70,7 @@ final class ObjectEncoder implements XmlEncoder
 
                 // Convert the XML into a lookup hash per property.
                 // For list-nodes, a concatenated string of the xml nodes will be generated.
-                $elements = reduce(
+                $nodes = reduce(
                     readChildren($doc->locateDocumentElement()),
                     static function (array $lookup, \DOMElement $element) use ($doc): array {
                         $key = $element->localName;
@@ -87,7 +87,7 @@ final class ObjectEncoder implements XmlEncoder
                         $properties,
                         fn (Property $property) => $this->grabIsoForProperty($context, $property)->from(
                             index($property->getName())
-                                ->tryGet($elements)
+                                ->tryGet($nodes)
                                 ->catch(static function () {
                                     // TODO : Improve logic based on 'list' or 'nullable' or ...
                                     // TODO : - what with nullables that are not there e.g.

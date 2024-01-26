@@ -16,20 +16,12 @@ class GuessEncoder implements XmlEncoder
         $type = $context->type;
         $meta = $type->getMeta();
 
-        if ($meta->isList()->unwrapOr(false)) {
-            return (new ListEncoder())->iso($context);
-        }
+        $encoder =  match (true) {
+            $meta->isList()->unwrapOr(false) => new ListEncoder(),
+            $meta->isSimple()->unwrapOr(false) => new ElementEncoder(new SimpleType\ExtendingBaseTypeEncoder()),
+            default => new ObjectEncoder(\stdClass::class)
+        };
 
-        if ($meta->isSimple()->unwrapOr(false)) {
-            return $meta->extends()
-                ->map(static fn ($extends) : XmlEncoder => $context->registry->findByNamespaceName(
-                    $extends['namespace'],
-                    $extends['type'],
-                ))
-                ->unwrapOr(new ElementEncoder())
-                ->iso($context);
-        }
-
-        return (new ObjectEncoder(\stdClass::class))->iso($context);
+        return $encoder->iso($context);
     }
 }
