@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Encoder\SimpleType\GuessTypeEncoder;
-use Soap\Encoding\Xml\XsdTypeXmlElementBuilder;
+use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Type\string;
@@ -35,18 +35,12 @@ final class ElementEncoder implements XmlEncoder
 
         return $this->typeEncoder->iso($context)->compose(
             new Iso(
-                /**
-                 * @template T $raw
-                 */
-                static function(mixed $raw) use ($type): string {
+                static function(string $raw) use ($type): string {
                     $value = buildValue($raw);
 
-                    return (new XsdTypeXmlElementBuilder($type))($value);
+                    return (new XsdTypeXmlElementWriter($type))($value);
                 },
-                /**
-                 * @return T
-                 */
-                static function(string $xml): mixed {
+                static function(string $xml): string {
                     return readValue(
                         Document::fromXmlString($xml)->locateDocumentElement(),
                         string()

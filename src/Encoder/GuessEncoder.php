@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**

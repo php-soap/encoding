@@ -3,18 +3,17 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Xml\XsdTypeXmlElementBuilder;
+use Soap\Encoding\Encoder\SimpleType\GuessTypeEncoder;
+use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
+use Soap\Encoding\Xml\Writer\AttributeBuilder;
+use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\Property;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
-use function Psl\Dict\merge;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
 use function Psl\Dict\map;
-use function Psl\Iter\reduce;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
-use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Reflecta\Lens\property;
@@ -51,54 +50,82 @@ final class ObjectEncoder implements XmlEncoder
         );
 
         return new Iso(
+            /**
+             * @param T $value
+             */
             function (object $value) use ($context, $properties) : string {
-                return (new XsdTypeXmlElementBuilder($context->type))(
-                    writeChildren(
-                        map(
-                            $properties,
-                            fn (Property $property) => raw(
-                                $this->grabIsoForProperty($context, $property)->to(
-                                    property($property->getName())->get($value)
-                                )
-                            )
-                        )
-                    )
-                );
+                return $this->to($context, $properties, $value);
             },
+            /**
+             * @return T
+             */
             function (string $value) use ($context, $properties) : object {
-                $doc = Document::fromXmlString($value);
-
-                // Convert the XML into a lookup hash per property.
-                // For list-nodes, a concatenated string of the xml nodes will be generated.
-                $nodes = reduce(
-                    readChildren($doc->locateDocumentElement()),
-                    static function (array $lookup, \DOMElement $element) use ($doc): array {
-                        $key = $element->localName;
-                        $nodeValue = $doc->stringifyNode($element);
-                        $value = array_key_exists($key, $lookup) ? $lookup[$key].$nodeValue : $nodeValue;
-
-                        return merge($lookup, [$key => $value]);
-                    },
-                    []
-                );
-
-                return object_data($this->className)->from(
-                    map(
-                        $properties,
-                        fn (Property $property) => $this->grabIsoForProperty($context, $property)->from(
-                            index($property->getName())
-                                ->tryGet($nodes)
-                                ->catch(static function () {
-                                    // TODO : Improve logic based on 'list' or 'nullable' or ...
-                                    // TODO : - what with nullables that are not there e.g.
-                                    // TODO : - what with nullable?
-                                    return '';
-                                })
-                                ->getResult()
-                        )
-                    )
-                );
+                return $this->from($context, $properties, $value);
             }
+        );
+    }
+
+    /**
+     * @param array<string, Property> $properties
+     */
+    private function to(Context $context, array $properties, object $data): string
+    {
+        return (new XsdTypeXmlElementWriter($context->type))(
+            writeChildren(
+                map(
+                    $properties,
+                    function (Property $property) use ($context, $data) : callable {
+                        $type = $property->getType();
+                        $meta = $type->getMeta();
+                        $value = property($property->getName())->get($data);
+
+                        return match(true) {
+                            $meta->isAttribute()->unwrapOr(false) => new AttributeBuilder(
+                                $context->withType($property->getType()),
+                                $value
+                            ),
+                            default => raw(
+                                $this->grabIsoForProperty($context, $property)->to($value)
+                            )
+                        };
+                    }
+                )
+            )
+        );
+    }
+
+    /**
+     * @param array<string, Property> $properties
+     * @return T
+     */
+    private function from(Context $context, array $properties, string $data): object
+    {
+        $nodes = (new DocumentToLookupArrayReader())($data);
+
+        return object_data($this->className)->from(
+            map(
+                $properties,
+                function (Property $property) use ($context, $nodes): mixed {
+                    $meta = $property->getType()->getMeta();
+                    $value = index($property->getName())
+                        ->tryGet($nodes)
+                        ->catch(static function () use ($property) {
+
+                            // TODO : Improve logic based on 'list' or 'nullable' or nullable attributes ...
+                            // TODO : - what with nullables that are not there e.g.
+                            // TODO : - what with nullable?
+                            return '';
+                        })
+                        ->getResult();
+
+                    return match(true) {
+                        $meta->isAttribute()->unwrapOr(false) => (new GuessTypeEncoder())->iso(
+                            $context->withType($property->getType())
+                        )->from($value),
+                        default => $this->grabIsoForProperty($context, $property)->from($value)
+                    };
+                }
+            )
         );
     }
 

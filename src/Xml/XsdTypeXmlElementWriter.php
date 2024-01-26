@@ -5,14 +5,13 @@ namespace Soap\Encoding\Xml;
 
 use Generator;
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\Xml\Xmlns;
 use VeeWee\Xml\Writer\Writer;
 use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\namespaced_element;
 use function VeeWee\Xml\Writer\Mapper\memory_output;
 
-final class XsdTypeXmlElementBuilder
+final class XsdTypeXmlElementWriter
 {
     public function __construct(
         private readonly XsdType $type
