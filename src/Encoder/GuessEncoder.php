@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -14,6 +15,10 @@ class GuessEncoder implements XmlEncoder
     {
         $type = $context->type;
         $meta = $type->getMeta();
+
+        if ($meta->isList()->unwrapOr(false)) {
+            return (new ListEncoder())->iso($context);
+        }
 
         if ($meta->isSimple()->unwrapOr(false)) {
             return $meta->extends()

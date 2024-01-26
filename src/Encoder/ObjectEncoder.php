@@ -7,15 +7,14 @@ use Soap\Encoding\Xml\XsdTypeXmlElementBuilder;
 use Soap\Engine\Metadata\Model\Property;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
-use function Psl\Dict\pull;
+use function Psl\Dict\merge;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
 use function Psl\Dict\map;
+use function Psl\Iter\reduce;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
-use function VeeWee\Xml\Dom\Locator\document_element;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
-use function VeeWee\Xml\Dom\Mapper\xml_string;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Reflecta\Lens\property;
@@ -68,10 +67,19 @@ final class ObjectEncoder implements XmlEncoder
             },
             function (string $value) use ($context, $properties) : object {
                 $doc = Document::fromXmlString($value);
-                $elements = pull(
-                    readChildren($doc->map(document_element())),
-                    static fn (\DOMElement $element): string => xml_string()($element),
-                    static fn (\DOMElement $element): string => $element->localName,
+
+                // Convert the XML into a lookup hash per property.
+                // For list-nodes, a concatenated string of the xml nodes will be generated.
+                $elements = reduce(
+                    readChildren($doc->locateDocumentElement()),
+                    static function (array $lookup, \DOMElement $element) use ($doc): array {
+                        $key = $element->localName;
+                        $nodeValue = $doc->stringifyNode($element);
+                        $value = array_key_exists($key, $lookup) ? $lookup[$key].$nodeValue : $nodeValue;
+
+                        return merge($lookup, [$key => $value]);
+                    },
+                    []
                 );
 
                 return object_data($this->className)->from(

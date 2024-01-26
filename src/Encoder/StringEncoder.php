@@ -7,7 +7,6 @@ use Soap\Encoding\Xml\XsdTypeXmlElementBuilder;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Type\string;
-use function VeeWee\Xml\Dom\Locator\document_element;
 use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
@@ -31,7 +30,7 @@ class StringEncoder implements XmlEncoder
             },
             static function(string $xml): string {
                 return readValue(
-                    Document::fromXmlString($xml)->map(document_element()),
+                    Document::fromXmlString($xml)->locateDocumentElement(),
                     string()
                 );
             }

@@ -26,14 +26,14 @@ final class XsdTypeXmlElementBuilder
     {
         return Writer::inMemory()
             ->write(
-                $this->type->getXmlNamespace() && $this->type->getXmlNamespace() !== Xmlns::xsd()->value()
+                $this->type->getXmlTargetNamespace()
                     ? namespaced_element(
-                        $this->type->getXmlNamespace(),
-                        $this->type->getXmlNamespaceName() ?: null,
-                        $this->type->getName(),
+                        $this->type->getXmlTargetNamespace(),
+                        $this->type->getXmlTargetNamespaceName() ?: null,
+                        $this->type->getXmlTargetNodeName(),
                         $children
                     )
-                    : element($this->type->getName(), $children)
+                    : element($this->type->getXmlTargetNodeName(), $children)
             )
             ->map(memory_output());
     }
