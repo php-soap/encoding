@@ -33,7 +33,7 @@ final class BackedEnumTypeEncoder implements XmlEncoder
             /**
              * @return T
              */
-            static fn (string $value): \BackedEnum => backed_enum($this->enumClass)->coerce($value),
+            fn (string $value): \BackedEnum => backed_enum($this->enumClass)->coerce($value),
         ));
     }
 }

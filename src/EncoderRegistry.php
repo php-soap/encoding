@@ -7,6 +7,7 @@ use Psl\Collection\Map;
 use Psl\Collection\MutableMap;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\GuessEncoder;
+use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;

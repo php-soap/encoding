@@ -8,6 +8,11 @@
             "Soap\\Encoding\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Soap\\Encoding\\Test\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Toon Verwerft",
@@ -24,6 +29,7 @@
     "require-dev": {
         "php-soap/wsdl-reader": "^0.9.0",
         "vimeo/psalm": "^5.16",
-        "php-soap/ext-soap-engine": "^1.5"
+        "php-soap/ext-soap-engine": "^1.5",
+        "phpunit/phpunit": "^10.5"
     }
 }

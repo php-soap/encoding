@@ -27,7 +27,7 @@ final class GuessTypeEncoder implements XmlEncoder
         $xsdType = $context->type;
 
         $qNameFormatter = new QNameFormatter();
-        $qname = $qNameFormatter($xsdType->getBaseTypeOrFallbackToName(), $xsdType->getXmlNamespace());
+        $qname = $qNameFormatter($xsdType->getXmlNamespace(), $xsdType->getBaseTypeOrFallbackToName());
         $xsd = Xmlns::xsd()->value();
 
         // TODO => Move to lookup Map instead of match.
