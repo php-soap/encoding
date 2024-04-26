@@ -54,17 +54,17 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'ENTITIES') => new SimpleType\StringTypeEncoder(),
 
                 // Dates
-                /*
-                 * 	{{XSD_DATETIME, XSD_DATETIME_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_datetime},
-                    {{XSD_TIME, XSD_TIME_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_time},
-                    {{XSD_DATE, XSD_DATE_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_date},
-                    {{XSD_GYEARMONTH, XSD_GYEARMONTH_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_gyearmonth},
-                    {{XSD_GYEAR, XSD_GYEAR_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_gyear},
-                    {{XSD_GMONTHDAY, XSD_GMONTHDAY_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_gmonthday},
-                    {{XSD_GDAY, XSD_GDAY_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_gday},
-                    {{XSD_GMONTH, XSD_GMONTH_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_gmonth},
-                    {{XSD_DURATION, XSD_DURATION_STRING, XSD_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_duration},
-                 */
+                $qNameFormatter($xsd, 'date') => new SimpleType\DateTypeEncoder(),
+                $qNameFormatter($xsd, 'dateTime') => new SimpleType\DateTimeTypeEncoder(),
+                // TODO : Check date types underneath;
+                // Should it be string or should it be "smarter" and support both a DateTimeInterface / string object as input?
+                $qNameFormatter($xsd, 'time') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'gYear') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'gYearMonth') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'gDay') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'gMonthDay') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'gMonth') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'duration') => new SimpleType\StringTypeEncoder(),
 
                 // Encoded strings
                 $qNameFormatter($xsd, 'base64Binary') => new SimpleType\Base64BinaryTypeEncoder(),

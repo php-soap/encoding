@@ -6,6 +6,7 @@ namespace Soap\Encoding\Encoder\SimpleType;
 use Psl\Type;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Exception\InvalidArgumentException;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -31,7 +32,7 @@ final class ScalarTypeEncoder implements XmlEncoder
                     static fn (string $value): bool => match ($value) {
                         'true' => true,
                         'false' => false,
-                        default => throw new \RuntimeException('Invalid boolean value: '.$value)
+                        default => throw new InvalidArgumentException('Invalid boolean value: '.$value)
                     }
                 ),
                 Type\string()
