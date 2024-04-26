@@ -10,12 +10,6 @@ use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\SimpleType;
-use Soap\Encoding\Encoder\SimpleType\Base64BinaryTypeEncoder;
-use Soap\Encoding\Encoder\SimpleType\BoolTypeEncoder;
-use Soap\Encoding\Encoder\SimpleType\FloatTypeEncoder;
-use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
-use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
-use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
 use Soap\Engine\Metadata\Model\XsdType;
@@ -42,47 +36,48 @@ final class EncoderRegistry
         return new self(
             new MutableMap([
                 // Strings:
-                $qNameFormatter($xsd, 'string') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'anyURI') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'qname') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'NOTATION') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'normalizedString') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'token') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'language') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'NMTOKEN') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'Name') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'NCName') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'ID') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'IDREF') => new StringTypeEncoder(),
-                $qNameFormatter($xsd, 'ENTITY') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'string') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'anyURI') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'qname') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NOTATION') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'normalizedString') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'token') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'language') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NMTOKEN') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'Name') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NCName') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'ID') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'IDREF') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'ENTITY') => new SimpleType\StringTypeEncoder(),
 
                 // Encoded strings
-                $qNameFormatter($xsd, 'base64Binary') => new Base64BinaryTypeEncoder(),
+                $qNameFormatter($xsd, 'base64Binary') => new SimpleType\Base64BinaryTypeEncoder(),
+                $qNameFormatter($xsd, 'hexBinary') => new SimpleType\HexBinaryTypeEncoder(),
 
                 // Bools
-                $qNameFormatter($xsd, 'boolean') => new BoolTypeEncoder(),
+                $qNameFormatter($xsd, 'boolean') => new SimpleType\BoolTypeEncoder(),
 
                 // Integers:
-                $qNameFormatter($xsd, 'int') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'long') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'short') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'byte') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'nonPositiveInteger') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'positiveInteger') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'nonNegativeInteger') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'negativeInteger') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'unsignedLong') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'unsignedByte') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'unsignedShort') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'unsignedInt') => new IntTypeEncoder(),
-                $qNameFormatter($xsd, 'integer') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'int') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'long') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'short') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'byte') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'nonPositiveInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'positiveInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'nonNegativeInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'negativeInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedLong') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedByte') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedShort') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedInt') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd, 'integer') => new SimpleType\IntTypeEncoder(),
 
                 // Floats:
-                $qNameFormatter($xsd, 'float') => new FloatTypeEncoder(),
-                $qNameFormatter($xsd, 'double') => new FloatTypeEncoder(),
+                $qNameFormatter($xsd, 'float') => new SimpleType\FloatTypeEncoder(),
+                $qNameFormatter($xsd, 'double') => new SimpleType\FloatTypeEncoder(),
 
                 // Scalar:
-                $qNameFormatter($xsd, 'anySimpleType') => new ScalarTypeEncoder(),
+                $qNameFormatter($xsd, 'anySimpleType') => new SimpleType\ScalarTypeEncoder(),
             ]),
             new MutableMap([])
         );

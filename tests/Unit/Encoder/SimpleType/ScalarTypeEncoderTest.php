@@ -14,9 +14,6 @@ class ScalarTypeEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
-        // TODO --> Not all tests work as expected - needs revision...
-        return [];
-
         $baseConfig = [
             'encoder' => $encoder = new ScalarTypeEncoder(),
             'context' => $context = self::createContext(XsdType::guess('anySimpleType')),
@@ -49,7 +46,7 @@ class ScalarTypeEncoderTest extends AbstractEncoderTests
         ];
         yield 'bool-false' => [
             ...$baseConfig,
-            'xml' => 'true',
+            'xml' => 'false',
             'data' => false,
         ];
     }
