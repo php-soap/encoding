@@ -6,6 +6,7 @@ namespace Soap\Encoding\Encoder;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\Metadata\Metadata;
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 
 final class Context
 {
@@ -13,6 +14,7 @@ final class Context
         public /*readonly*/ XsdType $type,
         public /*readonly*/ Metadata $metadata,
         public /*readonly*/ EncoderRegistry $registry,
+        public /*readonly*/ BindingUse $bindingUse = BindingUse::LITERAL,
     ) {
     }
 

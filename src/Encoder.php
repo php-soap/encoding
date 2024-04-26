@@ -22,7 +22,8 @@ final class Encoder implements SoapEncoder
     {
         // TODO  : invariants
         // | inputBindingUsage  | literal                                                                                                |
-        // | bindingStyle       | document                                                                                               |
+        // | bindingStyle       | document
+        // SEE https://www.ibm.com/docs/en/bpm/8.5.7?topic=files-wsdl-binding-styles                                                                             |
 
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
@@ -33,7 +34,7 @@ final class Encoder implements SoapEncoder
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry);
             $argument = index($index)->get($arguments);
-            $request[] = $this->registry->findByXsdType($type)->iso($context)->to($argument);
+            $request[] = $this->registry->detectEncoderForContext($context)->iso($context)->to($argument);
         }
 
         // TODO Wrap envelope

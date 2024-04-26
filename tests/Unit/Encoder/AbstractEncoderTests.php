@@ -23,7 +23,7 @@ abstract class AbstractEncoderTests extends TestCase
      * @test
      * @dataProvider provideIsomorphicCases
      */
-    public function it_can_decode_from_xml(XmlEncoder $encoder, Context $context, string $xml, mixed $data): void
+    public function it_can_decode_from_xml(XmlEncoder $encoder, Context $context, ?string $xml, mixed $data): void
     {
         $iso = $encoder->iso($context);
         $actual = $iso->from($xml);
@@ -35,7 +35,7 @@ abstract class AbstractEncoderTests extends TestCase
      * @test
      * @dataProvider provideIsomorphicCases
      */
-    public function it_can_encode_into_xml(XmlEncoder $encoder, Context $context, string $xml, mixed $data): void
+    public function it_can_encode_into_xml(XmlEncoder $encoder, Context $context, ?string $xml, mixed $data): void
     {
         $iso = $encoder->iso($context);
         $actual = $iso->to($data);

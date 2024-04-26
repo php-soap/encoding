@@ -23,15 +23,15 @@ final class Decoder implements SoapDecoder
     {
         // TODO  : invariants
         // | inputBindingUsage  | literal                                                                                                |
-        // | bindingStyle       | document                                                                                               |
+        // | bindingStyle       | document
+        // SEE https://www.ibm.com/docs/en/bpm/8.5.7?topic=files-wsdl-binding-styles                                                                             |                                                                                |
 
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
         $returnType = $methodInfo->getReturnType();
         $context = new Context($returnType, $this->metadata, $this->registry);
 
-
-        $decoder = $this->registry->findByXsdType($returnType);
+        $decoder = $this->registry->detectEncoderForContext($context);
 
         // TODO : Unwind envelope
 

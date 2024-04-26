@@ -5,7 +5,9 @@ namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\ElementEncoder;
+use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(ElementEncoder::class)]
@@ -46,6 +48,12 @@ class ElementEncoderTest extends AbstractEncoderTests
             ),
             'xml' => '<greet:hello xmlns:greet="http://example.com">world</greet:hello>',
             'data' => 'world',
+        ];
+        yield 'int-type' => [
+            ...$baseConfig,
+            'encoder' => $encoder = new ElementEncoder(new IntTypeEncoder()),
+            'xml' => '<hello>32</hello>',
+            'data' => 32,
         ];
     }
 }

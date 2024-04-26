@@ -31,6 +31,7 @@
         "php-soap/wsdl-reader": "^0.9.0",
         "vimeo/psalm": "^5.16",
         "php-soap/ext-soap-engine": "^1.5",
-        "phpunit/phpunit": "^10.5"
+        "phpunit/phpunit": "^10.5",
+        "symfony/var-dumper": "^7.0"
     }
 }

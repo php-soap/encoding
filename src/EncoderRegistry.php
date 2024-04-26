@@ -8,6 +8,7 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
+use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\SimpleType\Base64BinaryTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\BoolTypeEncoder;
@@ -97,7 +98,7 @@ final class EncoderRegistry
     {
         $this->complextTypeMap->add(
             (new QNameFormatter())($namespace, $name),
-            new ObjectEncoder($class)
+            new OptionalElementEncoder(new ObjectEncoder($class))
         );
 
         return $this;
@@ -212,7 +213,9 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new ObjectEncoder(\stdClass::class);
+        return new OptionalElementEncoder(
+            new ObjectEncoder(\stdClass::class)
+        );
     }
 
     public function hasRegisteredComplexTypeForXsdType(XsdType $type): bool

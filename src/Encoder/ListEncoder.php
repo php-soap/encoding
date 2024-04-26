@@ -28,6 +28,8 @@ class ListEncoder implements XmlEncoder
     {
         $type = $context->type;
         $innerIso = $this->typeEncoder->iso(
+            // TODO : This line is duplicated in EncoderDetector - find a better way
+            //
             // Remove the list property from it to avoid nested guesses becoming stuck
             // Instead we want to fall back to the next part of the logic.
             $context->withType(
