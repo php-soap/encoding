@@ -6,34 +6,18 @@ namespace Soap\Encoding\Test\Unit\Encoder;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\EncoderRegistry;
-use Soap\Engine\Metadata\Collection\MethodCollection;
-use Soap\Engine\Metadata\Collection\TypeCollection;
-use Soap\Engine\Metadata\InMemoryMetadata;
-use Soap\Engine\Metadata\Model\XsdType;
+use Soap\Encoding\Test\Unit\ContextCreatorTrait;
+use VeeWee\Xml\Dom\Document;
+use function VeeWee\Xml\Dom\Configurator\trim_spaces;
 
 abstract class AbstractEncoderTests extends TestCase
 {
+    use ContextCreatorTrait;
 
     /**
      * @return iterable<int, array{encoder: XmlEncoder, context: Context, xml: string, data: mixed}>
      */
     abstract public static function provideIsomorphicCases(): iterable;
-
-    public static function createContext(
-        XsdType $currentType,
-        TypeCollection $allTypes = new TypeCollection(),
-    ): Context
-    {
-        return new Context(
-            $currentType,
-            new InMemoryMetadata(
-                $allTypes,
-                new MethodCollection(),
-            ),
-            EncoderRegistry::default()
-        );
-    }
 
     /**
      * @test

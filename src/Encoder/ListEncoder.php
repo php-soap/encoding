@@ -16,10 +16,18 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
  */
 class ListEncoder implements XmlEncoder
 {
+    /**
+     * @param XmlEncoder<string, T> $typeEncoder
+     */
+    public function __construct(
+        private readonly XmlEncoder $typeEncoder
+    ) {
+    }
+
     public function iso(Context $context): Iso
     {
         $type = $context->type;
-        $innerIso = $context->registry->findByXsdType($context->type)->iso(
+        $innerIso = $this->typeEncoder->iso(
             // Remove the list property from it to avoid nested guesses becoming stuck
             // Instead we want to fall back to the next part of the logic.
             $context->withType(

@@ -14,9 +14,6 @@ class FloatTypeEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
-        // TODO --> Not all tests work as expected - needs revision...
-        return [];
-
         $baseConfig = [
             'encoder' => $encoder = new FloatTypeEncoder(),
             'context' => $context = self::createContext(XsdType::guess('float')),

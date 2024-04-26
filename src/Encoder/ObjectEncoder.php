@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Encoder\SimpleType\GuessTypeEncoder;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
@@ -82,9 +81,9 @@ final class ObjectEncoder implements XmlEncoder
 
                         return $this->handleProperty(
                             $property,
-                            onAttribute: fn (): \Closure => (new AttributeBuilder($type, $this->grabSimpleTypeIsoForProperty($context, $property)->to($value)))(...),
-                            onValue: fn (): \Closure => value($this->grabSimpleTypeIsoForProperty($context, $property)->from($value)),
-                            onElements: fn (): \Closure =>raw($this->grabElementIsoForProperty($context, $property)->to($value)),
+                            onAttribute: fn (): \Closure => (new AttributeBuilder($type, $this->grabIsoForProperty($context, $property)->to($value)))(...),
+                            onValue: fn (): \Closure => value($this->grabIsoForProperty($context, $property)->from($value)),
+                            onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
                         );
                     }
                 )
@@ -117,29 +116,21 @@ final class ObjectEncoder implements XmlEncoder
 
                     return $this->handleProperty(
                         $property,
-                        onAttribute: fn (): mixed => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
-                        onValue: fn (): mixed => $this->grabSimpleTypeIsoForProperty($context, $property)->from($value),
-                        onElements: fn (): mixed => $this->grabElementIsoForProperty($context, $property)->from($value),
+                        onAttribute: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
+                        onValue: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
+                        onElements: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
                     );
                 }
             )
         );
     }
 
-    private function grabElementIsoForProperty(Context $context, Property $property): Iso
+    private function grabIsoForProperty(Context $context, Property $property): Iso
     {
-        $encoder = $context->registry->findByXsdType($property->getType());
+        $propertyContext = $context->withType($property->getType());
+        $encoder = $context->registry->detectEncoderForContext($propertyContext);
 
-        return $encoder->iso(
-            $context->withType($property->getType())
-        );
-    }
-
-    private function grabSimpleTypeIsoForProperty(Context $context, Property $property): Iso
-    {
-        return (new GuessTypeEncoder())->iso(
-            $context->withType($property->getType())
-        );
+        return $encoder->iso($propertyContext);
     }
 
     /**

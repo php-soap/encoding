@@ -3,12 +3,18 @@ declare(strict_types=1);
 
 namespace Soap\Encoding;
 
-use Psl\Collection\Map;
 use Psl\Collection\MutableMap;
+use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
-use Soap\Encoding\Encoder\GuessEncoder;
+use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\SimpleType;
+use Soap\Encoding\Encoder\SimpleType\Base64BinaryTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\BoolTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\FloatTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
 use Soap\Engine\Metadata\Model\XsdType;
@@ -17,10 +23,12 @@ use Soap\Xml\Xmlns;
 final class EncoderRegistry
 {
     /**
-     * @param MutableMap<string, XmlEncoder> $registry
+     * @param MutableMap<string, XmlEncoder> $simpleTypeMap
+     * @param MutableMap<string, XmlEncoder> $complextTypeMap
      */
     private function __construct(
-        private MutableMap $registry
+        private MutableMap $simpleTypeMap,
+        private MutableMap $complextTypeMap
     ) {
     }
 
@@ -30,51 +38,53 @@ final class EncoderRegistry
         $xsd = Xmlns::xsd()->value();
         $xsd1999 = '.????';
 
-        return new self(new MutableMap([
-            // Strings:
-            $qNameFormatter($xsd, 'string') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'anyURI') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'qname') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'NOTATION') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'normalizedString') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'token') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'language') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'NMTOKEN') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'Name') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'NCName') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'ID') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'IDREF') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
-            $qNameFormatter($xsd, 'ENTITY') => new ElementEncoder(new SimpleType\StringTypeEncoder()),
+        return new self(
+            new MutableMap([
+                // Strings:
+                $qNameFormatter($xsd, 'string') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'anyURI') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'qname') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NOTATION') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'normalizedString') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'token') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'language') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NMTOKEN') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'Name') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NCName') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'ID') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'IDREF') => new StringTypeEncoder(),
+                $qNameFormatter($xsd, 'ENTITY') => new StringTypeEncoder(),
 
-            // Encoded strings
-            $qNameFormatter($xsd, 'base64Binary') => new ElementEncoder(new SimpleType\Base64BinaryTypeEncoder()),
+                // Encoded strings
+                $qNameFormatter($xsd, 'base64Binary') => new Base64BinaryTypeEncoder(),
 
-            // Bools
-            $qNameFormatter($xsd, 'boolean') => new ElementEncoder(new SimpleType\BoolTypeEncoder()),
+                // Bools
+                $qNameFormatter($xsd, 'boolean') => new BoolTypeEncoder(),
 
-            // Integers:
-            $qNameFormatter($xsd, 'int') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'long') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'short') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'byte') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'nonPositiveInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'positiveInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'nonNegativeInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'negativeInteger') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'unsignedLong') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'unsignedByte') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'unsignedShort') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'unsignedInt') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'unsignedLong') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'integer') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+                // Integers:
+                $qNameFormatter($xsd, 'int') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'long') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'short') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'byte') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'nonPositiveInteger') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'positiveInteger') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'nonNegativeInteger') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'negativeInteger') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedLong') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedByte') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedShort') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'unsignedInt') => new IntTypeEncoder(),
+                $qNameFormatter($xsd, 'integer') => new IntTypeEncoder(),
 
-            // Floats:
-            $qNameFormatter($xsd, 'float') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
-            $qNameFormatter($xsd, 'double') => new ElementEncoder(new SimpleType\IntTypeEncoder()),
+                // Floats:
+                $qNameFormatter($xsd, 'float') => new FloatTypeEncoder(),
+                $qNameFormatter($xsd, 'double') => new FloatTypeEncoder(),
 
-            // Scalar:
-            $qNameFormatter($xsd, 'anySimpleType') => new ElementEncoder(new SimpleType\ScalarTypeEncoder()),
-        ]));
+                // Scalar:
+                $qNameFormatter($xsd, 'anySimpleType') => new ScalarTypeEncoder(),
+            ]),
+            new MutableMap([])
+        );
     }
 
     /**
@@ -85,7 +95,7 @@ final class EncoderRegistry
      */
     public function addClassMap(string $namespace, string $name, string $class): self
     {
-        $this->registry->add(
+        $this->complextTypeMap->add(
             (new QNameFormatter())($namespace, $name),
             new ObjectEncoder($class)
         );
@@ -101,7 +111,7 @@ final class EncoderRegistry
      */
     public function addBackedEnum(string $namespace, string $name, string $enumClass): self
     {
-        $this->registry->add(
+        $this->simpleTypeMap->add(
             (new QNameFormatter())($namespace, $name),
             new ElementEncoder(new SimpleType\BackedEnumTypeEncoder($enumClass))
         );
@@ -114,9 +124,24 @@ final class EncoderRegistry
      * @param non-empty-string $name
      * @return $this
      */
-    public function addTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
+    public function addSimpleTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
     {
-        $this->registry->add(
+        $this->simpleTypeMap->add(
+            (new QNameFormatter())($namespace, $name),
+            $encoder
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param non-empty-string $namespace
+     * @param non-empty-string $name
+     * @return $this
+     */
+    public function addComplexTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
+    {
+        $this->complextTypeMap->add(
             (new QNameFormatter())($namespace, $name),
             $encoder
         );
@@ -127,9 +152,12 @@ final class EncoderRegistry
     /**
      * @return XmlEncoder<string, mixed>
      */
-    public function findByXsdType(XsdType $type): XmlEncoder
+    public function findSimpleEncoderByXsdType(XsdType $type): XmlEncoder
     {
-        return $this->findByNamespaceName($type->getXmlNamespace(), $type->getBaseTypeOrFallbackToName());
+        return $this->findSimpleEncoderByNamespaceName(
+            $type->getXmlNamespace(),
+            $type->getXmlTypeName()
+        );
     }
 
     /**
@@ -137,15 +165,71 @@ final class EncoderRegistry
      * @param non-empty-string $name
      * @return XmlEncoder<string, mixed>
      */
-    public function findByNamespaceName(string $namespace, string $name): XmlEncoder
+    public function findSimpleEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
     {
         $qNameFormatter = new QNameFormatter();
 
-        $found = $this->registry->get($qNameFormatter($namespace, $name));
+        $found = $this->simpleTypeMap->get($qNameFormatter($namespace, $name));
         if ($found) {
             return $found;
         }
 
-        return new GuessEncoder();
+        return new ScalarTypeEncoder();
+    }
+
+    public function hasRegisteredSimpleTypeForXsdType(XsdType $type): bool
+    {
+        $qNameFormatter = new QNameFormatter();
+
+        return $this->simpleTypeMap->contains($qNameFormatter(
+            $type->getXmlNamespace(),
+            $type->getXmlTypeName()
+        ));
+    }
+
+    /**
+     * @return XmlEncoder<string, mixed>
+     */
+    public function findComplexEncoderByXsdType(XsdType $type): XmlEncoder
+    {
+        return $this->findComplexEncoderByNamespaceName(
+            $type->getXmlNamespace(),
+            $type->getXmlTypeName()
+        );
+    }
+
+    /**
+     * @param non-empty-string $namespace
+     * @param non-empty-string $name
+     * @return XmlEncoder<string, mixed>
+     */
+    public function findComplexEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
+    {
+        $qNameFormatter = new QNameFormatter();
+
+        $found = $this->complextTypeMap->get($qNameFormatter($namespace, $name));
+        if ($found) {
+            return $found;
+        }
+
+        return new ObjectEncoder(\stdClass::class);
+    }
+
+    public function hasRegisteredComplexTypeForXsdType(XsdType $type): bool
+    {
+        $qNameFormatter = new QNameFormatter();
+
+        return $this->complextTypeMap->contains($qNameFormatter(
+            $type->getXmlNamespace(),
+            $type->getXmlTypeName()
+        ));
+    }
+
+    /**
+     * @return XmlEncoder<string, mixed>
+     */
+    public function detectEncoderForContext(Context $context): XmlEncoder
+    {
+        return (new EncoderDetector())($context);
     }
 }

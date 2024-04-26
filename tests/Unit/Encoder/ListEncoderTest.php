@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\ListEncoder;
+use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
 
@@ -14,7 +16,7 @@ class ListEncoderTest extends AbstractEncoderTests
     public static function provideIsomorphicCases(): iterable
     {
         $baseConfig = [
-            'encoder' => $encoder = new ListEncoder(),
+            'encoder' => $encoder = new ListEncoder(new ElementEncoder(new StringTypeEncoder())),
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlNamespace(Xmlns::xsd()->value())

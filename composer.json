@@ -21,6 +21,7 @@
     ],
     "require": {
         "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
+        "azjezz/psl": "dev-next as 2.9.0",
         "veewee/reflecta": "^0.2.0",
         "veewee/xml": "^2.14",
         "php-soap/engine": "^2.6",

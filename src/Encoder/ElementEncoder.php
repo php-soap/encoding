@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Encoder\SimpleType\GuessTypeEncoder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
@@ -18,12 +17,11 @@ use function VeeWee\Xml\Writer\Builder\value as buildValue;
 final class ElementEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, T>|null $typeEncoder
+     * @param XmlEncoder<string, T> $typeEncoder
      */
     public function __construct(
-        private ?XmlEncoder $typeEncoder = null
+        private readonly XmlEncoder $typeEncoder
     ) {
-        $this->typeEncoder ??= new GuessTypeEncoder();
     }
 
     /**

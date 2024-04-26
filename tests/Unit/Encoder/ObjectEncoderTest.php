@@ -10,6 +10,7 @@ use Soap\Encoding\Test\Fixture\Model\Hat;
 use Soap\Encoding\Test\Fixture\Model\User;
 use Soap\Engine\Metadata\Collection\PropertyCollection;
 use Soap\Engine\Metadata\Collection\TypeCollection;
+use Soap\Engine\Metadata\Metadata;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
@@ -103,6 +104,25 @@ class ObjectEncoderTest extends AbstractEncoderTests
             'xml' => '<user active="true"><hat><color>green</color></hat></user>',
             'data' => new User(active: true, hat: new Hat('green')),
         ];
+
+        yield 'wsdl-example-objects' => [
+            ...$baseConfig,
+            'context' => self::createContextFromMetadata(self::createWsdlExample(), 'user'),
+            'xml' => '<tns:user xmlns:tns="https://test"><tns:active xmlns:tns="https://test">true</tns:active><tns:hat xmlns:tns="https://test"><tns:color xmlns:tns="https://test">green</tns:color></tns:hat></tns:user>',
+            'data' => (object)[
+                'active' => true,
+                'hat' => (object)[
+                    'color' => 'green',
+                ],
+            ],
+        ];
+
+        yield 'wsdl-example-classes' => [
+            'encoder' => new ObjectEncoder(User::class),
+            'context' => $withClassMap(self::createContextFromMetadata(self::createWsdlExample(), 'user')),
+            'xml' => '<tns:user xmlns:tns="https://test"><tns:active xmlns:tns="https://test">true</tns:active><tns:hat xmlns:tns="https://test"><tns:color xmlns:tns="https://test">green</tns:color></tns:hat></tns:user>',
+            'data' => new User(active: true, hat: new Hat('green')),
+        ];
     }
 
 
@@ -119,16 +139,21 @@ class ObjectEncoderTest extends AbstractEncoderTests
                     new Property(
                         'active',
                         XsdType::create('active')
-                            ->withBaseType('boolean')
+                            ->withXmlTypeName('boolean')
                             ->withXmlTargetNodeName('active')
                             ->withXmlNamespace(Xmlns::xsd()->value())
                             ->withXmlNamespaceName('xsd')
-                            ->withMeta(fn (TypeMeta $meta): TypeMeta => $activeAsAttribute ? $meta->withIsAttribute(true) : $meta)
+                            ->withMeta(fn (TypeMeta $meta): TypeMeta => $meta
+                                ->withIsSimple(true)
+                                ->withIsElement(!$activeAsAttribute)
+                                ->withIsAttribute($activeAsAttribute)
+                            )
                     ),
                     new Property(
                         'hat',
                         XsdType::create('hat')
                             ->withBaseType('hat')
+                            ->withXmlTypeName("hat")
                             ->withXmlTargetNodeName('hat')
                             ->withXmlNamespace('https://test')
                             ->withXmlNamespaceName('test')
@@ -137,6 +162,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
             ),
             new Type(
                 XsdType::create('hat')
+                    ->withXmlTypeName("hat")
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
                     ->withXmlTargetNodeName('hat'),
@@ -144,13 +170,37 @@ class ObjectEncoderTest extends AbstractEncoderTests
                     new Property(
                         'color',
                         XsdType::create('color')
-                            ->withBaseType('string')
+                            ->withXmlTypeName('string')
                             ->withXmlTargetNodeName('color')
                             ->withXmlNamespace(Xmlns::xsd()->value())
                             ->withXmlNamespaceName('xsd')
+                            ->withMeta(fn (TypeMeta $meta): TypeMeta => $meta
+                                ->withIsSimple(true)
+                                ->withIsElement(true)
+                            )
                     ),
                 )
             )
+        );
+    }
+
+    public static function createWsdlExample(): Metadata
+    {
+        return self::createMetadataFromWsdl(
+            <<<EOSCHEMA
+                <complexType name="user">
+                    <sequence>
+                        <element name="active" type="boolean"/>
+                        <element name="hat" type="tns:hat"/>
+                    </sequence>
+                </complexType>
+                <complexType name="hat">
+                    <sequence>
+                        <element name="color" type="string"/>
+                    </sequence>
+                </complexType>
+            EOSCHEMA,
+            'type="tns:user"'
         );
     }
 }
