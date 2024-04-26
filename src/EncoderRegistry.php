@@ -31,7 +31,7 @@ final class EncoderRegistry
     {
         $qNameFormatter = new QNameFormatter();
         $xsd = Xmlns::xsd()->value();
-        $xsd1999 = '.????';
+        $xsd1999 = 'http://www.w3.org/1999/XMLSchema'; // TODO : Move to Xmlns
 
         return new self(
             new MutableMap([
@@ -99,21 +99,33 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'anyXML') => new SimpleType\ScalarTypeEncoder(),
                 $qNameFormatter($xsd, 'anySimpleType') => new SimpleType\ScalarTypeEncoder(),
 
-
-                // 19999
-                /* support some of the 1999 data types */
-                // {{XSD_STRING, XSD_STRING_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_string, to_xml_string},
-                // {{XSD_BOOLEAN, XSD_BOOLEAN_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_bool, to_xml_bool},
-                // {{XSD_DECIMAL, XSD_DECIMAL_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_string},
-                // {{XSD_FLOAT, XSD_FLOAT_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_double, to_xml_double},
-                // {{XSD_DOUBLE, XSD_DOUBLE_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_double, to_xml_double},
-
-                // {{XSD_LONG, XSD_LONG_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_long, to_xml_long},
-                // {{XSD_INT, XSD_INT_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_long, to_xml_long},
-                // {{XSD_SHORT, XSD_SHORT_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_long, to_xml_long},
-                // {{XSD_BYTE, XSD_BYTE_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_long, to_xml_long},
-                // {{XSD_1999_TIMEINSTANT, XSD_1999_TIMEINSTANT_STRING, XSD_1999_NAMESPACE, NULL, NULL, NULL}, to_zval_stringc, to_xml_string},
-
+                // XSD 1999 version
+                // @see https://www.w3.org/1999/XMLSchema-datatypes.xsd
+                $qNameFormatter($xsd1999, 'string') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'boolean') => new SimpleType\BoolTypeEncoder(),
+                $qNameFormatter($xsd1999, 'float') => new SimpleType\FloatTypeEncoder(),
+                $qNameFormatter($xsd1999, 'double') => new SimpleType\FloatTypeEncoder(),
+                $qNameFormatter($xsd1999, 'decimal') => new SimpleType\FloatTypeEncoder(),
+                $qNameFormatter($xsd1999, 'timeInstant') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'timeDuration') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'recurringInstant') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'binary') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'uriReference') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd1999, 'integer') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'nonNegativeInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'positiveInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'nonPositiveInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'negativeInteger') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'byte') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'int') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'long') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'short') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'unsignedByte') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'unsignedInt') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'unsignedLong') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'unsignedShort') => new SimpleType\IntTypeEncoder(),
+                $qNameFormatter($xsd1999, 'date') => new SimpleType\DateTypeEncoder(),
+                $qNameFormatter($xsd1999, 'time') => new SimpleType\StringTypeEncoder(),
             ]),
             new MutableMap([
                 // TODO
