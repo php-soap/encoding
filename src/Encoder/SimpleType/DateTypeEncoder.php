@@ -27,7 +27,7 @@ final class DateTypeEncoder implements XmlEncoder
         return (new Iso(
             static fn (\DateTimeInterface $value): string => $value->format(self::DATE_FORMAT),
             static function (string $value): \DateTimeInterface {
-                $result = \DateTimeInterface::createFromFormat('!'.self::DATE_FORMAT, $value);
+                $result = \DateTimeImmutable::createFromFormat('!'.self::DATE_FORMAT, $value);
                 if (!$result) {
                     throw new InvalidArgumentException(
                         'Invalid date format detected: '.$value.'. Expected format: '.self::DATE_FORMAT.'.'
