@@ -21,7 +21,7 @@ class HexBinaryTypeEncoderTest extends AbstractEncoderTests
 
         yield 'simple' => [
             ...$baseConfig,
-            'xml' => bin2hex('hello'),
+            'xml' => mb_strtoupper(bin2hex('hello')),
             'data' => 'hello',
         ];
     }

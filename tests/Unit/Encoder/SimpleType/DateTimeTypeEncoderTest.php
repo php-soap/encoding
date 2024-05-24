@@ -21,8 +21,8 @@ class DateTimeTypeEncoderTest extends AbstractEncoderTests
 
         yield 'valid-date' => [
             ...$baseConfig,
-            'xml' => '2002-05-30T09:00:00',
-            'data' => \DateTimeImmutable::createFromFormat(DateTimeTypeEncoder::DATE_FORMAT, '2002-05-30T09:00:00'),
+            'xml' => '2002-05-30T09:00:00+00:00',
+            'data' => \DateTimeImmutable::createFromFormat(DateTimeTypeEncoder::DATE_FORMAT, '2002-05-30T09:00:00+00:00'),
         ];
     }
 }

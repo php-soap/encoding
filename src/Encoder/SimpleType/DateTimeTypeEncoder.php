@@ -13,7 +13,7 @@ use VeeWee\Reflecta\Iso\Iso;
  */
 final class DateTimeTypeEncoder implements XmlEncoder
 {
-    public const DATE_FORMAT = 'Y-m-d\TH:i:s';
+    public const DATE_FORMAT = 'Y-m-d\TH:i:sP';
 
     /**
      * @return Iso<string, \DateTimeInterface>

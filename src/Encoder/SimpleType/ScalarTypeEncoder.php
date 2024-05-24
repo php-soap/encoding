@@ -22,6 +22,11 @@ final class ScalarTypeEncoder implements XmlEncoder
                 is_float($value) => (new FloatTypeEncoder())->iso($context)->to($value),
                 is_string($value) => (new StringTypeEncoder())->iso($context)->to($value),
                 is_bool($value) => (new BoolTypeEncoder())->iso($context)->to($value),
+
+                // TODO ADD SPECIFIC EXCEPTION...
+                default => throw new \RuntimeException(
+                    'Unsupported scalar type: '.gettype($value) . print_r($context->type, true)
+                )
             },
             static fn (string $value): mixed => Type\union(
                 Type\int(),

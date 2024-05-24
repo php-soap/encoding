@@ -15,7 +15,7 @@ final class HexBinaryTypeEncoder implements XmlEncoder
     public function iso(Context $context): Iso
     {
         return (new Iso(
-            static fn (string $value): string => bin2hex($value),
+            static fn (string $value): string => mb_strtoupper(bin2hex($value)),
             static fn (string $value): string => hex2bin($value),
         ));
     }

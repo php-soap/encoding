@@ -21,7 +21,7 @@ final class Decoder implements SoapDecoder
     /**
      * @return mixed
      */
-    public function decode(string $method, SoapResponse $response)
+    public function decode(string $method, SoapResponse $response): mixed
     {
         // TODO  : invariants
         // | outputBindingUsage  | literal                                                                                                |
@@ -36,7 +36,8 @@ final class Decoder implements SoapDecoder
         $context = new Context($returnType, $this->metadata, $this->registry, $bindingUse);
         $decoder = $this->registry->detectEncoderForContext($context);
 
-        // TODO / Strip the body before parsing the payload? To investigate what the payload is exactly.
+        // The SoapResponse only contains the payload of the response (with no headers).
+        // It can be parsed directly as XML.
         $body = (new SoapEnvelopeReader())($response->getPayload());
 
         return $decoder->iso($context)->from($body);

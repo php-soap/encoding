@@ -17,7 +17,7 @@ class SoapEnvelopeReaderTest extends TestCase
      * @test
      * @dataProvider provideEnvelopeCases
      */
-    public function it_can_write_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
+    public function it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
     {
         $reader = new SoapEnvelopeReader();
         $actual = $reader($envelope);
