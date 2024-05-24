@@ -27,7 +27,7 @@
         "php-soap/engine": "^2.8",
         "php-soap/wsdl": "^1.6",
         "php-soap/xml": "^1.6",
-        "php-soap/wsdl-reader": "^0.12.0"
+        "php-soap/wsdl-reader": "^0.13.0"
     },
     "require-dev": {
         "vimeo/psalm": "^5.16",
