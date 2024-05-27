@@ -10,6 +10,7 @@ use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
+use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use function VeeWee\Reflecta\Lens\index;
@@ -31,6 +32,7 @@ final class Encoder implements SoapEncoder
         // TODO : What on failure? Is fallback assumption OK or error?
         $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
         $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
+        $encodingStyle = $meta->outputEncodingStyle()->map(EncodingStyle::tryFrom(...));
 
         $request = [];
         foreach ($methodInfo->getParameters() as $index => $parameter)
@@ -44,7 +46,7 @@ final class Encoder implements SoapEncoder
         $operation = new OperationBuilder($meta, $request);
 
         // TODO : unwrap or throw very specific issue or fallback to a specific soap version?
-        $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $bindingUse, $operation(...));
+        $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $encodingStyle, $operation(...));
 
         return new SoapRequest(
             $writeEnvelope(),
