@@ -7,6 +7,10 @@ use Soap\Engine\Driver as SoapDriver;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\HttpBinding\SoapResponse;
 use Soap\Engine\Metadata\Metadata;
+use Soap\WsdlReader\Locator\ServiceSelectionCriteria;
+use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
+use Soap\WsdlReader\Model\Definitions\Namespaces;
+use Soap\WsdlReader\Model\Wsdl1;
 
 class Driver implements SoapDriver
 {
@@ -17,13 +21,35 @@ class Driver implements SoapDriver
     ){
     }
 
-    public static function createFromMetadata(Metadata $metadata, ?EncoderRegistry $registry = null): self
-    {
+    public static function createFromWsdl1(
+        Wsdl1 $wsdl,
+        ?ServiceSelectionCriteria $serviceSelectionCriteria = null,
+        ?EncoderRegistry $registry = null
+    ) {
+        $registry ??= EncoderRegistry::default();
+        $metadataProvider = new Wsdl1MetadataProvider(
+            $wsdl,
+            $serviceSelectionCriteria
+        );
+        $metadata = $metadataProvider->getMetadata();
+
+        return new self(
+            new Encoder($metadata, $wsdl->namespaces, $registry),
+            new Decoder($metadata, $wsdl->namespaces, $registry),
+            $metadata,
+        );
+    }
+
+    public static function createFromMetadata(
+        Metadata $metadata,
+        Namespaces $namespaces,
+        ?EncoderRegistry $registry = null
+    ): self {
         $registry ??= EncoderRegistry::default();
 
         return new self(
-            new Encoder($metadata, $registry),
-            new Decoder($metadata, $registry),
+            new Encoder($metadata, $namespaces, $registry),
+            new Decoder($metadata, $namespaces, $registry),
             $metadata,
         );
     }

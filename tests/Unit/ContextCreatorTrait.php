@@ -14,6 +14,7 @@ use Soap\Wsdl\Loader\CallbackLoader;
 use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
+use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Wsdl1Reader;
 
 trait ContextCreatorTrait
@@ -28,7 +29,8 @@ trait ContextCreatorTrait
                 $allTypes,
                 new MethodCollection(),
             ),
-            EncoderRegistry::default()
+            EncoderRegistry::default(),
+            new Namespaces([], []), // TODO : ::empty() constructor.
         );
     }
 
@@ -44,7 +46,8 @@ trait ContextCreatorTrait
         return new Context(
             $type->getXsdType(),
             $metadata,
-            EncoderRegistry::default()
+            EncoderRegistry::default(),
+            new Namespaces([], []),
         );
     }
 

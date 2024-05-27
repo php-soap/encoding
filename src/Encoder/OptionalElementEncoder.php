@@ -42,7 +42,7 @@ final class OptionalElementEncoder implements XmlEncoder
 
         return new Iso(
             static fn (mixed $raw): string => match (true) {
-                $raw === null && $isNillable => (new XsdTypeXmlElementWriter())($type, new NilAttributeBuilder()),
+                $raw === null && $isNillable => (new XsdTypeXmlElementWriter())($context, new NilAttributeBuilder()),
                 $raw === null => '',
                 default => $elementIso->to($raw),
             },

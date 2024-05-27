@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
+use Soap\Encoding\Encoder\Context;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Xml\Writer\Builder\Builder;
 use XMLWriter;
@@ -11,14 +12,13 @@ use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\namespaced_element;
 
 
-final class ElementBuilder implements Builder
+final class LiteralElementBuilder implements Builder
 {
     /**
-     * @param XsdType $type
      * @param \Closure(XMLWriter): \Generator<bool> $children
      */
     public function __construct(
-        private readonly XsdType $type,
+        private readonly Context $context,
         private readonly \Closure $children
     ) {
     }
@@ -28,18 +28,20 @@ final class ElementBuilder implements Builder
      */
     public function __invoke(XMLWriter $writer): Generator
     {
-        if ($this->type->getXmlTargetNamespace()) {
+        $type = $this->context->type;
+
+        if ($type->getXmlTargetNamespace()) {
             yield from namespaced_element(
-                $this->type->getXmlTargetNamespace(),
-                $this->type->getXmlTargetNamespaceName() ?: null,
-                $this->type->getXmlTargetNodeName(),
+                $type->getXmlTargetNamespace(),
+                $type->getXmlTargetNamespaceName() ?: null,
+                $type->getXmlTargetNodeName(),
                 $this->children
             )($writer);
             return;
         }
 
         yield from element(
-            $this->type->getXmlTargetNodeName(),
+            $type->getXmlTargetNodeName(),
             $this->children
         )($writer);
     }

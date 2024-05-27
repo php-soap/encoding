@@ -6,7 +6,6 @@ namespace Soap\Encoding\Test\Integration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Decoder as SoapDecoder;
-use Soap\Encoding\Encoder;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\Decoder;
 use Soap\EngineIntegrationTests\AbstractDecoderTest;
@@ -34,6 +33,7 @@ final class DecoderTest extends AbstractDecoderTest
 
         $this->decoder = new SoapDecoder(
             $metadata,
+            $wsdlInfo->namespaces,
             EncoderRegistry::default()
                 ->addClassMap('http://soapinterop.org/xsd', 'MappedValidateRequest', ValidateRequest::class)
         );

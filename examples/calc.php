@@ -16,16 +16,10 @@ $wsdlLocation = 'https://ecs.syr.edu/faculty/fawcett/Handouts/cse775/code/calcWe
 $loader = new StreamWrapperLoader();
 $wsdl = (new Wsdl1Reader($loader))($wsdlLocation);
 
-// Parsing metadata
-$metadataProvider = new Wsdl1MetadataProvider(
+$driver = Driver::createFromWsdl1(
     $wsdl,
     ServiceSelectionCriteria::defaults()
-        ->withPreferredSoapVersion(SoapVersion::SOAP_11)
-);
-$metadata = $metadataProvider->getMetadata();
-
-$driver = Driver::createFromMetadata(
-    $metadata,
+        ->withPreferredSoapVersion(SoapVersion::SOAP_11),
     $registry = EncoderRegistry::default()
 );
 

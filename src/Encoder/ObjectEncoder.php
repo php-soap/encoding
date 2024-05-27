@@ -71,7 +71,7 @@ final class ObjectEncoder implements XmlEncoder
     private function to(Context $context, array $properties, object $data): string
     {
         return (new XsdTypeXmlElementWriter())(
-            $context->type,
+            $context,
             writeChildren(
                 map(
                     $properties,

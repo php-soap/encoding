@@ -29,12 +29,11 @@ final class ElementEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
-        $type = $context->type;
         $typeIso = $this->typeEncoder->iso($context);
 
         return new Iso(
             static fn(mixed $raw): string => (new XsdTypeXmlElementWriter())(
-                $type,
+                $context,
                 buildValue($typeIso->to($raw))
             ),
             static fn(string $xml): mixed => $typeIso->from(

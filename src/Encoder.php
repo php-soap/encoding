@@ -9,28 +9,22 @@ use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
-use Soap\Engine\Metadata\Model\TypeMeta;
-use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
+use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use function VeeWee\Reflecta\Lens\index;
-use function VeeWee\Xml\Writer\Builder\raw;
 
 final class Encoder implements SoapEncoder
 {
     public function __construct(
         private readonly Metadata $metadata,
+        private readonly Namespaces $namespaces,
         private readonly EncoderRegistry $registry
     ) {
     }
 
     public function encode(string $method, array $arguments): SoapRequest
     {
-        // TODO  : invariants
-        // | inputBindingUsage  | literal                                                                                                |
-        // | bindingStyle       | document
-        // SEE https://www.ibm.com/docs/en/bpm/8.5.7?topic=files-wsdl-binding-styles                                                                             |
-
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
 
@@ -42,7 +36,7 @@ final class Encoder implements SoapEncoder
         foreach ($methodInfo->getParameters() as $index => $parameter)
         {
             $type = $parameter->getType();
-            $context = new Context($type, $this->metadata, $this->registry, $bindingUse);
+            $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
             $argument = index($index)->get($arguments);
             $request[] = $this->registry->detectEncoderForContext($context)->iso($context)->to($argument);
         }
