@@ -9,6 +9,7 @@ use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;

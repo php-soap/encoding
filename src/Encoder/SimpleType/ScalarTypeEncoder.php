@@ -25,7 +25,7 @@ final class ScalarTypeEncoder implements XmlEncoder
 
                 // TODO ADD SPECIFIC EXCEPTION...
                 default => throw new \RuntimeException(
-                    'Unsupported scalar type: '.gettype($value) . print_r($context->type, true)
+                    'Unsupported scalar type: '.gettype($value) . '. ' . print_r($context->type, true)
                 )
             },
             static fn (string $value): mixed => Type\union(

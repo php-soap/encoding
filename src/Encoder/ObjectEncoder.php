@@ -5,31 +5,27 @@ namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
+use Soap\Encoding\Xml\Writer\ElementValueBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\Property;
 use VeeWee\Reflecta\Iso\Iso;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
 use function Psl\Dict\map;
+use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
-use function VeeWee\Xml\Dom\Builder\value;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Reflecta\Lens\property;
 
 /**
- * TODO : object instead of array?
- * TODO : Support for both?
- * TODO : ...
- * @template T extends object
- *
- * @implements XmlEncoder<string, T>
+ * @implements XmlEncoder<string, object|array>
  */
 final class ObjectEncoder implements XmlEncoder
 {
     /**
-     * @param class-string<T> $className
+     * @param class-string<object|array> $className
      */
     public function __construct(
         private readonly string $className
@@ -45,20 +41,17 @@ final class ObjectEncoder implements XmlEncoder
             $context->type->getXmlNamespace()
         );
         $properties = reindex(
-            $type->getProperties(),
+            sort_by(
+                $type->getProperties(),
+                static fn(Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
+            ),
             static fn(Property $property): string => $property->getName(),
         );
 
         return new Iso(
-            /**
-             * @param T $value
-             */
-            function (object $value) use ($context, $properties) : string {
+            function (object|array $value) use ($context, $properties) : string {
                 return $this->to($context, $properties, $value);
             },
-            /**
-             * @return T
-             */
             function (string $value) use ($context, $properties) : object {
                 return $this->from($context, $properties, $value);
             }
@@ -68,8 +61,12 @@ final class ObjectEncoder implements XmlEncoder
     /**
      * @param array<string, Property> $properties
      */
-    private function to(Context $context, array $properties, object $data): string
+    private function to(Context $context, array $properties, object|array $data): string
     {
+        if (is_array($data)) {
+            $data = (object) $data;
+        }
+
         return (new XsdTypeXmlElementWriter())(
             $context,
             writeChildren(
@@ -81,8 +78,16 @@ final class ObjectEncoder implements XmlEncoder
 
                         return $this->handleProperty(
                             $property,
-                            onAttribute: fn (): \Closure => (new AttributeBuilder($type, $this->grabIsoForProperty($context, $property)->to($value)))(...),
-                            onValue: fn (): \Closure => value($this->grabIsoForProperty($context, $property)->from($value)),
+                            onAttribute: fn (): \Closure => (new AttributeBuilder(
+                                $context,
+                                $type,
+                                $this->grabIsoForProperty($context, $property)->to($value)
+                            ))(...),
+                            onValue: fn (): \Closure => (new ElementValueBuilder(
+                                $context,
+                                $this->grabIsoForProperty($context, $property),
+                                $value
+                            ))(...),
                             onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
                         );
                     }

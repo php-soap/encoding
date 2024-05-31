@@ -5,7 +5,7 @@ namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
 use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\Encoder\TypeInference\XsiTypeEncoder;
+use Soap\Encoding\TypeInference\XsiTypeDetector;
 use VeeWee\Xml\Writer\Builder\Builder;
 use VeeWee\Xml\Xmlns\Xmlns;
 use XMLWriter;
@@ -34,15 +34,7 @@ final class EncodedElementBuilder implements Builder
 
         yield from element(
             $type->getXmlTargetNodeName(),
-            children([
-                namespaced_attribute(
-                    Xmlns::xsi()->value(),
-                    'xsi',
-                    'type',
-                    (new XsiTypeEncoder())->iso($this->context)->to($type)
-                ),
-                $this->children
-            ])
+            $this->children
         )($writer);
     }
 }

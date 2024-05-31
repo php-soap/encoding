@@ -74,7 +74,7 @@ class SoapEnvelopeWriterTest extends TestCase
 
         yield 'soap-1.2-encoded' => [
             SoapVersion::SOAP_12,
-            some(EncodingStyle::SOAP_12),
+            some(EncodingStyle::SOAP_12_2001_12),
             '<Request>content</Request>',
             <<<EOXML
                 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope">

@@ -24,16 +24,35 @@
         "azjezz/psl": "dev-next as 2.9.0",
         "veewee/reflecta": "^0.4.0",
         "veewee/xml": "^3.1",
-        "php-soap/engine": "^2.8",
+        "php-soap/engine": "dev-main as 2.8",
         "php-soap/wsdl": "^1.6",
         "php-soap/xml": "^1.6",
-        "php-soap/wsdl-reader": "^0.13.0"
+        "php-soap/wsdl-reader": "dev-detect-soapenc-info as 0.13.0",
+        "goetas-webservices/xsd-reader": "dev-merged-prs as 0.4.4"
     },
     "require-dev": {
         "vimeo/psalm": "^5.16",
         "phpunit/phpunit": "^10.5",
         "symfony/var-dumper": "^7.0",
         "php-standard-library/psalm-plugin": "^2.3",
-        "php-soap/engine-integration-tests": "^1.7"
-    }
+        "php-soap/engine-integration-tests": "dev-main as 1.7"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../engine"
+        },
+        {
+            "type": "path",
+            "url": "../wsdl-reader"
+        },
+        {
+            "type": "path",
+            "url": "../xsd-reader"
+        },
+        {
+            "type": "path",
+            "url": "../engine-integration-tests"
+        }
+    ]
 }

@@ -33,7 +33,9 @@ final class EncoderDetector
         if ($meta->isSimple()->unwrapOr(false)) {
             $encoder = $this->detectSimpleTypeEncoder($type, $context);
             if ($meta->isElement()->unwrapOr(false)) {
-                $encoder = new ElementEncoder($encoder);
+                $encoder = new OptionalElementEncoder(
+                    new ElementEncoder($encoder)
+                );
             }
 
             return $encoder;
