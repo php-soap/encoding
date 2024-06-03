@@ -5,6 +5,7 @@ namespace Soap\Encoding\Encoder\SimpleType;
 
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Restriction\WhitespaceRestriction;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -16,7 +17,7 @@ final class Base64BinaryTypeEncoder implements XmlEncoder
     {
         return (new Iso(
             static fn (string $value): string => base64_encode($value),
-            static fn (string $value): string => base64_decode($value),
+            static fn (string $value): string => WhitespaceRestriction::collapse(base64_decode($value)),
         ));
     }
 }
