@@ -9,6 +9,6 @@ final class QNameFormatter
 {
     public function __invoke(string $namespace, string $name): string
     {
-        return '{'.$namespace.':'.$name.'}';
+        return '{'.$namespace.':'.mb_strtolower($name).'}';
     }
 }

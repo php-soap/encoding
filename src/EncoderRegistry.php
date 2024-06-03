@@ -52,6 +52,7 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'NMTOKENS') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'Name') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'NCName') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NCNames') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'ID') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'IDREF') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'IDREFS') => new SimpleType\StringTypeEncoder(),
@@ -135,29 +136,15 @@ final class EncoderRegistry
 
             ]),
             new MutableMap([
-                // TODO : Array case sensitivity
-
                 // SOAP 1.1 ENC
-                $qNameFormatter(EncodingStyle::SOAP_11->value, 'array') => new SoapEnc\SoapArrayEncoder(),
                 $qNameFormatter(EncodingStyle::SOAP_11->value, 'Array') => new SoapEnc\SoapArrayEncoder(),
-                $qNameFormatter(EncodingStyle::SOAP_11->value, 'struct') => new SoapEnc\SoapObjectEncoder(),
                 $qNameFormatter(EncodingStyle::SOAP_11->value, 'Struct') => new SoapEnc\SoapObjectEncoder(),
 
                 // SOAP 1.2 ENC
                 ...pull(
                     EncodingStyle::listKnownSoap12Version(),
                     static fn() => new SoapEnc\SoapArrayEncoder() ,
-                    static fn(string $namespace): string => $qNameFormatter($namespace, 'array')
-                ),
-                ...pull(
-                    EncodingStyle::listKnownSoap12Version(),
-                    static fn() => new SoapEnc\SoapArrayEncoder() ,
                     static fn(string $namespace): string => $qNameFormatter($namespace, 'Array')
-                ),
-                ...pull(
-                    EncodingStyle::listKnownSoap12Version(),
-                    static fn() => new SoapEnc\SoapObjectEncoder() ,
-                    static fn(string $namespace): string => $qNameFormatter($namespace, 'struct')
                 ),
                 ...pull(
                     EncodingStyle::listKnownSoap12Version(),
@@ -258,7 +245,7 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new ScalarTypeEncoder();
+        return new SimpleType\ScalarTypeEncoder();
     }
 
     public function hasRegisteredSimpleTypeForXsdType(XsdType $type): bool

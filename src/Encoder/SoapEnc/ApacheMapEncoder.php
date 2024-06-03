@@ -7,12 +7,17 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
+use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
-use function Psl\Dict\map_with_key;
-use function VeeWee\Xml\Writer\Builder\children;
+use VeeWee\Xml\Dom\Document;
+use function Psl\Dict\merge;
+use function Psl\Type\string;
+use function VeeWee\Xml\Dom\Assert\assert_element;
+use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
+use function VeeWee\Xml\Writer\Builder\children as buildChildren;
 use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\namespace_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
@@ -36,9 +41,6 @@ final class ApacheMapEncoder implements XmlEncoder
         ));
     }
 
-    /**
-     * @param list<T> $data
-     */
     private function encodeArray(Context $context, array $data): string
     {
         $type = $context->type;
@@ -46,19 +48,19 @@ final class ApacheMapEncoder implements XmlEncoder
 
         return (new XsdTypeXmlElementWriter())(
             $context,
-            children([
+            buildChildren([
                 namespace_attribute($type->getXmlNamespace(), $type->getXmlNamespaceName()),
                 new XsiAttributeBuilder($context, XsiTypeDetector::detectFromValue($context, $data)),
                 ...\Psl\Vec\map_with_key(
                     $data,
                     static fn (mixed $key, mixed $value): \Closure => element(
                         'item',
-                        children([
-                            element('key', children([
+                        buildChildren([
+                            element('key', buildChildren([
                                 (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $key))),
                                 buildValue((new ScalarTypeEncoder())->iso($context)->to($key))
                             ])),
-                            element('value', children([
+                            element('value', buildChildren([
                                 (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
                                 buildValue((new ScalarTypeEncoder())->iso($context)->to($value))
                             ])),
@@ -69,8 +71,27 @@ final class ApacheMapEncoder implements XmlEncoder
         );
     }
 
-    private function decodeArray(Context $context, string $part): array
+    private function decodeArray(Context $context, string $value): array
     {
-        throw new \RuntimeException('Not implemented yet!');
+        $document = Document::fromXmlString($value);
+        $xpath = $document->xpath();
+        $element = $document->locateDocumentElement();
+
+        return readChildren($element)->reduce(
+            static function (array $map, \DOMElement $item) use ($context, $xpath): array
+            {
+                $key = $xpath->evaluate('string(./key)', string(), $item);
+                $value = (new ElementValueReader())(
+                    $context->withType(XsdType::any()),
+                    (new ScalarTypeEncoder())->iso($context),
+                    assert_element($xpath->querySingle('./value', $item))
+                );
+
+                return merge($map, [
+                    $key => $value,
+                ]);
+            },
+            [],
+        );
     }
 }

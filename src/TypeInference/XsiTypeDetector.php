@@ -5,8 +5,12 @@ namespace Soap\Encoding\TypeInference;
 
 use Psl\Option\Option;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
+use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
 use VeeWee\Xml\Dom\Document;
+use VeeWee\Xml\Xmlns\Xmlns;
 use VeeWee\Xml\Xmlns\Xmlns as XmlXmlns;
 use function Psl\Option\none;
 use function Psl\Option\some;
@@ -28,14 +32,40 @@ final class XsiTypeDetector
         );
     }
 
-    public static function detectFromXmlElement(Context $context, string $xmlElement): string
+    /**
+     * @param Context $context
+     * @param \DOMElement $element
+     * @return Option<XmlEncoder<string, mixed>>
+     */
+    public static function detectEncoderFromXmlElement(Context $context, \DOMElement $element): Option
     {
-        return self::detectFromContext($context)->unwrapOrElse(
-            static function() use ($context, $xmlElement): string {
-                $element = Document::fromXmlString($xmlElement)->locateDocumentElement();
-                $xsd = $context->namespaces->lookupNameFromNamespace(SoapXmlns::xsd()->value())->unwrap();
+        if ($context->bindingUse !== BindingUse::ENCODED) {
+            return none();
+        }
 
-                return $element->getAttributeNS(XmlXmlns::xsi()->value(), 'type') ?: $xsd . ':anyType';
+        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type');
+        if (!$xsiType) {
+            return none();
+        }
+
+        [$prefix, $localName] = (new QnameParser)($xsiType);
+        if (!$prefix) {
+            return none();
+        }
+
+        $namespace = $context->namespaces->lookupNamespaceFromName($prefix);
+        if (!$namespace->isSome()) {
+            return none();
+        }
+
+        $namespaceUri = $namespace->unwrap();
+        $type = $context->type;
+        $meta = $type->getMeta();
+
+        return some(
+            match(true) {
+                $meta->isSimple()->unwrapOr(false) => $context->registry->findSimpleEncoderByNamespaceName($namespaceUri, $localName),
+                default => $context->registry->findComplexEncoderByNamespaceName($namespaceUri, $localName),
             }
         );
     }
