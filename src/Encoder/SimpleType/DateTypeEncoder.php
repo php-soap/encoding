@@ -20,22 +20,9 @@ final class DateTypeEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
-
-        // TODO : Timezones
-        // https://www.w3schools.com/xml/schema_dtypes_date.asp
-
         return (new Iso(
             static fn (\DateTimeInterface $value): string => $value->format(self::DATE_FORMAT),
-            static function (string $value): \DateTimeInterface {
-                $result = \DateTimeImmutable::createFromFormat('!'.self::DATE_FORMAT, $value);
-                if (!$result) {
-                    throw new InvalidArgumentException(
-                        'Invalid date format detected: '.$value.'. Expected format: '.self::DATE_FORMAT.'.'
-                    );
-                }
-
-                return $result;
-            }
+            static fn (string $value): \DateTimeInterface => (new \DateTimeImmutable($value))->setTime(0, 0),
         ));
     }
 }
