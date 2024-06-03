@@ -14,7 +14,7 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
  * @template T
  * @implements XmlEncoder<string, iterable<array-key, T>>
  */
-class ListEncoder implements XmlEncoder
+class ListEncoder implements XmlEncoder, Feature\ListAware
 {
     /**
      * @param XmlEncoder<string, T> $typeEncoder
@@ -28,10 +28,6 @@ class ListEncoder implements XmlEncoder
     {
         $type = $context->type;
         $innerIso = $this->typeEncoder->iso(
-            // TODO : This line is duplicated in EncoderDetector - find a better way
-            //
-            // Remove the list property from it to avoid nested guesses becoming stuck
-            // Instead we want to fall back to the next part of the logic.
             $context->withType(
                 $type->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsList(false))
             )

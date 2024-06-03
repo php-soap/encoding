@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\Feature\ListAware;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
@@ -11,12 +12,15 @@ use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Model\Definitions\EncodingStyle;
+use Soap\Xml\Xmlns;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\element;
+use function VeeWee\Xml\Writer\Builder\prefixed_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 use function VeeWee\Xml\Writer\Builder\namespaced_attribute as buildNamespacedAttribute;
 
@@ -25,7 +29,7 @@ use function VeeWee\Xml\Writer\Builder\namespaced_attribute as buildNamespacedAt
  *
  * @implements XmlEncoder<string, list<T>>
  */
-final class SoapArrayEncoder implements XmlEncoder
+final class SoapArrayEncoder implements XmlEncoder, ListAware
 {
     /**
      * @return Iso<string, list<T>>
@@ -56,11 +60,14 @@ final class SoapArrayEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             children([
-                buildNamespacedAttribute(
-                    $type->getXmlNamespace(),
-                    $type->getXmlNamespaceName(),
+                new XsiAttributeBuilder(
+                    $context,
+                    XsiTypeDetector::detectFromValue($context, [])
+                ),
+                prefixed_attribute(
+                    'SOAP-ENC',
                     'arrayType',
-                    $itemType . '[]'
+                    $itemType . '['.count($data).']'
                 ),
                 ...map(
                     $data,
@@ -91,7 +98,7 @@ final class SoapArrayEncoder implements XmlEncoder
             {
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    (new ScalarTypeEncoder())->iso($context),
+                    new ScalarTypeEncoder(),
                     $item
                 );
 

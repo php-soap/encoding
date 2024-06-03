@@ -47,7 +47,6 @@ final class SoapObjectEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             children([
-                namespace_attribute($type->getXmlNamespace(), $type->getXmlNamespaceName()),
                 new XsiAttributeBuilder($context, XsiTypeDetector::detectFromValue($context, $data)),
                 ...\Psl\Vec\map_with_key(
                     (array) $data,
@@ -74,7 +73,7 @@ final class SoapObjectEncoder implements XmlEncoder
                 $key = $item->localName;
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    (new ScalarTypeEncoder())->iso($context),
+                    new ScalarTypeEncoder(),
                     $item
                 );
 

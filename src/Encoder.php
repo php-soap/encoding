@@ -33,7 +33,7 @@ final class Encoder implements SoapEncoder
         // TODO : What on failure? Is fallback assumption OK or error?
         $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
         $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
-        $encodingStyle = $meta->outputEncodingStyle()->map(EncodingStyle::tryFrom(...));
+        $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::tryFrom(...));
 
         $request = [];
         foreach ($methodInfo->getParameters() as $index => $parameter)
@@ -41,16 +41,17 @@ final class Encoder implements SoapEncoder
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
             $argument = index($index)->get($arguments);
+
             $request[] = $this->registry->detectEncoderForContext($context)->iso($context)->to($argument);
         }
 
-        $operation = new OperationBuilder($meta, $request);
+        $operation = new OperationBuilder($meta, $this->namespaces, $request);
 
         // TODO : unwrap or throw very specific issue or fallback to a specific soap version?
         $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $encodingStyle, $operation(...));
 
         return new SoapRequest(
-            $writeEnvelope(),
+            $writeEnvelope() . PHP_EOL,
             $meta->location()->unwrap(),
             $meta->action()->unwrap(),
             match($soapVersion) {

@@ -9,9 +9,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
-use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Xmlns\Xmlns;
-use VeeWee\Xml\Xmlns\Xmlns as XmlXmlns;
 use function Psl\Option\none;
 use function Psl\Option\some;
 
@@ -77,8 +75,10 @@ final class XsiTypeDetector
     private static function detectFromContext(Context $context): Option
     {
         $type = $context->type;
+        $isMixed = $type->getBaseType() === 'mixed';
+        $isUnion = $type->getMeta()->unions()->isSome();
 
-        if ($type->getBaseType() === 'mixed') {
+        if ($isMixed && !$isUnion) {
             return none();
         }
 

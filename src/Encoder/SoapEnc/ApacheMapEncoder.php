@@ -49,7 +49,6 @@ final class ApacheMapEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             buildChildren([
-                namespace_attribute($type->getXmlNamespace(), $type->getXmlNamespaceName()),
                 new XsiAttributeBuilder($context, XsiTypeDetector::detectFromValue($context, $data)),
                 ...\Psl\Vec\map_with_key(
                     $data,
@@ -83,7 +82,7 @@ final class ApacheMapEncoder implements XmlEncoder
                 $key = $xpath->evaluate('string(./key)', string(), $item);
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    (new ScalarTypeEncoder())->iso($context),
+                    new ScalarTypeEncoder(),
                     assert_element($xpath->querySingle('./value', $item))
                 );
 

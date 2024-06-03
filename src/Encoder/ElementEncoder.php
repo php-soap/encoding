@@ -28,7 +28,8 @@ final class ElementEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
-        $typeIso = $this->typeEncoder->iso($context);
+        $typeEncoder = $this->typeEncoder;
+        $typeIso = $typeEncoder->iso($context);
 
         return new Iso(
             static fn(mixed $raw): string => (new XsdTypeXmlElementWriter())(
@@ -37,7 +38,7 @@ final class ElementEncoder implements XmlEncoder
             ),
             static fn(string $xml): mixed => (new ElementValueReader())(
                 $context,
-                $typeIso,
+                $typeEncoder,
                 Document::fromXmlString($xml)->locateDocumentElement(),
             )
         );

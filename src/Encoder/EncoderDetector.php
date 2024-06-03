@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
+use Soap\Encoding\Encoder\Feature;
 use Soap\Engine\Metadata\Model\XsdType;
 
 final class EncoderDetector
@@ -16,54 +16,38 @@ final class EncoderDetector
         $type = $context->type;
         $meta = $type->getMeta();
 
-        // TODO : List / Nullable should be wrapped in a different location.
-        // TODO : otherwise, it only works when guessed and not when fetched by type directly from the registry.
-        if ($meta->isList()->unwrapOr(false)) {
-            return new ListEncoder(
-                $this->__invoke(
-                    $context->withType(
-                        $type->withMeta(
-                            static fn($meta): mixed => $meta->withIsList(false)
-                        )
-                    )
-                )
-            );
-        }
-
         if ($meta->isSimple()->unwrapOr(false)) {
-            $encoder = $this->detectSimpleTypeEncoder($type, $context);
-            if ($meta->isElement()->unwrapOr(false)) {
-                $encoder = new OptionalElementEncoder(
-                    new ElementEncoder($encoder)
-                );
-            }
-
-            return $encoder;
+            return (new SimpleType\EncoderDetector())($context);
         }
 
-        return $context->registry->findComplexEncoderByXsdType($type);
+        $encoder = $this->detectComplexTypeEncoder($type, $context);
+        if (!$encoder instanceof Feature\ListAware && $meta->isList()->unwrapOr(false)){
+            $encoder = new SimpleType\ListTypeEncoder($encoder);
+        }
+
+        return $encoder;
     }
 
     /**
      * @return XmlEncoder<string, mixed>
      */
-    private function detectSimpleTypeEncoder(XsdType $type, Context $context): XmlEncoder
+    private function detectComplexTypeEncoder(XsdType $type, Context $context): XmlEncoder
     {
         $meta = $type->getMeta();
 
         // Try to find a direct match:
-        if ($context->registry->hasRegisteredSimpleTypeForXsdType($type)) {
-            return $context->registry->findSimpleEncoderByXsdType($type);
+        if ($context->registry->hasRegisteredComplexTypeForXsdType($type)) {
+            return $context->registry->findComplexEncoderByXsdType($type);
         }
 
-        // Try to find a match for the extended simple type:
-        // Or fallback to the default scalar encoder.
+        // Try to find a match for the extended complex type:
+        // Or fallback to the default object encoder.
         return $meta->extends()
-            ->filter(static fn($extend): bool => $extend['isSimple'])
-            ->map(static fn ($extends) : XmlEncoder => $context->registry->findSimpleEncoderByNamespaceName(
+            ->filter(static fn($extend): bool => !$extend['isSimple'])
+            ->map(static fn ($extends) : XmlEncoder => $context->registry->findComplexEncoderByNamespaceName(
                 $extends['namespace'],
                 $extends['type'],
             ))
-            ->unwrapOr(new ScalarTypeEncoder());
+            ->unwrapOr(new ObjectEncoder(\stdClass::class));
     }
 }
