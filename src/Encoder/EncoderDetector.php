@@ -16,12 +16,12 @@ final class EncoderDetector
         $type = $context->type;
         $meta = $type->getMeta();
 
-        if ($meta->isSimple()->unwrapOr(false)) {
-            return (new SimpleType\EncoderDetector())($context);
-        }
+        $encoder = match(true) {
+            $meta->isSimple()->unwrapOr(false) => (new SimpleType\EncoderDetector())($context),
+            default => $this->detectComplexTypeEncoder($type, $context),
+        };
 
-        $encoder = $this->detectComplexTypeEncoder($type, $context);
-        if (!$encoder instanceof Feature\ListAware && $meta->isList()->unwrapOr(false)){
+        if (!$encoder instanceof Feature\ListAware && $meta->isRepeatingElement()->unwrapOr(false)){
             $encoder = new RepeatingElementEncoder($encoder);
         }
 

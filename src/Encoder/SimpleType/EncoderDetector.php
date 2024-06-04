@@ -66,6 +66,13 @@ final class EncoderDetector
     private function detectIsListType(XsdType $type): bool
     {
         $meta = $type->getMeta();
+
+        // Repeating elements will be decorated inside the regular EncoderDetector.
+        // There is no need to add a list encoder for repeating elements.
+        if ($meta->isRepeatingElement()->unwrapOr(false)) {
+            return false;
+        }
+
         if ($meta->isList()->unwrapOr(false)) {
             return true;
         }
