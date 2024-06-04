@@ -121,6 +121,7 @@ final class ObjectEncoder implements XmlEncoder
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
                     $type = $property->getType();
+                    $meta = $type->getMeta();
                     $value = $this->decorateLensForType(
                         index($property->getName()),
                         $type
@@ -130,7 +131,7 @@ final class ObjectEncoder implements XmlEncoder
                         ->getResult();
 
                     if (!$value) {
-                        return null;
+                        return $meta->isList()->unwrapOr(false) ? [] : null;
                     }
 
                     return $this->handleProperty(

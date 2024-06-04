@@ -12,8 +12,7 @@ use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\WsdlReader\Model\Definitions\EncodingStyle;
-use Soap\Xml\Xmlns;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Vec\map;
@@ -22,7 +21,6 @@ use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\prefixed_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
-use function VeeWee\Xml\Writer\Builder\namespaced_attribute as buildNamespacedAttribute;
 
 /**
  * @template T
@@ -60,14 +58,20 @@ final class SoapArrayEncoder implements XmlEncoder, ListAware
         return (new XsdTypeXmlElementWriter())(
             $context,
             children([
-                new XsiAttributeBuilder(
-                    $context,
-                    XsiTypeDetector::detectFromValue($context, [])
-                ),
-                prefixed_attribute(
-                    'SOAP-ENC',
-                    'arrayType',
-                    $itemType . '['.count($data).']'
+                ...(
+                    $context->bindingUse === BindingUse::ENCODED
+                        ? [
+                            new XsiAttributeBuilder(
+                                $context,
+                                XsiTypeDetector::detectFromValue($context, [])
+                            ),
+                            prefixed_attribute(
+                                'SOAP-ENC',
+                                'arrayType',
+                                $itemType . '['.count($data).']'
+                            ),
+                        ]
+                        : []
                 ),
                 ...map(
                     $data,

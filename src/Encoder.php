@@ -48,7 +48,7 @@ final class Encoder implements SoapEncoder
         $operation = new OperationBuilder($meta, $this->namespaces, $request);
 
         // TODO : unwrap or throw very specific issue or fallback to a specific soap version?
-        $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $encodingStyle, $operation(...));
+        $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $bindingUse, $encodingStyle, $operation(...));
 
         return new SoapRequest(
             $writeEnvelope() . PHP_EOL,

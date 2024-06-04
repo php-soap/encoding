@@ -43,7 +43,6 @@ final class ApacheMapEncoder implements XmlEncoder
 
     private function encodeArray(Context $context, array $data): string
     {
-        $type = $context->type;
         $anyContext = $context->withType(XsdType::any());
 
         return (new XsdTypeXmlElementWriter())(

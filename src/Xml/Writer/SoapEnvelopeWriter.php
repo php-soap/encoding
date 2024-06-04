@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Writer;
 
 use Psl\Option\Option;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use Soap\Xml\Xmlns;
@@ -23,6 +24,7 @@ final class SoapEnvelopeWriter
      */
     public function __construct(
         private readonly SoapVersion $soapVersion,
+        private readonly BindingUse $bindingUse,
         private readonly Option $encodingStyle,
         private readonly \Closure $children
     ) {
@@ -51,20 +53,22 @@ final class SoapEnvelopeWriter
                                 // See: https://www.w3.org/TR/soap12-part1/#soapencattr
                                 // For SOAP 1.1 it can be everywhere:
                                 // See: https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383495
-                                $this->encodingStyle->map(
-                                    static fn (EncodingStyle $encodingStyle) => children([
-                                        namespace_attribute(
-                                            $encodingStyle->value,
-                                            'SOAP-ENC'
-                                        ),
-                                        namespaced_attribute(
-                                            $envelopeNamespace,
-                                            'SOAP-ENV',
-                                            'encodingStyle',
-                                            $encodingStyle->value
-                                        )
-                                    ])
-                                )->unwrapOr(null),
+                                $this->encodingStyle
+                                    ->filter(fn (): bool => $this->bindingUse === BindingUse::ENCODED)
+                                    ->map(
+                                        static fn (EncodingStyle $encodingStyle) => children([
+                                            namespace_attribute(
+                                                $encodingStyle->value,
+                                                'SOAP-ENC'
+                                            ),
+                                            namespaced_attribute(
+                                                $envelopeNamespace,
+                                                'SOAP-ENV',
+                                                'encodingStyle',
+                                                $encodingStyle->value
+                                            )
+                                        ])
+                                    )->unwrapOr(null),
                                 $this->children
                             ])
                         )
