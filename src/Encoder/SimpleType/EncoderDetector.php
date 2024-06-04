@@ -7,7 +7,6 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
-use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\InvalidArgumentException;
 use Soap\Engine\Metadata\Model\XsdType;
@@ -29,7 +28,7 @@ final class EncoderDetector
 
         $encoder = $this->detectSimpleTypeEncoder($type, $context);
         if (!$encoder instanceof Feature\ListAware && $this->detectIsListType($type)) {
-            $encoder = new SimpleType\ListTypeEncoder($encoder);
+            $encoder = new SimpleListEncoder($encoder);
         }
 
         if ($meta->isElement()->unwrapOr(false)) {
@@ -61,7 +60,7 @@ final class EncoderDetector
                 $extends['namespace'],
                 $extends['type'],
             ))
-            ->unwrapOr(new SimpleType\ScalarTypeEncoder());
+            ->unwrapOr(new ScalarTypeEncoder());
     }
 
     private function detectIsListType(XsdType $type): bool

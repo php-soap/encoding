@@ -15,7 +15,7 @@ use function Psl\Vec\map;
 /**
  * @implements XmlEncoder<string, array>
  */
-final class ListTypeEncoder implements XmlEncoder, Feature\ListAware
+final class SimpleListEncoder implements XmlEncoder, Feature\ListAware
 {
     /**
      * @param XmlEncoder<string, mixed> $typeEncoder

@@ -5,19 +5,19 @@ namespace Soap\Encoding\Test\Unit\Encoder\SimpleType;
 
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Soap\Encoding\Encoder\SimpleType\ListTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\SimpleListEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Encoding\Test\Unit\Encoder\AbstractEncoderTests;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 
-#[CoversClass(ListTypeEncoder::class)]
-class ListTypeEncoderTest extends AbstractEncoderTests
+#[CoversClass(SimpleListEncoder::class)]
+class SimpleListEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
         $baseConfig = [
-            'encoder' => $encoder = new ListTypeEncoder(new StringTypeEncoder()),
+            'encoder' => $encoder = new SimpleListEncoder(new StringTypeEncoder()),
             'context' => $context = self::createContext(
                 XsdType::guess('string')
                     ->withMeta(

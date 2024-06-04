@@ -5,18 +5,18 @@ namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\ElementEncoder;
-use Soap\Encoding\Encoder\ListTypeEncoder;
+use Soap\Encoding\Encoder\RepeatingElementEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
 
-#[CoversClass(ListTypeEncoder::class)]
-class ListEncoderTest extends AbstractEncoderTests
+#[CoversClass(RepeatingElementEncoder::class)]
+class RepeatingElementEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
         $baseConfig = [
-            'encoder' => $encoder = new ListTypeEncoder(new ElementEncoder(new StringTypeEncoder())),
+            'encoder' => $encoder = new RepeatingElementEncoder(new ElementEncoder(new StringTypeEncoder())),
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlNamespace(Xmlns::xsd()->value())

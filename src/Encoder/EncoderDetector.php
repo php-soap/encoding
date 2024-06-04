@@ -22,7 +22,7 @@ final class EncoderDetector
 
         $encoder = $this->detectComplexTypeEncoder($type, $context);
         if (!$encoder instanceof Feature\ListAware && $meta->isList()->unwrapOr(false)){
-            $encoder = new SimpleType\ListTypeEncoder($encoder);
+            $encoder = new RepeatingElementEncoder($encoder);
         }
 
         return $encoder;
