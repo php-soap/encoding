@@ -14,7 +14,7 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
  * @template T
  * @implements XmlEncoder<string, iterable<array-key, T>>
  */
-class ListEncoder implements XmlEncoder, Feature\ListAware
+class ListTypeEncoder implements XmlEncoder, Feature\ListAware
 {
     /**
      * @param XmlEncoder<string, T> $typeEncoder

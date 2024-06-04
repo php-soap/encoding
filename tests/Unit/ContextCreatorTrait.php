@@ -16,6 +16,7 @@ use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Wsdl1Reader;
+use Soap\Xml\Xmlns;
 
 trait ContextCreatorTrait
 {
@@ -30,7 +31,7 @@ trait ContextCreatorTrait
                 new MethodCollection(),
             ),
             EncoderRegistry::default(),
-            new Namespaces([], []), // TODO : ::empty() constructor.
+            self::buildNamespaces(),
         );
     }
 
@@ -47,7 +48,7 @@ trait ContextCreatorTrait
             $type->getXsdType(),
             $metadata,
             EncoderRegistry::default(),
-            new Namespaces([], []),
+            self::buildNamespaces(),
         );
     }
 
@@ -103,5 +104,19 @@ trait ContextCreatorTrait
         $metadataProvider = new Wsdl1MetadataProvider($wsdl);
 
         return $metadataProvider->getMetadata();
+    }
+
+    private static function buildNamespaces(): Namespaces
+    {
+        return new Namespaces(
+            [
+                'xsd' => Xmlns::xsd()->value(),
+                'tns' => 'https://test',
+            ],
+            [
+                Xmlns::xsd()->value() => 'xsd',
+                'https://test' => 'tns',
+            ]
+        );
     }
 }

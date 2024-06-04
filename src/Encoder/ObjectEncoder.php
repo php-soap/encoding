@@ -3,20 +3,25 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
-use Soap\Encoding\Xml\Writer\ElementValueBuilder;
+use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\Property;
+use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Lens\Lens;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
 use function Psl\Dict\map;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
+use function VeeWee\Reflecta\Lens\optional;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
+use function VeeWee\Xml\Writer\Builder\value as buildValue;
 use function VeeWee\Reflecta\Lens\property;
 
 /**
@@ -70,28 +75,35 @@ final class ObjectEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             writeChildren(
-                map(
-                    $properties,
-                    function (Property $property) use ($context, $data) : \Closure {
-                        $type = $property->getType();
-                        $value = property($property->getName())->get($data);
+                [
+                    (new XsiAttributeBuilder(
+                        $context,
+                        XsiTypeDetector::detectFromValue($context, []))
+                    ),
+                    ...map(
+                        $properties,
+                        function (Property $property) use ($context, $data) : \Closure {
+                            $type = $property->getType();
+                            $lens = $this->decorateLensForType(property($property->getName()), $type);
+                            $value = $lens->tryGet($data)->unwrapOr(null);
 
-                        return $this->handleProperty(
-                            $property,
-                            onAttribute: fn (): \Closure => (new AttributeBuilder(
-                                $context,
-                                $type,
-                                $this->grabIsoForProperty($context, $property)->to($value)
-                            ))(...),
-                            onValue: fn (): \Closure => (new ElementValueBuilder(
-                                $context,
-                                $this->grabIsoForProperty($context, $property),
-                                $value
-                            ))(...),
-                            onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
-                        );
-                    }
-                )
+                            if (!$value) {
+                                return writeChildren([]);
+                            }
+
+                            return $this->handleProperty(
+                                $property,
+                                onAttribute: fn (): \Closure => (new AttributeBuilder(
+                                    $context,
+                                    $type,
+                                    $this->grabIsoForProperty($context, $property)->to($value)
+                                ))(...),
+                                onValue: fn (): \Closure => buildValue($this->grabIsoForProperty($context, $property)->to($value)),
+                                onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
+                            );
+                        }
+                    )
+                ]
             )
         );
     }
@@ -108,16 +120,18 @@ final class ObjectEncoder implements XmlEncoder
             map(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
-                    $value = index($property->getName())
+                    $type = $property->getType();
+                    $value = $this->decorateLensForType(
+                        index($property->getName()),
+                        $type
+                    )
                         ->tryGet($nodes)
-                        ->catch(static function () use ($property) {
-
-                            // TODO : Improve logic based on 'list' or 'nullable' or nullable attributes ...
-                            // TODO : - what with nullables that are not there e.g.
-                            // TODO : - what with nullable?
-                            return '';
-                        })
+                        ->catch(static fn () => null)
                         ->getResult();
+
+                    if (!$value) {
+                        return null;
+                    }
 
                     return $this->handleProperty(
                         $property,
@@ -161,5 +175,28 @@ final class ObjectEncoder implements XmlEncoder
             $property->getName() === '_' => $onValue(),
             default => $onElements()
         };
+    }
+
+    /**
+     * @param Lens<mixed, mixed> $lens
+     * @param XsdType $type
+     *
+     * @return Lens<mixed, mixed>
+     */
+    private function decorateLensForType(Lens $lens, XsdType $type): Lens
+    {
+        $meta = $type->getMeta();
+        if ($meta->isNullable()->unwrapOr(false)) {
+            return optional($lens);
+        }
+
+        if (
+            $meta->isAttribute()->unwrapOr(false) &&
+            $meta->use()->unwrapOr('optional') === 'optional'
+        ) {
+            return optional($lens);
+        }
+
+        return $lens;
     }
 }

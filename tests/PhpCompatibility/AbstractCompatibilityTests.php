@@ -14,6 +14,8 @@ use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Wsdl1Reader;
 use VeeWee\Xml\Dom\Document;
+use VeeWee\Xml\Exception\RuntimeException;
+use VeeWee\Xml\Exception\RuntimeException as XmlRuntimeException;
 use function Psl\Iter\first;
 use function VeeWee\Xml\Dom\Configurator\comparable;
 
@@ -28,9 +30,15 @@ abstract class AbstractCompatibilityTests extends TestCase
     protected int $features = 0;
 
     abstract protected function expectXml(): string;
-    protected function expectDecoded(): mixed
+
+    protected function calculateParam(): mixed
     {
         return $this->param;
+    }
+
+    protected function expectDecoded(): mixed
+    {
+        return $this->calculateParam();
     }
 
     #[Test]
@@ -86,13 +94,16 @@ abstract class AbstractCompatibilityTests extends TestCase
         $metadata = $metadataProvider->getMetadata();
         $driver = Driver::createFromMetadata($metadata, $wsdlObject->namespaces, $registry);
 
-        $encoded = $driver->encode('test', [$this->param]);
+        $encoded = $driver->encode('test', [$this->calculateParam()]);
         $request = $encoded->getRequest();
-
-        self::assertSame(
-            Document::fromXmlString($this->expectXml(), comparable())->toXmlString(),
-            Document::fromXmlString($request, comparable())->toXmlString()
-        );
+        try {
+            self::assertSame(
+                Document::fromXmlString($this->expectXml(), comparable())->toXmlString(),
+                Document::fromXmlString($request, comparable())->toXmlString()
+            );
+        } catch (RuntimeException $e) {
+            self::fail('Invalid XML: ' . $e->getMessage() . PHP_EOL . $request);
+        }
 
         $method = $metadata->getMethods()->fetchByName('test');
         $param = first($method->getParameters());
@@ -106,6 +117,7 @@ abstract class AbstractCompatibilityTests extends TestCase
                 ->map(BindingUse::from(...))
                 ->unwrapOr(BindingUse::LITERAL)
         );
+
         $decoder = $registry->detectEncoderForContext($decodeContext);
         $params = (new OperationReader($method->getMeta()))($request);
         $paramXml = implode('', $params);
