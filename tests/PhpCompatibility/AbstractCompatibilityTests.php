@@ -41,6 +41,11 @@ abstract class AbstractCompatibilityTests extends TestCase
         return $this->calculateParam();
     }
 
+    protected function registry(): EncoderRegistry
+    {
+        return EncoderRegistry::default();
+    }
+
     #[Test]
     public function it_is_compatible_with_phps_encoding()
     {
@@ -89,7 +94,7 @@ abstract class AbstractCompatibilityTests extends TestCase
         $wsdlObject = (new Wsdl1Reader(
             new CallbackLoader(static fn (): string => $wsdl)
         ))('file.wsdl');
-        $registry ??= EncoderRegistry::default();
+        $registry = $this->registry();
         $metadataProvider = new Wsdl1MetadataProvider($wsdlObject);
         $metadata = $metadataProvider->getMetadata();
         $driver = Driver::createFromMetadata($metadata, $wsdlObject->namespaces, $registry);

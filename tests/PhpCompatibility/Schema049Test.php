@@ -55,4 +55,12 @@ class Schema049Test extends AbstractCompatibilityTests
         </SOAP-ENV:Envelope>
         XML;
     }
+
+    protected function expectDecoded(): mixed
+    {
+        return (object)[
+            "int2" => 123,
+            "int" => null,
+        ];
+    }
 }

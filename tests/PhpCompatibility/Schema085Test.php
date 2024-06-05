@@ -7,6 +7,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
+use Soap\Encoding\EncoderRegistry;
 
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
@@ -34,6 +35,13 @@ class Schema085Test extends AbstractCompatibilityTests
     protected function calculateParam(): mixed
     {
         return new B();
+    }
+
+    protected function registry(): EncoderRegistry
+    {
+        return parent::registry()
+            ->addClassMap('http://test-uri/', 'testType2', A::class)
+            ->addClassMap('http://test-uri/', 'testType', B::class);
     }
 
     protected function expectXml(): string

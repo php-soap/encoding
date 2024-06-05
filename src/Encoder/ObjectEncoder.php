@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
@@ -43,17 +44,7 @@ final class ObjectEncoder implements XmlEncoder
     {
         invariant((bool)$context->type->getXmlNamespace(), 'TODO : Expecting a namespace for now');
 
-        $type = $context->metadata->getTypes()->fetchByNameAndXmlNamespace( // TODO : simplify API
-            $context->type->getName(),
-            $context->type->getXmlNamespace()
-        );
-        $properties = reindex(
-            sort_by(
-                $type->getProperties(),
-                static fn(Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
-            ),
-            static fn(Property $property): string => $property->getName(),
-        );
+        $properties = $this->detectProperties($context);
 
         return new Iso(
             function (object|array $value) use ($context, $properties) : string {
@@ -203,5 +194,23 @@ final class ObjectEncoder implements XmlEncoder
         }
 
         return $lens;
+    }
+
+    /**
+     * @param Context $context
+     * @return array<string, Property>
+     */
+    private function detectProperties(Context $context): array
+    {
+        $type = (new ComplexTypeBuilder())($context);
+        $properties = reindex(
+            sort_by(
+                $type->getProperties(),
+                static fn(Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
+            ),
+            static fn(Property $property): string => $property->getName(),
+        );
+
+        return $properties;
     }
 }
