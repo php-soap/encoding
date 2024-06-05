@@ -6,8 +6,9 @@ namespace Soap\Encoding\Encoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
+use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
@@ -15,6 +16,7 @@ use VeeWee\Reflecta\Lens\Lens;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
 use function Psl\Dict\map;
+use function Psl\Iter\any;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
@@ -71,6 +73,11 @@ final class ObjectEncoder implements XmlEncoder
         if (is_array($data)) {
             $data = (object) $data;
         }
+        $isAnyPropertyQualified = any(
+            $properties,
+            static fn(Property $property): bool => $property->getType()->getMeta()->isQualified()->unwrapOr(false)
+        );
+        $defaultAction = writeChildren([]);
 
         return (new XsdTypeXmlElementWriter())(
             $context,
@@ -78,28 +85,28 @@ final class ObjectEncoder implements XmlEncoder
                 [
                     (new XsiAttributeBuilder(
                         $context,
-                        XsiTypeDetector::detectFromValue($context, []))
-                    ),
+                        XsiTypeDetector::detectFromValue($context, []),
+                        includeXsiTargetNamespace: !$isAnyPropertyQualified,
+                    )),
                     ...map(
                         $properties,
-                        function (Property $property) use ($context, $data) : \Closure {
+                        function (Property $property) use ($context, $data, $defaultAction) : \Closure {
                             $type = $property->getType();
                             $lens = $this->decorateLensForType(property($property->getName()), $type);
                             $value = $lens->tryGet($data)->unwrapOr(null);
 
-                            if (!$value) {
-                                return writeChildren([]);
-                            }
 
                             return $this->handleProperty(
                                 $property,
-                                onAttribute: fn (): \Closure => (new AttributeBuilder(
+                                onAttribute: fn (): \Closure => $value ? (new AttributeBuilder(
                                     $context,
                                     $type,
                                     $this->grabIsoForProperty($context, $property)->to($value)
-                                ))(...),
-                                onValue: fn (): \Closure => buildValue($this->grabIsoForProperty($context, $property)->to($value)),
-                                onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
+                                ))(...) : $defaultAction,
+                                onValue: fn (): \Closure => $value
+                                    ? buildValue($this->grabIsoForProperty($context, $property)->to($value))
+                                    : (new NilAttributeBuilder())(...),
+                                onElements: fn (): \Closure => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction,
                             );
                         }
                     )

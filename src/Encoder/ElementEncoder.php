@@ -5,7 +5,7 @@ namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\ElementValueBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 

@@ -10,7 +10,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
@@ -79,7 +79,7 @@ final class SoapArrayEncoder implements XmlEncoder, ListAware
                         $itemNodeName,
                         children([
                             (new XsiAttributeBuilder($context, $itemType)),
-                            buildValue((new ScalarTypeEncoder())->iso($context)->to($value))
+                            buildValue(ScalarTypeEncoder::static()->iso($context)->to($value))
                         ])
                     )
                 )
@@ -102,7 +102,7 @@ final class SoapArrayEncoder implements XmlEncoder, ListAware
             {
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    new ScalarTypeEncoder(),
+                    ScalarTypeEncoder::static(),
                     $item
                 );
 

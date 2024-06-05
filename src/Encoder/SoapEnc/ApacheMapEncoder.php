@@ -9,7 +9,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
@@ -19,7 +19,6 @@ use function VeeWee\Xml\Dom\Assert\assert_element;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children as buildChildren;
 use function VeeWee\Xml\Writer\Builder\element;
-use function VeeWee\Xml\Writer\Builder\namespace_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
@@ -56,11 +55,11 @@ final class ApacheMapEncoder implements XmlEncoder
                         buildChildren([
                             element('key', buildChildren([
                                 (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $key))),
-                                buildValue((new ScalarTypeEncoder())->iso($context)->to($key))
+                                buildValue(ScalarTypeEncoder::static()->iso($context)->to($key))
                             ])),
                             element('value', buildChildren([
                                 (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
-                                buildValue((new ScalarTypeEncoder())->iso($context)->to($value))
+                                buildValue(ScalarTypeEncoder::static()->iso($context)->to($value))
                             ])),
                         ]),
                     )
@@ -81,7 +80,7 @@ final class ApacheMapEncoder implements XmlEncoder
                 $key = $xpath->evaluate('string(./key)', string(), $item);
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    new ScalarTypeEncoder(),
+                    ScalarTypeEncoder::static(),
                     assert_element($xpath->querySingle('./value', $item))
                 );
 

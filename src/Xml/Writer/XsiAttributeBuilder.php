@@ -14,7 +14,8 @@ final class XsiAttributeBuilder
 {
     public function __construct(
         private readonly Context $context,
-        private readonly string $xsiType
+        private readonly string $xsiType,
+        private readonly bool $includeXsiTargetNamespace = true
     ) {
     }
 
@@ -26,7 +27,7 @@ final class XsiAttributeBuilder
 
         // Add xmlns for target namespace
         [$prefix] = (new QnameParser())($this->xsiType);
-        if ($prefix) {
+        if ($prefix && $this->includeXsiTargetNamespace) {
             yield from namespace_attribute(
                 $this->context->namespaces->lookupNamespaceFromName($prefix)->unwrap(),
                 $prefix

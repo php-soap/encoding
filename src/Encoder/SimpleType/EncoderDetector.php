@@ -64,7 +64,7 @@ final class EncoderDetector
                 $extends['namespace'],
                 $extends['type'],
             ))
-            ->unwrapOr(new ScalarTypeEncoder());
+            ->unwrapOr(ScalarTypeEncoder::static());
     }
 
     private function detectIsListType(XsdType $type): bool

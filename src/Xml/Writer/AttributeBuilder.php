@@ -27,7 +27,9 @@ final class AttributeBuilder implements Builder
      */
     public function __invoke(XMLWriter $writer): Generator
     {
-        if ($this->type->getXmlTargetNamespace() && $this->context->bindingUse !== BindingUse::ENCODED) {
+        $qualified = $this->type->getMeta()->isQualified()->unwrapOr(false);
+
+        if ($qualified && $this->type->getXmlTargetNamespace()) {
             yield from namespaced_attribute(
                 $this->type->getXmlTargetNamespace(),
                 $this->type->getXmlTargetNamespaceName() ?: null,

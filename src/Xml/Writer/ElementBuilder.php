@@ -5,16 +5,13 @@ namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
 use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
 use VeeWee\Xml\Writer\Builder\Builder;
-use VeeWee\Xml\Xmlns\Xmlns;
 use XMLWriter;
-use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\element;
-use function VeeWee\Xml\Writer\Builder\namespaced_attribute;
+use function VeeWee\Xml\Writer\Builder\namespaced_element;
 
 
-final class EncodedElementBuilder implements Builder
+final class ElementBuilder implements Builder
 {
     /**
      * @param \Closure(XMLWriter): \Generator<bool> $children
@@ -31,6 +28,18 @@ final class EncodedElementBuilder implements Builder
     public function __invoke(XMLWriter $writer): Generator
     {
         $type = $this->context->type;
+        $meta = $type->getMeta();
+        $qualified = $meta->isQualified()->unwrapOr(false);
+
+        if ($qualified && $type->getXmlTargetNamespace()) {
+            yield from namespaced_element(
+                $type->getXmlTargetNamespace(),
+                $type->getXmlTargetNamespaceName() ?: null,
+                $type->getXmlTargetNodeName(),
+                $this->children
+            )($writer);
+            return;
+        }
 
         yield from element(
             $type->getXmlTargetNodeName(),

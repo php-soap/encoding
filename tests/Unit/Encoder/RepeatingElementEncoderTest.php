@@ -7,6 +7,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\RepeatingElementEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
 
@@ -20,7 +21,8 @@ class RepeatingElementEncoderTest extends AbstractEncoderTests
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlNamespace(Xmlns::xsd()->value())
-                    ->withXmlTargetNodeName('item'),
+                    ->withXmlTargetNodeName('item')
+                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
             ),
         ];
 

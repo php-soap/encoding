@@ -29,7 +29,8 @@ class ObjectEncoderTest extends AbstractEncoderTests
                 $xsdType = XsdType::create('user')
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
-                    ->withXmlTargetNodeName('user'),
+                    ->withXmlTargetNodeName('user')
+                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
             ),
         ];
 
@@ -147,6 +148,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
                                 ->withIsSimple(true)
                                 ->withIsElement(!$activeAsAttribute)
                                 ->withIsAttribute($activeAsAttribute)
+                                ->withIsQualified(true)
                             )
                     ),
                     new Property(
@@ -157,6 +159,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
                             ->withXmlTargetNodeName('hat')
                             ->withXmlNamespace('https://test')
                             ->withXmlNamespaceName('test')
+                            ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
                     )
                 )
             ),
@@ -165,7 +168,8 @@ class ObjectEncoderTest extends AbstractEncoderTests
                     ->withXmlTypeName("hat")
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
-                    ->withXmlTargetNodeName('hat'),
+                    ->withXmlTargetNodeName('hat')
+                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
                 new PropertyCollection(
                     new Property(
                         'color',
@@ -177,6 +181,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
                             ->withMeta(fn (TypeMeta $meta): TypeMeta => $meta
                                 ->withIsSimple(true)
                                 ->withIsElement(true)
+                                ->withIsQualified(true)
                             )
                     ),
                 )
@@ -188,19 +193,21 @@ class ObjectEncoderTest extends AbstractEncoderTests
     {
         return self::createMetadataFromWsdl(
             <<<EOSCHEMA
-                <complexType name="user">
+                <complexType name="userType">
                     <sequence>
                         <element name="active" type="boolean"/>
                         <element name="hat" type="tns:hat"/>
                     </sequence>
                 </complexType>
+                <element name="user" type="tns:userType" />
                 <complexType name="hat">
                     <sequence>
                         <element name="color" type="string"/>
                     </sequence>
                 </complexType>
             EOSCHEMA,
-            'type="tns:user"'
+            'type="tns:user"',
+            attributeFormDefault: 'elementFormDefault="qualified"',
         );
     }
 }

@@ -28,6 +28,7 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
                         ->withMaxOccurs(1)
                         ->withIsSimple(true)
                         ->withIsElement(true)
+                        ->withIsQualified(true)
                     )
             ),
         ];

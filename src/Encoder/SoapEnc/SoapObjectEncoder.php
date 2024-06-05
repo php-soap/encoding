@@ -9,17 +9,14 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Dict\merge;
-use function Psl\Type\string;
-use function VeeWee\Xml\Dom\Assert\assert_element;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\element;
-use function VeeWee\Xml\Writer\Builder\namespace_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
@@ -54,7 +51,7 @@ final class SoapObjectEncoder implements XmlEncoder
                         $key,
                         children([
                             (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
-                            buildValue((new ScalarTypeEncoder())->iso($context)->to($value))
+                            buildValue(ScalarTypeEncoder::static()->iso($context)->to($value))
                         ]),
                     )
                 )
@@ -73,7 +70,7 @@ final class SoapObjectEncoder implements XmlEncoder
                 $key = $item->localName;
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    new ScalarTypeEncoder(),
+                    ScalarTypeEncoder::static(),
                     $item
                 );
 

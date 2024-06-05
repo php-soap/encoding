@@ -41,7 +41,8 @@ final class ElementValueBuilder
 
         yield from (new XsiAttributeBuilder(
             $this->context,
-            XsiTypeDetector::detectFromValue($this->context, $this->value))
-        )($writer);
+            XsiTypeDetector::detectFromValue($this->context, $this->value),
+            includeXsiTargetNamespace:  !$this->context->type->getMeta()->isQualified()->unwrapOr(false)
+        ))($writer);
     }
 }

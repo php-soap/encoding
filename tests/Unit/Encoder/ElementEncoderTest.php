@@ -20,6 +20,7 @@ class ElementEncoderTest extends AbstractEncoderTests
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlTargetNodeName('hello')
+                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
             ),
         ];
 

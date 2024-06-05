@@ -39,8 +39,7 @@ class Schema057Test extends AbstractCompatibilityTests
     protected function expectXml(): string
     {
         return <<<XML
-        <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://test-uri/"
-                           xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://test-uri/">
             <SOAP-ENV:Body>
                 <tns:test>
                     <testParam>

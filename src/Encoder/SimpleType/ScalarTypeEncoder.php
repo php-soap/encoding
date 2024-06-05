@@ -14,6 +14,13 @@ use VeeWee\Reflecta\Iso\Iso;
  */
 final class ScalarTypeEncoder implements XmlEncoder
 {
+    public static function static(): self
+    {
+        static $instance = new self();
+
+        return $instance;
+    }
+
     public function iso(Context $context): Iso
     {
         return (new Iso(
