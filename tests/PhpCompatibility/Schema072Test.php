@@ -24,7 +24,7 @@ class Schema072Test extends AbstractCompatibilityTests
     </complexType>
     </element>
     EOXML;
-    protected string $type = 'type="tns:testType"';
+    protected string $type = 'type="tns:testElement"';
     protected string $style = 'document';
     protected string $use = 'literal';
 

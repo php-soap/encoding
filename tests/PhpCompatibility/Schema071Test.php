@@ -23,8 +23,8 @@ class Schema071Test extends AbstractCompatibilityTests
     </complexType>
     EOXML;
     protected string $type = 'type="tns:testType"';
-    protected string $style = 'rpc';
-    protected string $use = 'encoded';
+    protected string $style = 'document';
+    protected string $use = 'literal';
 
     protected function calculateParam(): mixed
     {
