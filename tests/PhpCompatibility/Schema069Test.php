@@ -48,7 +48,7 @@ class Schema069Test extends AbstractCompatibilityTests
     {
         return (object)[
             'str' => 'str',
-            'int' => 5,
+            'int' => null,
         ];
     }
 }

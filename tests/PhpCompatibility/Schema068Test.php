@@ -32,9 +32,8 @@ class Schema068Test extends AbstractCompatibilityTests
 
     #[Test] public function it_is_compatible_with_phps_encoding()
     {
-        $this->markTestIncomplete('No fixed value is being validates (yet)');
-
-        $this->expectException(\Exception::class);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Provided attribute value should be fixed to 5. Got 3');
         parent::it_is_compatible_with_phps_encoding();
     }
 

@@ -110,7 +110,6 @@ final class ObjectEncoder implements XmlEncoder
 
     /**
      * @param array<string, Property> $properties
-     * @return T
      */
     private function from(Context $context, array $properties, string $data): object
     {
@@ -122,6 +121,7 @@ final class ObjectEncoder implements XmlEncoder
                 function (Property $property) use ($context, $nodes): mixed {
                     $type = $property->getType();
                     $meta = $type->getMeta();
+                    $isList = $meta->isList()->unwrapOr(false);
                     $value = $this->decorateLensForType(
                         index($property->getName()),
                         $type
@@ -129,16 +129,13 @@ final class ObjectEncoder implements XmlEncoder
                         ->tryGet($nodes)
                         ->catch(static fn () => null)
                         ->getResult();
-
-                    if (!$value) {
-                        return $meta->isList()->unwrapOr(false) ? [] : null;
-                    }
+                    $defaultValue = $isList ? [] : null;
 
                     return $this->handleProperty(
                         $property,
                         onAttribute: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
-                        onValue: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
-                        onElements: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
+                        onValue: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
+                        onElements: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                     );
                 }
             )

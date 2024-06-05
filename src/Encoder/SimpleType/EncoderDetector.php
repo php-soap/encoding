@@ -31,6 +31,10 @@ final class EncoderDetector
             $encoder = new SimpleListEncoder($encoder);
         }
 
+        if ($meta->isAttribute()->unwrapOr(false)) {
+            return new AttributeValueEncoder($encoder);
+        }
+
         if ($meta->isElement()->unwrapOr(false)) {
             $encoder = new OptionalElementEncoder(
                 new ElementEncoder($encoder)
