@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Writer;
 
+use Closure;
 use Generator;
 use Soap\Encoding\Encoder\Context;
 use VeeWee\Xml\Writer\Builder\Builder;
@@ -10,15 +11,14 @@ use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\namespaced_element;
 
-
 final class ElementBuilder implements Builder
 {
     /**
-     * @param \Closure(XMLWriter): \Generator<bool> $children
+     * @param Closure(XMLWriter): Generator<bool> $children
      */
     public function __construct(
         private readonly Context $context,
-        private readonly \Closure $children
+        private readonly Closure $children
     ) {
     }
 

@@ -11,18 +11,18 @@ use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 
 #[CoversClass(SoapEnvelopeWriter::class)]
-class SoapEnvelopeReaderTest extends TestCase
+final class SoapEnvelopeReaderTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideEnvelopeCases
      */
-    public function it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
+    public function test_it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
     {
         $reader = new SoapEnvelopeReader();
         $actual = $reader($envelope);
 
-        self::assertXmlStringEqualsXmlString($expected, $actual);
+        static::assertXmlStringEqualsXmlString($expected, $actual);
     }
 
     public static function provideEnvelopeCases()

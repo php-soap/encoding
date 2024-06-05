@@ -3,14 +3,13 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Encoder\SimpleType;
 
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Test\Unit\Encoder\AbstractEncoderTests;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(ScalarTypeEncoder::class)]
-class ScalarTypeEncoderTest extends AbstractEncoderTests
+final class ScalarTypeEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {

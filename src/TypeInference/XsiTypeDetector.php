@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\TypeInference;
 
+use DOMElement;
 use Psl\Option\Option;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -18,7 +19,7 @@ final class XsiTypeDetector
     public static function detectFromValue(Context $context, mixed $value): string
     {
         return self::detectFromContext($context)->unwrapOrElse(
-            static function() use ($context, $value) {
+            static function () use ($context, $value) {
                 $xsd = $context->namespaces->lookupNameFromNamespace(SoapXmlns::xsd()->value())->unwrap();
 
                 return match (true) {
@@ -33,11 +34,9 @@ final class XsiTypeDetector
     }
 
     /**
-     * @param Context $context
-     * @param \DOMElement $element
      * @return Option<XmlEncoder<string, mixed>>
      */
-    public static function detectEncoderFromXmlElement(Context $context, \DOMElement $element): Option
+    public static function detectEncoderFromXmlElement(Context $context, DOMElement $element): Option
     {
         if ($context->bindingUse !== BindingUse::ENCODED) {
             return none();
@@ -71,7 +70,6 @@ final class XsiTypeDetector
     }
 
     /**
-     * @param Context $context
      * @return Option<string>
      */
     private static function detectFromContext(Context $context): Option

@@ -8,6 +8,7 @@ use Soap\Encoding\Xml\Reader\ChildrenReader;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
+use XMLWriter;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Writer\Builder\namespaced_element;
 use function VeeWee\Xml\Writer\Builder\raw;
@@ -15,7 +16,6 @@ use function VeeWee\Xml\Writer\Builder\raw;
 final class OperationBuilder
 {
     /**
-     * @param \Closure(\XMLWriter): Generator<bool> $children
      * @param list<string> $parameters
      */
     public function __construct(
@@ -28,7 +28,7 @@ final class OperationBuilder
     /**
      * @return Generator<bool>
      */
-    public function __invoke(\XMLWriter $writer): Generator
+    public function __invoke(XMLWriter $writer): Generator
     {
         $operationName = $this->meta->operationName()->unwrap();
         $namespace = $this->meta->inputNamespace()->or($this->meta->targetNamespace())->unwrap();
@@ -44,7 +44,7 @@ final class OperationBuilder
     /**
      * @return Generator<bool>
      */
-    private function buildChildren(\XMLWriter $writer): Generator
+    private function buildChildren(XMLWriter $writer): Generator
     {
         $bindingStyle = BindingStyle::tryFrom($this->meta->bindingStyle()->unwrapOr(BindingStyle::DOCUMENT->value));
 
@@ -57,7 +57,7 @@ final class OperationBuilder
     /**
      * @return Generator<bool>
      */
-    private function buildDocument(\XMLWriter $writer): Generator
+    private function buildDocument(XMLWriter $writer): Generator
     {
         $documentParts = map($this->parameters, (new ChildrenReader())(...));
 
@@ -67,7 +67,7 @@ final class OperationBuilder
     /**
      * @return Generator<bool>
      */
-    private function buildRpc(\XMLWriter $writer): Generator
+    private function buildRpc(XMLWriter $writer): Generator
     {
         yield from raw(implode('', $this->parameters))($writer);
     }

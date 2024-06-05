@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
+use DOMElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature\DisregardXsiInformation;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -15,7 +16,7 @@ final class ElementValueReader
     public function __invoke(
         Context $context,
         XmlEncoder $encoder,
-        \DOMElement $element
+        DOMElement $element
     ): mixed {
         $encoder = match (true) {
             $encoder instanceof DisregardXsiInformation => $encoder,

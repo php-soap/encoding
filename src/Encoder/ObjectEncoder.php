@@ -3,29 +3,30 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Closure;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
-use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
+use function Psl\Dict\map;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
-use function Psl\Dict\map;
 use function Psl\Iter\any;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
 use function VeeWee\Reflecta\Lens\optional;
+use function VeeWee\Reflecta\Lens\property;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
-use function VeeWee\Reflecta\Lens\property;
 
 /**
  * @implements XmlEncoder<string, object|array>
@@ -66,7 +67,7 @@ final class ObjectEncoder implements XmlEncoder
         }
         $isAnyPropertyQualified = any(
             $properties,
-            static fn(Property $property): bool => $property->getType()->getMeta()->isQualified()->unwrapOr(false)
+            static fn (Property $property): bool => $property->getType()->getMeta()->isQualified()->unwrapOr(false)
         );
         $defaultAction = writeChildren([]);
 
@@ -81,7 +82,7 @@ final class ObjectEncoder implements XmlEncoder
                     )),
                     ...map(
                         $properties,
-                        function (Property $property) use ($context, $data, $defaultAction) : \Closure {
+                        function (Property $property) use ($context, $data, $defaultAction) : Closure {
                             $type = $property->getType();
                             $lens = $this->decorateLensForType(property($property->getName()), $type);
                             $value = $lens
@@ -91,15 +92,15 @@ final class ObjectEncoder implements XmlEncoder
 
                             return $this->handleProperty(
                                 $property,
-                                onAttribute: fn (): \Closure => $value ? (new AttributeBuilder(
+                                onAttribute: fn (): Closure => $value ? (new AttributeBuilder(
                                     $context,
                                     $type,
                                     $this->grabIsoForProperty($context, $property)->to($value)
                                 ))(...) : $defaultAction,
-                                onValue: fn (): \Closure => $value
+                                onValue: fn (): Closure => $value
                                     ? buildValue($this->grabIsoForProperty($context, $property)->to($value))
                                     : (new NilAttributeBuilder())(...),
-                                onElements: fn (): \Closure => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction,
+                                onElements: fn (): Closure => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction,
                             );
                         }
                     )
@@ -153,17 +154,16 @@ final class ObjectEncoder implements XmlEncoder
     /**
      * @template T
      *
-     * @param Property $property
-     * @param \Closure(): T $onAttribute
-     * @param \Closure(): T $onValue
-     * @param \Closure(): T $onElements
+     * @param Closure(): T $onAttribute
+     * @param Closure(): T $onValue
+     * @param Closure(): T $onElements
      * @return T
      */
     private function handleProperty(
         Property $property,
-        \Closure $onAttribute,
-        \Closure $onValue,
-        \Closure $onElements,
+        Closure $onAttribute,
+        Closure $onValue,
+        Closure $onElements,
     ) {
         $meta = $property->getType()->getMeta();
 
@@ -177,7 +177,6 @@ final class ObjectEncoder implements XmlEncoder
 
     /**
      * @param Lens<mixed, mixed> $lens
-     * @param XsdType $type
      *
      * @return Lens<mixed, mixed>
      */
@@ -199,7 +198,6 @@ final class ObjectEncoder implements XmlEncoder
     }
 
     /**
-     * @param Context $context
      * @return array<string, Property>
      */
     private function detectProperties(Context $context): array
@@ -208,9 +206,9 @@ final class ObjectEncoder implements XmlEncoder
         $properties = reindex(
             sort_by(
                 $type->getProperties(),
-                static fn(Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
+                static fn (Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
             ),
-            static fn(Property $property): string => $property->getName(),
+            static fn (Property $property): string => $property->getName(),
         );
 
         return $properties;

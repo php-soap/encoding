@@ -15,7 +15,6 @@ use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Wsdl1Reader;
 use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Exception\RuntimeException;
-use VeeWee\Xml\Exception\RuntimeException as XmlRuntimeException;
 use function Psl\Iter\first;
 use function VeeWee\Xml\Dom\Configurator\comparable;
 
@@ -102,12 +101,12 @@ abstract class AbstractCompatibilityTests extends TestCase
         $encoded = $driver->encode('test', [$this->calculateParam()]);
         $request = $encoded->getRequest();
         try {
-            self::assertSame(
+            static::assertSame(
                 Document::fromXmlString($this->expectXml(), comparable())->toXmlString(),
                 Document::fromXmlString($request, comparable())->toXmlString()
             );
         } catch (RuntimeException $e) {
-            self::fail('Invalid XML: ' . $e->getMessage() . PHP_EOL . $request);
+            static::fail('Invalid XML: ' . $e->getMessage() . PHP_EOL . $request);
         }
 
         $method = $metadata->getMethods()->fetchByName('test');
@@ -128,6 +127,6 @@ abstract class AbstractCompatibilityTests extends TestCase
         $paramXml = implode('', $params);
         $decoded = $decoder->iso($decodeContext)->from($paramXml);
 
-        self::assertEquals($this->expectDecoded(), $decoded);
+        static::assertEquals($this->expectDecoded(), $decoded);
     }
 }

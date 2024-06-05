@@ -12,11 +12,11 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema084Test extends AbstractCompatibilityTests
+final class Schema084Test extends AbstractCompatibilityTests
 {
     #[Test] public function it_is_compatible_with_phps_encoding()
     {
-        $this->markTestSkipped('We currently dont support the SOAP_USE_XSI_ARRAY_TYPE way in here');
+        static::markTestSkipped('We currently dont support the SOAP_USE_XSI_ARRAY_TYPE way in here');
     }
 
     protected function expectXml(): string

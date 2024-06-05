@@ -17,7 +17,7 @@ final class StringTypeEncoder implements XmlEncoder
     {
         return (new Iso(
             static fn (string $value): string => $value,
-            fn (string $value): string => WhitespaceRestriction::parseForContext($context, $value),
+            static fn (string $value): string => WhitespaceRestriction::parseForContext($context, $value),
         ));
     }
 }

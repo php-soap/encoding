@@ -16,23 +16,23 @@ use function Psl\Option\some;
 use function VeeWee\Xml\Writer\Builder\raw;
 
 #[CoversClass(SoapEnvelopeWriter::class)]
-class SoapEnvelopeWriterTest extends TestCase
+final class SoapEnvelopeWriterTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideEnvelopeCases
      */
-    public function it_can_write_a_soap_envelope(
+    public function test_it_can_write_a_soap_envelope(
         SoapVersion $version,
         BindingUse $bindingUse,
         Option $encodingStyle,
         string $xml,
         string $expected
-    ): void{
+    ): void {
         $writer = new SoapEnvelopeWriter($version, $bindingUse, $encodingStyle, raw($xml));
         $actual = $writer();
 
-        self::assertXmlStringEqualsXmlString($expected, $actual);
+        static::assertXmlStringEqualsXmlString($expected, $actual);
     }
 
     public static function provideEnvelopeCases()

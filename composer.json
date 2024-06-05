@@ -33,7 +33,7 @@
     "require-dev": {
         "vimeo/psalm": "^5.16",
         "phpunit/phpunit": "^10.5",
-        "symfony/var-dumper": "^7.0",
+        "symfony/var-dumper": "^7.0 || ^6.4",
         "php-standard-library/psalm-plugin": "^2.3",
         "php-soap/engine-integration-tests": "^1.8.1",
         "php-soap/psr18-transport": "^1.6",

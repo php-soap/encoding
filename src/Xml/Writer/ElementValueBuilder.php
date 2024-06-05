@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Writer;
 
+use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
+use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\value;
 
@@ -20,9 +22,9 @@ final class ElementValueBuilder
     }
 
     /**
-     * @return \Generator<true>
+     * @return Generator<true>
      */
-    public function __invoke(\XMLWriter $writer): \Generator
+    public function __invoke(XMLWriter $writer): Generator
     {
         yield from children([
             $this->buildXsiType(...),
@@ -31,9 +33,9 @@ final class ElementValueBuilder
     }
 
     /**
-     * @return \Generator<bool>
+     * @return Generator<bool>
      */
-    private function buildXsiType(\XMLWriter $writer): \Generator
+    private function buildXsiType(XMLWriter $writer): Generator
     {
         if ($this->context->bindingUse !== BindingUse::ENCODED) {
             return;

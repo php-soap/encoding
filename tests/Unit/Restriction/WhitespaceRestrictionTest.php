@@ -8,33 +8,33 @@ use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Restriction\WhitespaceRestriction;
 
 #[CoversClass(WhitespaceRestriction::class)]
-class WhitespaceRestrictionTest extends TestCase
+final class WhitespaceRestrictionTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider providePreserveValues
      */
-    public function it_can_preserve(string $input, string $expected): void
+    public function test_it_can_preserve(string $input, string $expected): void
     {
-        self::assertSame($expected, WhitespaceRestriction::preserve($input));
+        static::assertSame($expected, WhitespaceRestriction::preserve($input));
     }
 
     /**
-     * @test
+     *
      * @dataProvider provideReplaceValues
      */
-    public function it_can_replace(string $input, string $expected): void
+    public function test_it_can_replace(string $input, string $expected): void
     {
-        self::assertSame($expected, WhitespaceRestriction::replace($input));
+        static::assertSame($expected, WhitespaceRestriction::replace($input));
     }
 
     /**
-     * @test
+     *
      * @dataProvider provideCollapseValues
      */
-    public function it_can_collapse(string $input, string $expected): void
+    public function test_it_can_collapse(string $input, string $expected): void
     {
-        self::assertSame($expected, WhitespaceRestriction::collapse($input));
+        static::assertSame($expected, WhitespaceRestriction::collapse($input));
     }
 
 

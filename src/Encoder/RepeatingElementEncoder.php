@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use DOMElement;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
@@ -14,7 +15,7 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
  * @template T
  * @implements XmlEncoder<string, iterable<array-key, T>>
  */
-class RepeatingElementEncoder implements XmlEncoder, Feature\ListAware
+final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<string, T> $typeEncoder
@@ -29,7 +30,7 @@ class RepeatingElementEncoder implements XmlEncoder, Feature\ListAware
         $type = $context->type;
         $innerIso = $this->typeEncoder->iso(
             $context->withType(
-                $type->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsList(false))
+                $type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsList(false))
             )
         );
 
@@ -38,7 +39,7 @@ class RepeatingElementEncoder implements XmlEncoder, Feature\ListAware
             /**
              * @param iterable<array-key, T> $raw
              */
-            static function(iterable $raw) use ($innerIso): string {
+            static function (iterable $raw) use ($innerIso): string {
                 return join(
                     map(
                         $raw,
@@ -50,11 +51,11 @@ class RepeatingElementEncoder implements XmlEncoder, Feature\ListAware
             /**
              * @return iterable<array-key, T>
              */
-            static function(string $xml) use ($innerIso): iterable {
+            static function (string $xml) use ($innerIso): iterable {
                 $doc = Document::fromXmlString('<list>'.$xml.'</list>');
 
                 return readChildren($doc->locateDocumentElement())->map(
-                    static fn(\DOMElement $element): mixed => $innerIso->from($doc->stringifyNode($element))
+                    static fn (DOMElement $element): mixed => $innerIso->from($doc->stringifyNode($element))
                 );
             }
         );

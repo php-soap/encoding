@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Encoder\SimpleType;
 
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\SimpleType\SimpleListEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
@@ -12,7 +11,7 @@ use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(SimpleListEncoder::class)]
-class SimpleListEncoderTest extends AbstractEncoderTests
+final class SimpleListEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {

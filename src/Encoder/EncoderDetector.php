@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Encoder\Feature;
 use Soap\Engine\Metadata\Model\XsdType;
+use stdClass;
 
 final class EncoderDetector
 {
@@ -21,7 +21,7 @@ final class EncoderDetector
             default => $this->detectComplexTypeEncoder($type, $context),
         };
 
-        if (!$encoder instanceof Feature\ListAware && $meta->isRepeatingElement()->unwrapOr(false)){
+        if (!$encoder instanceof Feature\ListAware && $meta->isRepeatingElement()->unwrapOr(false)) {
             $encoder = new RepeatingElementEncoder($encoder);
         }
 
@@ -43,11 +43,11 @@ final class EncoderDetector
         // Try to find a match for the extended complex type:
         // Or fallback to the default object encoder.
         return $meta->extends()
-            ->filter(static fn($extend): bool => !$extend['isSimple'])
+            ->filter(static fn ($extend): bool => !$extend['isSimple'])
             ->map(static fn ($extends) : XmlEncoder => $context->registry->findComplexEncoderByNamespaceName(
                 $extends['namespace'],
                 $extends['type'],
             ))
-            ->unwrapOr(new ObjectEncoder(\stdClass::class));
+            ->unwrapOr(new ObjectEncoder(stdClass::class));
     }
 }

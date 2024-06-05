@@ -11,7 +11,7 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema008Test extends AbstractCompatibilityTests
+final class Schema008Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <element name="testElement">

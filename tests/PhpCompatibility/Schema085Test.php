@@ -12,7 +12,7 @@ use Soap\Encoding\EncoderRegistry;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema085Test extends AbstractCompatibilityTests
+final class Schema085Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType2">
@@ -63,10 +63,12 @@ class Schema085Test extends AbstractCompatibilityTests
     }
 }
 
-class A {
+abstract class A
+{
     public $int = 1;
 }
 
-class B extends A {
+final class B extends A
+{
     public $int2 = 2;
 }

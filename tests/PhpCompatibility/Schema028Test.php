@@ -12,7 +12,7 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema028Test extends AbstractCompatibilityTests
+final class Schema028Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType">
@@ -31,7 +31,7 @@ class Schema028Test extends AbstractCompatibilityTests
     #[Test]
     public function it_is_compatible_with_phps_encoding()
     {
-        $this->markTestSkipped('Multiple array dimensions are not supported yet!');
+        static::markTestSkipped('Multiple array dimensions are not supported yet!');
     }
 
     protected function expectXml(): string

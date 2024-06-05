@@ -100,7 +100,7 @@ trait ContextCreatorTrait
               </definitions>
         EOXSD;
 
-        $wsdl = (new Wsdl1Reader(new CallbackLoader(fn() => $wsdl)))('some.wsdl');
+        $wsdl = (new Wsdl1Reader(new CallbackLoader(static fn () => $wsdl)))('some.wsdl');
         $metadataProvider = new Wsdl1MetadataProvider($wsdl);
 
         return $metadataProvider->getMetadata();

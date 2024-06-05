@@ -11,9 +11,10 @@ use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
+use stdClass;
 
 #[CoversClass(OptionalElementEncoder::class)]
-class OptionalElementEncoderTest extends AbstractEncoderTests
+final class OptionalElementEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
@@ -22,7 +23,8 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlTargetNodeName('hello')
-                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta
+                    ->withMeta(
+                        static fn (TypeMeta $meta): TypeMeta => $meta
                         ->withIsNullable(true)
                         ->withMinOccurs(0)
                         ->withMaxOccurs(1)
@@ -46,7 +48,8 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
         yield 'with-nil-value' => [
             ...$baseConfig,
             'context' => $context->withType(
-                $xsdType->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta
+                $xsdType->withMeta(
+                    static fn (TypeMeta $meta): TypeMeta => $meta
                     ->withIsNil(true)
                 )
             ),
@@ -61,7 +64,8 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
         yield 'with-non-nullable-value' => [
             ...$baseConfig,
             'context' => $context->withType(
-                $xsdType->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta
+                $xsdType->withMeta(
+                    static fn (TypeMeta $meta): TypeMeta => $meta
                     ->withIsNullable(false)
                 )
             ),
@@ -78,7 +82,7 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
         $objectContext = self::createContextFromMetadata(ObjectEncoderTest::createWsdlExample(), 'user');
         yield 'with-object-value' => [
             ...$baseConfig,
-            'encoder' => new OptionalElementEncoder(new ObjectEncoder(\stdClass::class)),
+            'encoder' => new OptionalElementEncoder(new ObjectEncoder(stdClass::class)),
             'context' => $objectContext,
             'xml' => '<tns:user xmlns:tns="https://test"><tns:active xmlns:tns="https://test">true</tns:active><tns:hat xmlns:tns="https://test"><tns:color xmlns:tns="https://test">green</tns:color></tns:hat></tns:user>',
             'data' => (object)[
@@ -90,9 +94,10 @@ class OptionalElementEncoderTest extends AbstractEncoderTests
         ];
         yield 'with-empty-object-value' => [
             ...$baseConfig,
-            'encoder' => new OptionalElementEncoder(new ObjectEncoder(\stdClass::class)),
+            'encoder' => new OptionalElementEncoder(new ObjectEncoder(stdClass::class)),
             'context' => $objectContext->withType(
-                $objectContext->type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta
+                $objectContext->type->withMeta(
+                    static fn (TypeMeta $meta): TypeMeta => $meta
                     ->withIsNullable(true)
                     ->withMinOccurs(0)
                     ->withMaxOccurs(1)

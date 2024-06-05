@@ -59,7 +59,7 @@ final class EncoderDetector
         // Try to find a match for the extended simple type:
         // Or fallback to the default scalar encoder.
         return $meta->extends()
-            ->filter(static fn($extend): bool => $extend['isSimple'])
+            ->filter(static fn ($extend): bool => $extend['isSimple'])
             ->map(static fn ($extends) : XmlEncoder => $context->registry->findSimpleEncoderByNamespaceName(
                 $extends['namespace'],
                 $extends['type'],
@@ -85,7 +85,7 @@ final class EncoderDetector
         $unionsContainsList = $unions
             ->map(static fn (array $unionList): bool => any(
                 $unionList,
-                static fn(array $union): bool => $union['isList']
+                static fn (array $union): bool => $union['isList']
             ))
             ->unwrapOr(false);
         if ($unionsContainsList) {

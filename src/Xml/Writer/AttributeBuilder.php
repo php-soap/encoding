@@ -6,12 +6,10 @@ namespace Soap\Encoding\Xml\Writer;
 use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Xml\Writer\Builder\Builder;
 use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\attribute;
 use function VeeWee\Xml\Writer\Builder\namespaced_attribute;
-
 
 final class AttributeBuilder implements Builder
 {

@@ -11,18 +11,18 @@ use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 
 #[CoversClass(OperationReader::class)]
-class OperationReaderTest extends TestCase
+final class OperationReaderTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideEnvelopeCases
      */
-    public function it_can_read_a_soap_envelope(MethodMeta $meta, string $envelope, array $expected): void
+    public function test_it_can_read_a_soap_envelope(MethodMeta $meta, string $envelope, array $expected): void
     {
         $reader = new OperationReader($meta);
         $actual = $reader($envelope);
 
-        self::assertSame($expected, $actual);
+        static::assertSame($expected, $actual);
     }
 
     public static function provideEnvelopeCases()

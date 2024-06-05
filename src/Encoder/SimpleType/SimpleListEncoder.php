@@ -15,7 +15,7 @@ use function Psl\Vec\map;
 /**
  * @implements XmlEncoder<string, array>
  */
-final class SimpleListEncoder implements XmlEncoder, Feature\ListAware
+final class SimpleListEncoder implements Feature\ListAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<string, mixed> $typeEncoder
@@ -26,7 +26,6 @@ final class SimpleListEncoder implements XmlEncoder, Feature\ListAware
     }
 
     /**
-     * @param Context $context
      * @return Iso<string, array>
      */
     public function iso(Context $context): Iso
@@ -34,7 +33,7 @@ final class SimpleListEncoder implements XmlEncoder, Feature\ListAware
         $type = $context->type;
         $innerIso = $this->typeEncoder->iso(
             $context->withType(
-                $type->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsList(false))
+                $type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsList(false))
             )
         );
 

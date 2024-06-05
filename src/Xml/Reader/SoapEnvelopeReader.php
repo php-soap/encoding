@@ -5,8 +5,6 @@ namespace Soap\Encoding\Xml\Reader;
 
 use Soap\Xml\Locator\SoapBodyLocator;
 use VeeWee\Xml\Dom\Document;
-use function Psl\Str\join;
-use function VeeWee\Xml\Dom\Locator\Element\children as locateChildElements;
 
 final class SoapEnvelopeReader
 {

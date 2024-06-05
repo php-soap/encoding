@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\PhpCompatibility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
@@ -12,7 +11,7 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema063Test extends AbstractCompatibilityTests
+final class Schema063Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
 

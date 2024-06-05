@@ -12,7 +12,7 @@ use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
 
 #[CoversClass(RepeatingElementEncoder::class)]
-class RepeatingElementEncoderTest extends AbstractEncoderTests
+final class RepeatingElementEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
@@ -22,7 +22,7 @@ class RepeatingElementEncoderTest extends AbstractEncoderTests
                 $xsdType = XsdType::guess('string')
                     ->withXmlNamespace(Xmlns::xsd()->value())
                     ->withXmlTargetNodeName('item')
-                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
             ),
         ];
 

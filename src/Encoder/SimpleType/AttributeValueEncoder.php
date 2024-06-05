@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder\SimpleType;
 
+use RuntimeException;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
@@ -21,14 +22,13 @@ final class AttributeValueEncoder implements XmlEncoder
     }
 
     /**
-     * @param Context $context
      * @return Iso<string, mixed>
      */
     public function iso(Context $context): Iso
     {
         return (new Iso(
-            fn(mixed $value): ?string => $this->to($context, $value),
-            fn(?string $value): mixed => $this->from($context, $value),
+            fn (mixed $value): ?string => $this->to($context, $value),
+            fn (?string $value): mixed => $this->from($context, $value),
         ));
     }
 
@@ -36,12 +36,12 @@ final class AttributeValueEncoder implements XmlEncoder
     {
         $meta = $context->type->getMeta();
         $fixed = $meta->fixed()
-            ->map(fn(string $fixed): mixed => $this->typeEncoder->iso($context)->from($fixed))
+            ->map(fn (string $fixed): mixed => $this->typeEncoder->iso($context)->from($fixed))
             ->unwrapOr(null);
 
         if ($fixed !== null && $value !== $fixed) {
             // TODO custom exception
-            throw new \RuntimeException(sprintf('Provided attribute value should be fixed to %s. Got %s', $fixed, $value));
+            throw new RuntimeException(sprintf('Provided attribute value should be fixed to %s. Got %s', $fixed, $value));
         }
 
         return $value ? $this->typeEncoder->iso($context)->to($value) : null;

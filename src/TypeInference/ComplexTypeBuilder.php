@@ -23,7 +23,7 @@ final class ComplexTypeBuilder
             new PropertyCollection(
                 ...flat_map(
                     $extensions,
-                    static fn(Type $type): iterable => $type->getProperties()
+                    static fn (Type $type): iterable => $type->getProperties()
                 ),
                 ...$type->getProperties(),
             )

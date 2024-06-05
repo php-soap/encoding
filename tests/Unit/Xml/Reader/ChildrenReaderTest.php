@@ -7,23 +7,20 @@ namespace Soap\Encoding\Test\Unit\Xml\Writer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Reader\ChildrenReader;
-use Soap\Encoding\Xml\Reader\SoapEnvelopeReader;
-use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
-use Soap\WsdlReader\Model\Definitions\SoapVersion;
 
 #[CoversClass(ChildrenReader::class)]
-class ChildrenReaderTest extends TestCase
+final class ChildrenReaderTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideChildrenCases
      */
-    public function it_can_read_children(string $xml, string $expected): void
+    public function test_it_can_read_children(string $xml, string $expected): void
     {
         $reader = new ChildrenReader();
         $actual = $reader($xml);
 
-        self::assertSame($expected, $actual);
+        static::assertSame($expected, $actual);
     }
 
     public static function provideChildrenCases()

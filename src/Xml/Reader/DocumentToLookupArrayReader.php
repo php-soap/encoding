@@ -10,7 +10,6 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildElements;
 final class DocumentToLookupArrayReader
 {
     /**
-     * @param string $document
      * @return array<string, string>
      */
     public function __invoke(string $xml): array

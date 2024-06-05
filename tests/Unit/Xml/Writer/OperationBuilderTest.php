@@ -9,26 +9,24 @@ use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Writer\OperationBuilder;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
-use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use VeeWee\Xml\Writer\Writer;
 use function VeeWee\Xml\Writer\Mapper\memory_output;
 
 #[CoversClass(OperationBuilder::class)]
-class OperationBuilderTest extends TestCase
+final class OperationBuilderTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideOperationCases
      */
-    public function it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
+    public function test_it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
     {
         $actual = Writer::inMemory()
             ->write(new OperationBuilder($meta, new Namespaces([], []), $parts))
             ->map(memory_output());
 
-        self::assertXmlStringEqualsXmlString($expected, $actual);
+        static::assertXmlStringEqualsXmlString($expected, $actual);
     }
 
     public static function provideOperationCases()

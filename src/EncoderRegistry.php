@@ -17,6 +17,7 @@ use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Metadata\Detector\ApacheMapDetector;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\Xml\Xmlns;
+use stdClass;
 use function Psl\Dict\pull;
 use function Psl\Vec\map;
 
@@ -143,13 +144,13 @@ final class EncoderRegistry
                 // SOAP 1.2 ENC
                 ...pull(
                     EncodingStyle::listKnownSoap12Version(),
-                    static fn() => new SoapEnc\SoapArrayEncoder() ,
-                    static fn(string $namespace): string => $qNameFormatter($namespace, 'Array')
+                    static fn () => new SoapEnc\SoapArrayEncoder(),
+                    static fn (string $namespace): string => $qNameFormatter($namespace, 'Array')
                 ),
                 ...pull(
                     EncodingStyle::listKnownSoap12Version(),
-                    static fn() => new SoapEnc\SoapObjectEncoder() ,
-                    static fn(string $namespace): string => $qNameFormatter($namespace, 'Struct')
+                    static fn () => new SoapEnc\SoapObjectEncoder(),
+                    static fn (string $namespace): string => $qNameFormatter($namespace, 'Struct')
                 ),
 
                 // Apache Map
@@ -284,7 +285,7 @@ final class EncoderRegistry
         }
 
         return new OptionalElementEncoder(
-            new ObjectEncoder(\stdClass::class)
+            new ObjectEncoder(stdClass::class)
         );
     }
 

@@ -9,7 +9,6 @@ use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
-use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
@@ -36,8 +35,7 @@ final class Encoder implements SoapEncoder
         $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::tryFrom(...));
 
         $request = [];
-        foreach ($methodInfo->getParameters() as $index => $parameter)
-        {
+        foreach ($methodInfo->getParameters() as $index => $parameter) {
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
             $argument = index($index)->get($arguments);

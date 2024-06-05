@@ -16,21 +16,22 @@ use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
+use stdClass;
 use function Psl\Fun\tap;
 
 #[CoversClass(ObjectEncoder::class)]
-class ObjectEncoderTest extends AbstractEncoderTests
+final class ObjectEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
         $baseConfig = [
-            'encoder' => $encoder = new ObjectEncoder(\stdClass::class),
+            'encoder' => $encoder = new ObjectEncoder(stdClass::class),
             'context' => $context = self::createContext(
                 $xsdType = XsdType::create('user')
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
                     ->withXmlTargetNodeName('user')
-                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
+                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
             ),
         ];
 
@@ -144,7 +145,8 @@ class ObjectEncoderTest extends AbstractEncoderTests
                             ->withXmlTargetNodeName('active')
                             ->withXmlNamespace(Xmlns::xsd()->value())
                             ->withXmlNamespaceName('xsd')
-                            ->withMeta(fn (TypeMeta $meta): TypeMeta => $meta
+                            ->withMeta(
+                                static fn (TypeMeta $meta): TypeMeta => $meta
                                 ->withIsSimple(true)
                                 ->withIsElement(!$activeAsAttribute)
                                 ->withIsAttribute($activeAsAttribute)
@@ -159,7 +161,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
                             ->withXmlTargetNodeName('hat')
                             ->withXmlNamespace('https://test')
                             ->withXmlNamespaceName('test')
-                            ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
                     )
                 )
             ),
@@ -169,7 +171,7 @@ class ObjectEncoderTest extends AbstractEncoderTests
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
                     ->withXmlTargetNodeName('hat')
-                    ->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
+                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
                 new PropertyCollection(
                     new Property(
                         'color',
@@ -178,7 +180,8 @@ class ObjectEncoderTest extends AbstractEncoderTests
                             ->withXmlTargetNodeName('color')
                             ->withXmlNamespace(Xmlns::xsd()->value())
                             ->withXmlNamespaceName('xsd')
-                            ->withMeta(fn (TypeMeta $meta): TypeMeta => $meta
+                            ->withMeta(
+                                static fn (TypeMeta $meta): TypeMeta => $meta
                                 ->withIsSimple(true)
                                 ->withIsElement(true)
                                 ->withIsQualified(true)

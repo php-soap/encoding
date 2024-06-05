@@ -8,12 +8,11 @@ use PHPUnit\Framework\Attributes\Test;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
-use function Psl\Str\format;
 
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema064Test extends AbstractCompatibilityTests
+final class Schema064Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType">
@@ -33,7 +32,7 @@ class Schema064Test extends AbstractCompatibilityTests
 
     protected function calculateParam(): mixed
     {
-        $date = gmmktime(1,2,3,4,5,1976);
+        $date = gmmktime(1, 2, 3, 4, 5, 1976);
         putenv('TZ=GMT');
 
         return (object)[
@@ -51,7 +50,7 @@ class Schema064Test extends AbstractCompatibilityTests
     #[Test]
     public function it_is_compatible_with_phps_encoding()
     {
-        $this->markTestSkipped('Epoch numbers are not supported currently - we only support dateTimeInterface. See Schema086.');
+        static::markTestSkipped('Epoch numbers are not supported currently - we only support dateTimeInterface. See Schema086.');
     }
 
     protected function expectXml(): string

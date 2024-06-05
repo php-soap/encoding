@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder\SimpleType;
 
+use BackedEnum;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
@@ -29,11 +30,11 @@ final class BackedEnumTypeEncoder implements XmlEncoder
             /**
              * @template T $value
              */
-            static fn (\BackedEnum $enum): string => $enum->value,
+            static fn (BackedEnum $enum): string => $enum->value,
             /**
              * @return T
              */
-            fn (string $value): \BackedEnum => backed_enum($this->enumClass)->coerce($value),
+            fn (string $value): BackedEnum => backed_enum($this->enumClass)->coerce($value),
         ));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder\SimpleType;
 
 use Psl\Type;
+use RuntimeException;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\InvalidArgumentException;
@@ -31,18 +32,20 @@ final class ScalarTypeEncoder implements XmlEncoder
                 is_bool($value) => (new BoolTypeEncoder())->iso($context)->to($value),
 
                 // TODO ADD SPECIFIC EXCEPTION...
-                default => throw new \RuntimeException(
+                default => throw new RuntimeException(
                     'Unsupported scalar type: '.gettype($value) . '. ' . print_r($context->type, true)
                 )
             },
             static function (string $value): mixed {
                 try {
                     return Type\int()->coerce($value);
-                } catch (Type\Exception\CoercionException){}
+                } catch (Type\Exception\CoercionException) {
+                }
 
                 try {
                     return Type\float()->coerce($value);
-                } catch (Type\Exception\CoercionException){}
+                } catch (Type\Exception\CoercionException) {
+                }
 
                 try {
                     return Type\converted(
@@ -54,7 +57,8 @@ final class ScalarTypeEncoder implements XmlEncoder
                             default => throw new InvalidArgumentException('Invalid boolean value: '.$value)
                         }
                     )->coerce($value);
-                } catch (Type\Exception\CoercionException){}
+                } catch (Type\Exception\CoercionException) {
+                }
 
                 return Type\string()->coerce($value);
             }

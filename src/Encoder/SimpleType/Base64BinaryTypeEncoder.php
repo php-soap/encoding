@@ -17,7 +17,7 @@ final class Base64BinaryTypeEncoder implements XmlEncoder
     {
         return (new Iso(
             static fn (string $value): string => base64_encode($value),
-            static fn (string $value): string => WhitespaceRestriction::collapse(base64_decode($value)),
+            static fn (string $value): string => WhitespaceRestriction::collapse(base64_decode($value, true)),
         ));
     }
 }

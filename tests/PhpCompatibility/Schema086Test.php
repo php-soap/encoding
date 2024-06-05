@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\PhpCompatibility;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
-use function Psl\Str\format;
 
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema086Test extends AbstractCompatibilityTests
+final class Schema086Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType">
@@ -33,7 +33,7 @@ class Schema086Test extends AbstractCompatibilityTests
     protected function calculateParam(): mixed
     {
         // We only support DateTimeInterface for dateTime and date - not the others. They are just strings.
-        $date = new \DateTimeImmutable('1976-04-05T01:02:03Z');
+        $date = new DateTimeImmutable('1976-04-05T01:02:03Z');
 
         return (object)[
             'dateTime' => $date,
