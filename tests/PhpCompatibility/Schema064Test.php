@@ -36,8 +36,8 @@ class Schema064Test extends AbstractCompatibilityTests
 
         return (object)[
             'dateTime' => $date,
-            'time' => $date->format('Y-m-dp'),
-            'date' => $date,
+            'time' => $date->format('H:i:sp'),
+            'date' => $date->setTime(0, 0),
             'gYearMonth' => $date->format('Y-mp'),
             'gYear' => $date->format('Yp'),
             'gMonthDay' => $date->format('--m-dp'),

@@ -17,15 +17,17 @@ final class XsiTypeDetector
 {
     public static function detectFromValue(Context $context, mixed $value): string
     {
-        $xsd = $context->namespaces->lookupNameFromNamespace(SoapXmlns::xsd()->value())->unwrap();
-
         return self::detectFromContext($context)->unwrapOrElse(
-            static fn() => match(true) {
-                is_string($value) => $xsd . ':string',
-                is_int($value) => $xsd . ':int',
-                is_float($value) => $xsd . ':float',
-                is_bool($value) => $xsd . ':boolean',
-                default => $xsd . ':anyType',
+            static function() use ($context, $value) {
+                $xsd = $context->namespaces->lookupNameFromNamespace(SoapXmlns::xsd()->value())->unwrap();
+
+                return match (true) {
+                    is_string($value) => $xsd . ':string',
+                    is_int($value) => $xsd . ':int',
+                    is_float($value) => $xsd . ':float',
+                    is_bool($value) => $xsd . ':boolean',
+                    default => $xsd . ':anyType',
+                };
             }
         );
     }
@@ -75,10 +77,10 @@ final class XsiTypeDetector
     private static function detectFromContext(Context $context): Option
     {
         $type = $context->type;
-        $isMixed = $type->getBaseType() === 'mixed';
+        $isAny = $type->getXmlNamespace() === SoapXmlns::xsd()->value() && $type->getName() === 'anyType';
         $isUnion = $type->getMeta()->unions()->isSome();
 
-        if ($isMixed && !$isUnion) {
+        if ($isAny && !$isUnion) {
             return none();
         }
 
