@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Xmlns\Xmlns;

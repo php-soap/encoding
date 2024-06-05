@@ -21,9 +21,6 @@ final class Decoder implements SoapDecoder
     ) {
     }
 
-    /**
-     * @return mixed
-     */
     public function decode(string $method, SoapResponse $response): mixed
     {
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);

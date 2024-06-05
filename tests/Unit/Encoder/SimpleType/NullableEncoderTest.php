@@ -11,7 +11,7 @@ use Soap\Encoding\Test\Unit\Encoder\AbstractEncoderTests;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(NullableEncoder::class)]
-class NullableEncoderTest extends AbstractEncoderTests
+final class NullableEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
@@ -19,7 +19,8 @@ class NullableEncoderTest extends AbstractEncoderTests
             'encoder' => $encoder = new NullableEncoder(new StringTypeEncoder()),
             'context' => $context = self::createContext(
                 XsdType::guess('string')
-                    ->withMeta(static fn ($meta) => $meta
+                    ->withMeta(
+                        static fn ($meta) => $meta
                         ->withIsNullable(true)
                     )
             ),
@@ -43,7 +44,8 @@ class NullableEncoderTest extends AbstractEncoderTests
         yield 'with-non-nullable-value' => [
             ...$baseConfig,
             'context' => $context->withType(
-                $context->type->withMeta(static fn ($meta) => $meta
+                $context->type->withMeta(
+                    static fn ($meta) => $meta
                     ->withIsNullable(false)
                 )
             ),

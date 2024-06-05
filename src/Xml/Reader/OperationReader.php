@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
+use DOMElement;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use VeeWee\Xml\Dom\Document;
@@ -20,7 +21,6 @@ final class OperationReader
     /**
      * Reads all operation response message parts:
      *
-     * @param string $xml
      * @return list<string>
      */
     public function __invoke(string $xml): array
@@ -44,7 +44,7 @@ final class OperationReader
 
         return map(
             $elements,
-            static fn (\DOMElement $element): string => Document::fromXmlNode($element)->stringifyDocumentElement(),
+            static fn (DOMElement $element): string => Document::fromXmlNode($element)->stringifyDocumentElement(),
         );
     }
 }

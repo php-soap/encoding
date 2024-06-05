@@ -9,25 +9,24 @@ use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Writer\OperationBuilder;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
-use Soap\WsdlReader\Model\Definitions\SoapVersion;
+use Soap\WsdlReader\Model\Definitions\Namespaces;
 use VeeWee\Xml\Writer\Writer;
 use function VeeWee\Xml\Writer\Mapper\memory_output;
 
 #[CoversClass(OperationBuilder::class)]
-class OperationBuilderTest extends TestCase
+final class OperationBuilderTest extends TestCase
 {
     /**
-     * @test
+     *
      * @dataProvider provideOperationCases
      */
-    public function it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
+    public function test_it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
     {
         $actual = Writer::inMemory()
-            ->write(new OperationBuilder($meta, $parts))
+            ->write(new OperationBuilder($meta, new Namespaces([], []), $parts))
             ->map(memory_output());
 
-        self::assertXmlStringEqualsXmlString($expected, $actual);
+        static::assertXmlStringEqualsXmlString($expected, $actual);
     }
 
     public static function provideOperationCases()
@@ -45,10 +44,10 @@ class OperationBuilderTest extends TestCase
                 </parameters>'
             ],
             <<<EOXML
-                <ns1:Add xmlns:ns1="http://tempuri.org/">
+                <tns:Add xmlns:tns="http://tempuri.org/">
                     <tns:a xmlns:tns="http://tempuri.org/">1</tns:a>
                     <tns:b xmlns:tns="http://tempuri.org/">2</tns:b>
-                </ns1:Add>
+                </tns:Add>
             EOXML
         ];
         yield 'rpc-single-part' => [
@@ -60,12 +59,12 @@ class OperationBuilderTest extends TestCase
                 </parameters>'
             ],
             <<<EOXML
-                <ns1:Add xmlns:ns1="http://tempuri.org/">
+                <tns:Add xmlns:tns="http://tempuri.org/">
                     <parameters>
                         <tns:a xmlns:tns="http://tempuri.org/">1</tns:a>
                         <tns:b xmlns:tns="http://tempuri.org/">2</tns:b>
                     </parameters>
-                </ns1:Add>
+                </tns:Add>
             EOXML
         ];
     }

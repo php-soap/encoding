@@ -12,13 +12,13 @@ use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Wsdl1;
 
-class Driver implements SoapDriver
+final class Driver implements SoapDriver
 {
     public function __construct(
         private readonly Encoder $encoder,
         private readonly Decoder $decoder,
         private readonly Metadata $metadata,
-    ){
+    ) {
     }
 
     public static function createFromWsdl1(

@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Fixture\Model;
 
-class Hat {
+final class Hat
+{
     public function __construct(
         public string $color,
     ) {

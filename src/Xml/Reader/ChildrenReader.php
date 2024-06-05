@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
+use DOMElement;
 use VeeWee\Xml\Dom\Document;
 use function Psl\Str\join;
 use function VeeWee\Xml\Dom\Locator\Element\children as locateChildElements;
@@ -16,7 +17,7 @@ final class ChildrenReader
 
         return join(
             $elements->map(
-                static fn(\DOMElement $element): string => Document::fromXmlNode($element)->stringifyDocumentElement(),
+                static fn (DOMElement $element): string => Document::fromXmlNode($element)->stringifyDocumentElement(),
             ),
             ''
         );

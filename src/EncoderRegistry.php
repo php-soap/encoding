@@ -10,10 +10,16 @@ use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\SimpleType;
+use Soap\Encoding\Encoder\SoapEnc;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Metadata\Detector\ApacheMapDetector;
+use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\Xml\Xmlns;
+use stdClass;
+use function Psl\Dict\pull;
+use function Psl\Vec\map;
 
 final class EncoderRegistry
 {
@@ -47,6 +53,7 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'NMTOKENS') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'Name') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'NCName') => new SimpleType\StringTypeEncoder(),
+                $qNameFormatter($xsd, 'NCNames') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'ID') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'IDREF') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'IDREFS') => new SimpleType\StringTypeEncoder(),
@@ -126,14 +133,28 @@ final class EncoderRegistry
                 $qNameFormatter($xsd1999, 'unsignedShort') => new SimpleType\IntTypeEncoder(),
                 $qNameFormatter($xsd1999, 'date') => new SimpleType\DateTypeEncoder(),
                 $qNameFormatter($xsd1999, 'time') => new SimpleType\StringTypeEncoder(),
+
+
             ]),
             new MutableMap([
-                // TODO
-                // {{APACHE_MAP, APACHE_MAP_STRING, APACHE_NAMESPACE, NULL, NULL, NULL}, to_zval_map, to_xml_map},
-                // {{SOAP_ENC_OBJECT, SOAP_ENC_OBJECT_STRING, SOAP_1_1_ENC_NAMESPACE, NULL, NULL, NULL}, to_zval_object, to_xml_object},
-                // {{SOAP_ENC_ARRAY, SOAP_ENC_ARRAY_STRING, SOAP_1_1_ENC_NAMESPACE, NULL, NULL, NULL}, to_zval_array, to_xml_array},
-                // {{SOAP_ENC_OBJECT, SOAP_ENC_OBJECT_STRING, SOAP_1_2_ENC_NAMESPACE, NULL, NULL, NULL}, to_zval_object, to_xml_object},
-                // {{SOAP_ENC_ARRAY, SOAP_ENC_ARRAY_STRING, SOAP_1_2_ENC_NAMESPACE, NULL, NULL, NULL}, to_zval_array, to_xml_array},
+                // SOAP 1.1 ENC
+                $qNameFormatter(EncodingStyle::SOAP_11->value, 'Array') => new SoapEnc\SoapArrayEncoder(),
+                $qNameFormatter(EncodingStyle::SOAP_11->value, 'Struct') => new SoapEnc\SoapObjectEncoder(),
+
+                // SOAP 1.2 ENC
+                ...pull(
+                    EncodingStyle::listKnownSoap12Version(),
+                    static fn () => new SoapEnc\SoapArrayEncoder(),
+                    static fn (string $namespace): string => $qNameFormatter($namespace, 'Array')
+                ),
+                ...pull(
+                    EncodingStyle::listKnownSoap12Version(),
+                    static fn () => new SoapEnc\SoapObjectEncoder(),
+                    static fn (string $namespace): string => $qNameFormatter($namespace, 'Struct')
+                ),
+
+                // Apache Map
+                $qNameFormatter(ApacheMapDetector::NAMESPACE, 'Map') => new SoapEnc\ApacheMapEncoder(),
             ])
         );
     }
@@ -225,7 +246,7 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new ScalarTypeEncoder();
+        return new SimpleType\ScalarTypeEncoder();
     }
 
     public function hasRegisteredSimpleTypeForXsdType(XsdType $type): bool
@@ -264,7 +285,7 @@ final class EncoderRegistry
         }
 
         return new OptionalElementEncoder(
-            new ObjectEncoder(\stdClass::class)
+            new ObjectEncoder(stdClass::class)
         );
     }
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use DOMElement;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
@@ -14,7 +15,7 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
  * @template T
  * @implements XmlEncoder<string, iterable<array-key, T>>
  */
-class ListEncoder implements XmlEncoder
+final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<string, T> $typeEncoder
@@ -28,12 +29,8 @@ class ListEncoder implements XmlEncoder
     {
         $type = $context->type;
         $innerIso = $this->typeEncoder->iso(
-            // TODO : This line is duplicated in EncoderDetector - find a better way
-            //
-            // Remove the list property from it to avoid nested guesses becoming stuck
-            // Instead we want to fall back to the next part of the logic.
             $context->withType(
-                $type->withMeta(static fn(TypeMeta $meta): TypeMeta => $meta->withIsList(false))
+                $type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsList(false))
             )
         );
 
@@ -42,7 +39,7 @@ class ListEncoder implements XmlEncoder
             /**
              * @param iterable<array-key, T> $raw
              */
-            static function(iterable $raw) use ($innerIso): string {
+            static function (iterable $raw) use ($innerIso): string {
                 return join(
                     map(
                         $raw,
@@ -54,11 +51,11 @@ class ListEncoder implements XmlEncoder
             /**
              * @return iterable<array-key, T>
              */
-            static function(string $xml) use ($innerIso): iterable {
+            static function (string $xml) use ($innerIso): iterable {
                 $doc = Document::fromXmlString('<list>'.$xml.'</list>');
 
                 return readChildren($doc->locateDocumentElement())->map(
-                    static fn(\DOMElement $element): mixed => $innerIso->from($doc->stringifyNode($element))
+                    static fn (DOMElement $element): mixed => $innerIso->from($doc->stringifyNode($element))
                 );
             }
         );

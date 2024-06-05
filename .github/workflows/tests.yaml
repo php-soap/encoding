@@ -1,0 +1,26 @@
+name: Tests
+
+on: [push, pull_request]
+jobs:
+    run:
+        runs-on: ${{ matrix.operating-system }}
+        strategy:
+            matrix:
+                operating-system: [ubuntu-latest]
+                php-versions: ['8.1', '8.2', '8.3']
+                dependency-preference: ['current', 'lowest', 'stable']
+            fail-fast: false
+        name: PHP ${{ matrix.php-versions }} ${{ matrix.dependency-preference }} deps @ ${{ matrix.operating-system }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@master
+            - name: Install PHP
+              uses: shivammathur/setup-php@master
+              with:
+                  php-version: ${{ matrix.php-versions }}
+                  tools: 'composer:v2'
+                  extensions: pcov, mbstring, posix, dom, soap
+            - name: Install dependencies
+              run: composer update --prefer-dist --no-progress --no-suggest ${{ matrix.dependency-preference == 'lowest' && '--prefer-lowest' || '' }} ${{ matrix.dependency-preference == 'stable' && '--prefer-stable' || '' }}
+            - name: Run the tests
+              run: ./vendor/bin/phpunit

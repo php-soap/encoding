@@ -21,19 +21,27 @@
     ],
     "require": {
         "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
-        "azjezz/psl": "dev-next as 2.9.0",
+        "azjezz/psl": "^2.9.0",
         "veewee/reflecta": "^0.4.0",
         "veewee/xml": "^3.1",
-        "php-soap/engine": "^2.8",
+        "php-soap/engine": "^2.9.0",
         "php-soap/wsdl": "^1.6",
         "php-soap/xml": "^1.6",
-        "php-soap/wsdl-reader": "^0.13.0"
+        "php-soap/wsdl-reader": "0.14.0",
+        "goetas-webservices/xsd-reader": "^0.4.5"
     },
     "require-dev": {
         "vimeo/psalm": "^5.16",
         "phpunit/phpunit": "^10.5",
-        "symfony/var-dumper": "^7.0",
+        "symfony/var-dumper": "^7.0 || ^6.4",
         "php-standard-library/psalm-plugin": "^2.3",
-        "php-soap/engine-integration-tests": "^1.7"
+        "php-soap/engine-integration-tests": "^1.8.1",
+        "php-soap/psr18-transport": "^1.6",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     }
 }

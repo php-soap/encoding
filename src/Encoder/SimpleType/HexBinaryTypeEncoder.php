@@ -5,6 +5,7 @@ namespace Soap\Encoding\Encoder\SimpleType;
 
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Restriction\WhitespaceRestriction;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -16,7 +17,7 @@ final class HexBinaryTypeEncoder implements XmlEncoder
     {
         return (new Iso(
             static fn (string $value): string => mb_strtoupper(bin2hex($value)),
-            static fn (string $value): string => hex2bin($value),
+            static fn (string $value): string => WhitespaceRestriction::collapse(hex2bin($value)),
         ));
     }
 }

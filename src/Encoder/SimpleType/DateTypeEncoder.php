@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder\SimpleType;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\Exception\InvalidArgumentException;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -16,26 +17,13 @@ final class DateTypeEncoder implements XmlEncoder
     public const DATE_FORMAT = 'Y-m-d';
 
     /**
-     * @return Iso<string, \DateTimeInterface>
+     * @return Iso<string, DateTimeInterface>
      */
     public function iso(Context $context): Iso
     {
-
-        // TODO : Timezones
-        // https://www.w3schools.com/xml/schema_dtypes_date.asp
-
         return (new Iso(
-            static fn (\DateTimeInterface $value): string => $value->format(self::DATE_FORMAT),
-            static function (string $value): \DateTimeInterface {
-                $result = \DateTimeImmutable::createFromFormat('!'.self::DATE_FORMAT, $value);
-                if (!$result) {
-                    throw new InvalidArgumentException(
-                        'Invalid date format detected: '.$value.'. Expected format: '.self::DATE_FORMAT.'.'
-                    );
-                }
-
-                return $result;
-            }
+            static fn (DateTimeInterface $value): string => $value->format(self::DATE_FORMAT),
+            static fn (string $value): DateTimeInterface => (new DateTimeImmutable($value))->setTime(0, 0),
         ));
     }
 }

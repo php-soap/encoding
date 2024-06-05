@@ -11,7 +11,7 @@ use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(ElementEncoder::class)]
-class ElementEncoderTest extends AbstractEncoderTests
+final class ElementEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
     {
@@ -20,6 +20,7 @@ class ElementEncoderTest extends AbstractEncoderTests
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlTargetNodeName('hello')
+                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
             ),
         ];
 

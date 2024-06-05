@@ -9,7 +9,7 @@ use Soap\Encoding\Decoder as SoapDecoder;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\Decoder;
 use Soap\EngineIntegrationTests\AbstractDecoderTest;
-use Soap\EngineIntegrationTests\Type\ValidateRequest;
+use Soap\EngineIntegrationTests\Type\ValidateResponse;
 use Soap\Wsdl\Loader\StreamWrapperLoader;
 use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Wsdl1Reader;
@@ -35,7 +35,7 @@ final class DecoderTest extends AbstractDecoderTest
             $metadata,
             $wsdlInfo->namespaces,
             EncoderRegistry::default()
-                ->addClassMap('http://soapinterop.org/xsd', 'MappedValidateRequest', ValidateRequest::class)
+                ->addClassMap('http://soapinterop.org/xsd', 'MappedValidateResponse', ValidateResponse::class)
         );
     }
 }

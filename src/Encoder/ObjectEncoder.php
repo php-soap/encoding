@@ -3,33 +3,38 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Closure;
+use Soap\Encoding\TypeInference\ComplexTypeBuilder;
+use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\Property;
+use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Lens\Lens;
+use function Psl\Dict\map;
 use function Psl\Dict\reindex;
 use function Psl\invariant;
-use function Psl\Dict\map;
+use function Psl\Iter\any;
+use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Lens\index;
-use function VeeWee\Xml\Dom\Builder\value;
+use function VeeWee\Reflecta\Lens\optional;
+use function VeeWee\Reflecta\Lens\property;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
-use function VeeWee\Reflecta\Lens\property;
+use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * TODO : object instead of array?
- * TODO : Support for both?
- * TODO : ...
- * @template T extends object
- *
- * @implements XmlEncoder<string, T>
+ * @implements XmlEncoder<string, object|array>
  */
 final class ObjectEncoder implements XmlEncoder
 {
     /**
-     * @param class-string<T> $className
+     * @param class-string<object|array> $className
      */
     public function __construct(
         private readonly string $className
@@ -40,25 +45,12 @@ final class ObjectEncoder implements XmlEncoder
     {
         invariant((bool)$context->type->getXmlNamespace(), 'TODO : Expecting a namespace for now');
 
-        $type = $context->metadata->getTypes()->fetchByNameAndXmlNamespace( // TODO : simplify API
-            $context->type->getName(),
-            $context->type->getXmlNamespace()
-        );
-        $properties = reindex(
-            $type->getProperties(),
-            static fn(Property $property): string => $property->getName(),
-        );
+        $properties = $this->detectProperties($context);
 
         return new Iso(
-            /**
-             * @param T $value
-             */
-            function (object $value) use ($context, $properties) : string {
+            function (object|array $value) use ($context, $properties) : string {
                 return $this->to($context, $properties, $value);
             },
-            /**
-             * @return T
-             */
             function (string $value) use ($context, $properties) : object {
                 return $this->from($context, $properties, $value);
             }
@@ -68,32 +60,57 @@ final class ObjectEncoder implements XmlEncoder
     /**
      * @param array<string, Property> $properties
      */
-    private function to(Context $context, array $properties, object $data): string
+    private function to(Context $context, array $properties, object|array $data): string
     {
+        if (is_array($data)) {
+            $data = (object) $data;
+        }
+        $isAnyPropertyQualified = any(
+            $properties,
+            static fn (Property $property): bool => $property->getType()->getMeta()->isQualified()->unwrapOr(false)
+        );
+        $defaultAction = writeChildren([]);
+
         return (new XsdTypeXmlElementWriter())(
             $context,
             writeChildren(
-                map(
-                    $properties,
-                    function (Property $property) use ($context, $data) : \Closure {
-                        $type = $property->getType();
-                        $value = property($property->getName())->get($data);
+                [
+                    (new XsiAttributeBuilder(
+                        $context,
+                        XsiTypeDetector::detectFromValue($context, []),
+                        includeXsiTargetNamespace: !$isAnyPropertyQualified,
+                    )),
+                    ...map(
+                        $properties,
+                        function (Property $property) use ($context, $data, $defaultAction) : Closure {
+                            $type = $property->getType();
+                            $lens = $this->decorateLensForType(property($property->getName()), $type);
+                            $value = $lens
+                                ->tryGet($data)
+                                ->catch(static fn () => null)
+                                ->getResult();
 
-                        return $this->handleProperty(
-                            $property,
-                            onAttribute: fn (): \Closure => (new AttributeBuilder($type, $this->grabIsoForProperty($context, $property)->to($value)))(...),
-                            onValue: fn (): \Closure => value($this->grabIsoForProperty($context, $property)->from($value)),
-                            onElements: fn (): \Closure =>raw($this->grabIsoForProperty($context, $property)->to($value)),
-                        );
-                    }
-                )
+                            return $this->handleProperty(
+                                $property,
+                                onAttribute: fn (): Closure => $value ? (new AttributeBuilder(
+                                    $context,
+                                    $type,
+                                    $this->grabIsoForProperty($context, $property)->to($value)
+                                ))(...) : $defaultAction,
+                                onValue: fn (): Closure => $value
+                                    ? buildValue($this->grabIsoForProperty($context, $property)->to($value))
+                                    : (new NilAttributeBuilder())(...),
+                                onElements: fn (): Closure => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction,
+                            );
+                        }
+                    )
+                ]
             )
         );
     }
 
     /**
      * @param array<string, Property> $properties
-     * @return T
      */
     private function from(Context $context, array $properties, string $data): object
     {
@@ -103,22 +120,23 @@ final class ObjectEncoder implements XmlEncoder
             map(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
-                    $value = index($property->getName())
+                    $type = $property->getType();
+                    $meta = $type->getMeta();
+                    $isList = $meta->isList()->unwrapOr(false);
+                    $value = $this->decorateLensForType(
+                        index($property->getName()),
+                        $type
+                    )
                         ->tryGet($nodes)
-                        ->catch(static function () use ($property) {
-
-                            // TODO : Improve logic based on 'list' or 'nullable' or nullable attributes ...
-                            // TODO : - what with nullables that are not there e.g.
-                            // TODO : - what with nullable?
-                            return '';
-                        })
+                        ->catch(static fn () => null)
                         ->getResult();
+                    $defaultValue = $isList ? [] : null;
 
                     return $this->handleProperty(
                         $property,
                         onAttribute: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
-                        onValue: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
-                        onElements: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
+                        onValue: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
+                        onElements: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                     );
                 }
             )
@@ -136,17 +154,16 @@ final class ObjectEncoder implements XmlEncoder
     /**
      * @template T
      *
-     * @param Property $property
-     * @param \Closure(): T $onAttribute
-     * @param \Closure(): T $onValue
-     * @param \Closure(): T $onElements
+     * @param Closure(): T $onAttribute
+     * @param Closure(): T $onValue
+     * @param Closure(): T $onElements
      * @return T
      */
     private function handleProperty(
         Property $property,
-        \Closure $onAttribute,
-        \Closure $onValue,
-        \Closure $onElements,
+        Closure $onAttribute,
+        Closure $onValue,
+        Closure $onElements,
     ) {
         $meta = $property->getType()->getMeta();
 
@@ -156,5 +173,44 @@ final class ObjectEncoder implements XmlEncoder
             $property->getName() === '_' => $onValue(),
             default => $onElements()
         };
+    }
+
+    /**
+     * @param Lens<mixed, mixed> $lens
+     *
+     * @return Lens<mixed, mixed>
+     */
+    private function decorateLensForType(Lens $lens, XsdType $type): Lens
+    {
+        $meta = $type->getMeta();
+        if ($meta->isNullable()->unwrapOr(false)) {
+            return optional($lens);
+        }
+
+        if (
+            $meta->isAttribute()->unwrapOr(false) &&
+            $meta->use()->unwrapOr('optional') === 'optional'
+        ) {
+            return optional($lens);
+        }
+
+        return $lens;
+    }
+
+    /**
+     * @return array<string, Property>
+     */
+    private function detectProperties(Context $context): array
+    {
+        $type = (new ComplexTypeBuilder())($context);
+        $properties = reindex(
+            sort_by(
+                $type->getProperties(),
+                static fn (Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
+            ),
+            static fn (Property $property): string => $property->getName(),
+        );
+
+        return $properties;
     }
 }

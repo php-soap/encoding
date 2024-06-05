@@ -3,12 +3,11 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Soap\Encoding\Xml\XsdTypeXmlElementWriter;
+use Soap\Encoding\Xml\Reader\ElementValueReader;
+use Soap\Encoding\Xml\Writer\ElementValueBuilder;
+use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
-use function Psl\Type\string;
-use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
-use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
  * @template T of mixed
@@ -29,18 +28,18 @@ final class ElementEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
-        $typeIso = $this->typeEncoder->iso($context);
+        $typeEncoder = $this->typeEncoder;
+        $typeIso = $typeEncoder->iso($context);
 
         return new Iso(
-            static fn(mixed $raw): string => (new XsdTypeXmlElementWriter())(
+            static fn (mixed $raw): string => (new XsdTypeXmlElementWriter())(
                 $context,
-                buildValue($typeIso->to($raw))
+                (new ElementValueBuilder($context, $typeIso, $raw))
             ),
-            static fn(string $xml): mixed => $typeIso->from(
-                readValue(
-                    Document::fromXmlString($xml)->locateDocumentElement(),
-                    string()
-                )
+            static fn (string $xml): mixed => (new ElementValueReader())(
+                $context,
+                $typeEncoder,
+                Document::fromXmlString($xml)->locateDocumentElement(),
             )
         );
     }
