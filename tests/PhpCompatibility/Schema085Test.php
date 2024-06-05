@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\PhpCompatibility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
@@ -12,7 +11,7 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema047Test extends AbstractCompatibilityTests
+class Schema085Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType2">
@@ -23,7 +22,9 @@ class Schema047Test extends AbstractCompatibilityTests
     <complexType name="testType">
         <complexContent>
             <extension base="tns:testType2">
-                <attribute name="int2" type="int"/>
+                <sequence>
+                    <element name="int2" type="int"/>
+                </sequence>
             </extension>
         </complexContent>
     </complexType>
@@ -32,11 +33,7 @@ class Schema047Test extends AbstractCompatibilityTests
 
     protected function calculateParam(): mixed
     {
-        return (object)[
-            "_" => 123,
-            "int" => 123,
-            "int2" => 123,
-        ];
+        return new B();
     }
 
     protected function expectXml(): string
@@ -47,20 +44,21 @@ class Schema047Test extends AbstractCompatibilityTests
                            xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
             <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                 <tns:test>
-                    <testParam xsi:type="tns:testType" int2="123">
-                        <int xsi:type="xsd:int">123</int>
+                    <testParam xsi:type="tns:testType">
+                        <int xsi:type="xsd:int">1</int>
+                        <int2 xsi:type="xsd:int">2</int2>
                     </testParam>
                 </tns:test>
             </SOAP-ENV:Body>
         </SOAP-ENV:Envelope>
         XML;
     }
+}
 
-    protected function expectDecoded(): mixed
-    {
-        return (object)[
-            "int2" => 123,
-            "int" => 123,
-        ];
-    }
+class A {
+    public $int = 1;
+}
+
+class B extends A {
+    public $int2 = 2;
 }

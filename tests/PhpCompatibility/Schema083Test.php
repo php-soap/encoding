@@ -1,3 +1,27 @@
+<?php
+declare(strict_types=1);
+
+namespace Soap\Encoding\Test\PhpCompatibility;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Soap\Encoding\Decoder;
+use Soap\Encoding\Driver;
+use Soap\Encoding\Encoder;
+
+#[CoversClass(Driver::class)]
+#[CoversClass(Encoder::class)]
+#[CoversClass(Decoder::class)]
+class Schema083Test extends AbstractCompatibilityTests
+{
+    #[Test] public function it_is_compatible_with_phps_encoding()
+    {
+        $this->markTestSkipped('We currently dont support the SOAP_USE_XSI_ARRAY_TYPE way in here');
+    }
+
+    protected function expectXml(): string
+    {
+        return <<<'EOORIGNALTEST'
 --TEST--
 SOAP XML Schema 83: SOAP 1.2 Array with SOAP_USE_XSI_ARRAY_TYPE
 
@@ -27,3 +51,7 @@ array(2) {
   int(123)
 }
 ok
+
+EOORIGNALTEST;
+    }
+}

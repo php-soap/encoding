@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\PhpCompatibility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
@@ -13,7 +12,7 @@ use function Psl\Str\format;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-class Schema064Test extends AbstractCompatibilityTests
+class Schema086Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
     <complexType name="testType">
@@ -33,25 +32,19 @@ class Schema064Test extends AbstractCompatibilityTests
 
     protected function calculateParam(): mixed
     {
-        $date = gmmktime(1,2,3,4,5,1976);
-        putenv('TZ=GMT');
+        // We only support DateTimeInterface for dateTime and date - not the others. They are just strings.
+        $date = new \DateTimeImmutable('1976-04-05T01:02:03Z');
 
         return (object)[
             'dateTime' => $date,
-            'time' => $date,
-            'date' => $date,
-            'gYearMonth' => $date,
-            'gYear' => $date,
-            'gMonthDay' => $date,
-            'gDay' => $date,
-            'gMonth' => $date,
+            'time' => $date->format('H:i:sp'),
+            'date' => $date->setTime(0, 0),
+            'gYearMonth' => $date->format('Y-mp'),
+            'gYear' => $date->format('Yp'),
+            'gMonthDay' => $date->format('--m-dp'),
+            'gDay' => $date->format('---dp'),
+            'gMonth' => $date->format('--m--p')
         ];
-    }
-
-    #[Test]
-    public function it_is_compatible_with_phps_encoding()
-    {
-        $this->markTestSkipped('Epoch numbers are not supported currently - we only support dateTimeInterface. See Schema086.');
     }
 
     protected function expectXml(): string
