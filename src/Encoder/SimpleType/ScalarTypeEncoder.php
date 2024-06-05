@@ -35,20 +35,29 @@ final class ScalarTypeEncoder implements XmlEncoder
                     'Unsupported scalar type: '.gettype($value) . '. ' . print_r($context->type, true)
                 )
             },
-            static fn (string $value): mixed => Type\union(
-                Type\int(),
-                Type\float(),
-                Type\converted(
-                    Type\string(),
-                    Type\bool(),
-                    static fn (string $value): bool => match ($value) {
-                        'true' => true,
-                        'false' => false,
-                        default => throw new InvalidArgumentException('Invalid boolean value: '.$value)
-                    }
-                ),
-                Type\string()
-            )->coerce($value)
+            static function (string $value): mixed {
+                try {
+                    return Type\int()->coerce($value);
+                } catch (Type\Exception\CoercionException){}
+
+                try {
+                    return Type\float()->coerce($value);
+                } catch (Type\Exception\CoercionException){}
+
+                try {
+                    return Type\converted(
+                        Type\string(),
+                        Type\bool(),
+                        static fn (string $value): bool => match ($value) {
+                            'true' => true,
+                            'false' => false,
+                            default => throw new InvalidArgumentException('Invalid boolean value: '.$value)
+                        }
+                    )->coerce($value);
+                } catch (Type\Exception\CoercionException){}
+
+                return Type\string()->coerce($value);
+            }
         ));
     }
 }
