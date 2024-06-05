@@ -84,8 +84,10 @@ final class ObjectEncoder implements XmlEncoder
                         function (Property $property) use ($context, $data, $defaultAction) : \Closure {
                             $type = $property->getType();
                             $lens = $this->decorateLensForType(property($property->getName()), $type);
-                            $value = $lens->tryGet($data)->unwrapOr(null);
-
+                            $value = $lens
+                                ->tryGet($data)
+                                ->catch(static fn () => null)
+                                ->getResult();
 
                             return $this->handleProperty(
                                 $property,
