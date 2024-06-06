@@ -43,8 +43,6 @@ final class ObjectEncoder implements XmlEncoder
 
     public function iso(Context $context): Iso
     {
-        invariant((bool)$context->type->getXmlNamespace(), 'TODO : Expecting a namespace for now');
-
         $properties = $this->detectProperties($context);
 
         return new Iso(
@@ -169,7 +167,6 @@ final class ObjectEncoder implements XmlEncoder
 
         return match(true) {
             $meta->isAttribute()->unwrapOr(false) => $onAttribute(),
-            // TODO -> meta->isElementValue() (fix multiple child elements to be isElementValue=false)
             $property->getName() === '_' => $onValue(),
             default => $onElements()
         };

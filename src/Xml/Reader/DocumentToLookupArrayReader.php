@@ -36,7 +36,6 @@ final class DocumentToLookupArrayReader
             $nodes['_'] = $content;
         }
 
-        // TODO : What if attr has the same key as element?
         // All attributes also need to be added as key => value pairs.
         foreach (attributes_list($root) as $attribute) {
             $nodes[$attribute->localName] = $attribute->value;

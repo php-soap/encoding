@@ -37,7 +37,9 @@ final class SoapEnvelopeWriter
     {
         $envelopeNamespace = match($this->soapVersion) {
             SoapVersion::SOAP_11 => Xmlns::soap11Envelope()->value(),
-            SoapVersion::SOAP_12 => rtrim(Xmlns::soap12Envelope()->value(), '/'), // TODO : Both could be accepted but the one without slashes should be the main one.
+            // The default SOAP12 namespace should not have a trailing backslash
+            // Although both are being used, some services complain about this.
+            SoapVersion::SOAP_12 => rtrim(Xmlns::soap12Envelope()->value(), '/'),
         };
 
         return Writer::inMemory()

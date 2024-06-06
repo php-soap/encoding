@@ -8,6 +8,7 @@ use RuntimeException;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\InvalidArgumentException;
+use Soap\Encoding\Exception\RestrictionException;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -30,13 +31,9 @@ final class ScalarTypeEncoder implements XmlEncoder
                 is_float($value) => (new FloatTypeEncoder())->iso($context)->to($value),
                 is_string($value) => (new StringTypeEncoder())->iso($context)->to($value),
                 is_bool($value) => (new BoolTypeEncoder())->iso($context)->to($value),
-
-                // TODO ADD SPECIFIC EXCEPTION...
-                default => throw new RuntimeException(
-                    'Unsupported scalar type: '.gettype($value) . '. ' . print_r($context->type, true)
-                )
+                default => throw RestrictionException::unsupportedValueType($context->type, $value)
             },
-            static function (string $value): mixed {
+            static function (string $value) use ($context): mixed {
                 try {
                     return Type\int()->coerce($value);
                 } catch (Type\Exception\CoercionException) {
@@ -54,7 +51,11 @@ final class ScalarTypeEncoder implements XmlEncoder
                         static fn (string $value): bool => match ($value) {
                             'true' => true,
                             'false' => false,
-                            default => throw new InvalidArgumentException('Invalid boolean value: '.$value)
+                            default => throw RestrictionException::unexpectedEnumType(
+                                $context->type,
+                                ['true', 'false'],
+                                $value
+                            )
                         }
                     )->coerce($value);
                 } catch (Type\Exception\CoercionException) {
