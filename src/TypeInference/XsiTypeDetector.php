@@ -16,6 +16,9 @@ use function Psl\Option\some;
 
 final class XsiTypeDetector
 {
+    /**
+     * @psalm-param mixed $value
+     */
     public static function detectFromValue(Context $context, mixed $value): string
     {
         return self::detectFromContext($context)->unwrapOrElse(
@@ -34,7 +37,7 @@ final class XsiTypeDetector
     }
 
     /**
-     * @return Option<XmlEncoder<string, mixed>>
+     * @return Option<XmlEncoder<mixed, string>>
      */
     public static function detectEncoderFromXmlElement(Context $context, DOMElement $element): Option
     {
@@ -48,7 +51,7 @@ final class XsiTypeDetector
         }
 
         [$prefix, $localName] = (new QnameParser)($xsiType);
-        if (!$prefix) {
+        if (!$prefix || !$localName) {
             return none();
         }
 
@@ -58,6 +61,10 @@ final class XsiTypeDetector
         }
 
         $namespaceUri = $namespace->unwrap();
+        if (!$namespaceUri) {
+            return none();
+        }
+
         $type = $context->type;
         $meta = $type->getMeta();
 
@@ -70,7 +77,7 @@ final class XsiTypeDetector
     }
 
     /**
-     * @return Option<string>
+     * @return Option<non-empty-string>
      */
     private static function detectFromContext(Context $context): Option
     {

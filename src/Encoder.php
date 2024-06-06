@@ -13,6 +13,8 @@ use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
+use function Psl\Type\mixed;
+use function Psl\Type\non_empty_string;
 use function VeeWee\Reflecta\Lens\index;
 
 final class Encoder implements SoapEncoder
@@ -31,15 +33,18 @@ final class Encoder implements SoapEncoder
 
         $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
         $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
-        $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::tryFrom(...));
+        $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::from(...));
 
         $request = [];
         foreach ($methodInfo->getParameters() as $index => $parameter) {
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
+            /** @var mixed $argument */
             $argument = index($index)->get($arguments);
 
-            $request[] = $this->registry->detectEncoderForContext($context)->iso($context)->to($argument);
+            $request[] = non_empty_string()->assert(
+                $this->registry->detectEncoderForContext($context)->iso($context)->to($argument)
+            );
         }
 
         $operation = new OperationBuilder($meta, $this->namespaces, $request);

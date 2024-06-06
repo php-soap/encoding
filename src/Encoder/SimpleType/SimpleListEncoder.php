@@ -13,12 +13,12 @@ use function Psl\Vec\filter;
 use function Psl\Vec\map;
 
 /**
- * @implements XmlEncoder<string, array>
+ * @implements XmlEncoder<array, string>
  */
 final class SimpleListEncoder implements Feature\ListAware, XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, mixed> $typeEncoder
+     * @param XmlEncoder<mixed, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -26,7 +26,9 @@ final class SimpleListEncoder implements Feature\ListAware, XmlEncoder
     }
 
     /**
-     * @return Iso<string, array>
+     * @psalm-suppress ImplementedReturnTypeMismatch - ISO<S,A> does not ISO<S,T,A,B>
+     *
+     * @return Iso<string|array, string>
      */
     public function iso(Context $context): Iso
     {

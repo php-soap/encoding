@@ -13,18 +13,21 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 
 /**
  * @template T
- * @implements XmlEncoder<string, iterable<array-key, T>>
+ * @implements XmlEncoder<iterable<array-key, T>, string>
  */
 final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, T> $typeEncoder
+     * @param XmlEncoder<T, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
     ) {
     }
 
+    /**
+     * @return Iso<iterable<array-key, T>, string>
+     */
     public function iso(Context $context): Iso
     {
         $type = $context->type;
@@ -43,6 +46,9 @@ final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
                 return join(
                     map(
                         $raw,
+                        /**
+                         * @param T $item
+                         */
                         static fn (mixed $item): string => $innerIso->to($item)
                     ),
                     ''

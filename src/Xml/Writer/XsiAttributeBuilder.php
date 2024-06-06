@@ -21,6 +21,9 @@ final class XsiAttributeBuilder
     ) {
     }
 
+    /**
+     * @return Generator<bool>
+     */
     public function __invoke(XMLWriter $writer): Generator
     {
         if ($this->context->bindingUse !== BindingUse::ENCODED) {

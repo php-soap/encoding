@@ -14,6 +14,10 @@ use function VeeWee\Xml\Writer\Builder\value;
 
 final class ElementValueBuilder
 {
+    /**
+     * @param Iso<mixed, string> $iso
+     * @psalm-param mixed $value
+     */
     public function __construct(
         private readonly Context $context,
         private readonly Iso $iso,
@@ -22,7 +26,7 @@ final class ElementValueBuilder
     }
 
     /**
-     * @return Generator<true>
+     * @return Generator<bool>
      */
     public function __invoke(XMLWriter $writer): Generator
     {

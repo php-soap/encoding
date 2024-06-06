@@ -10,31 +10,28 @@ use VeeWee\Reflecta\Iso\Iso;
 use function Psl\Type\backed_enum;
 
 /**
- * @template T of \BackedEnum
- *
- * @implements XmlEncoder<string, T>
+ * @implements XmlEncoder<BackedEnum, string>
  */
 final class BackedEnumTypeEncoder implements XmlEncoder
 {
     /**
-     * @param enum-string<T> $enumClass
+     * @param class-string<BackedEnum> $enumClass
      */
     public function __construct(
         private readonly string $enumClass
     ) {
     }
 
+    /**
+     * @return Iso<BackedEnum, string>
+     */
     public function iso(Context $context): Iso
     {
-        return (new Iso(
-            /**
-             * @template T $value
-             */
-            static fn (BackedEnum $enum): string => $enum->value,
-            /**
-             * @return T
-             */
-            fn (string $value): BackedEnum => backed_enum($this->enumClass)->coerce($value),
-        ));
+        return (
+            new Iso(
+                static fn (BackedEnum $enum): string => (string) $enum->value,
+                fn (string $value): BackedEnum => backed_enum($this->enumClass)->coerce($value),
+            )
+        );
     }
 }

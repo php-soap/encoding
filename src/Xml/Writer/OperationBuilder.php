@@ -16,7 +16,7 @@ use function VeeWee\Xml\Writer\Builder\raw;
 final class OperationBuilder
 {
     /**
-     * @param list<string> $parameters
+     * @param list<non-empty-string> $parameters
      */
     public function __construct(
         private readonly MethodMeta $meta,

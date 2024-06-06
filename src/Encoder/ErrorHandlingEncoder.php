@@ -8,26 +8,29 @@ use Throwable;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @template I
- * @template O
+ * @template-covariant TData
+ * @template-covariant TXml
  *
- * @implements XmlEncoder<I, O>
+ * @implements XmlEncoder<TData, TXml>
  *
  */
 final class ErrorHandlingEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<I, O> $encoder
+     * @param XmlEncoder<TData, TXml> $encoder
      */
     public function __construct(
         private readonly XmlEncoder $encoder
     ) {
     }
 
+    /**
+     * @return Iso<TData, TXml>
+     */
     public function iso(Context $context): Iso
     {
         $innerIso = $this->encoder->iso($context);
-        $buildPath = static function() use ($context): ?string {
+        $buildPath = static function () use ($context): ?string {
             $meta = $context->type->getMeta();
             $isElement = $meta->isElement()->unwrapOr(false);
             $isAttribute = $meta->isAttribute()->unwrapOr(false);
@@ -44,6 +47,10 @@ final class ErrorHandlingEncoder implements XmlEncoder
         };
 
         return new Iso(
+            /**
+             * @psalm-param TData $value
+             * @psalm-return TXml
+             */
             static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
                 try {
                     return $innerIso->to($value);
@@ -51,6 +58,10 @@ final class ErrorHandlingEncoder implements XmlEncoder
                     throw EncodingException::encodingValue($value, $context->type, $exception, $buildPath());
                 }
             },
+            /**
+             * @psalm-param TXml $value
+             * @psalm-return TData
+             */
             static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
                 try {
                     return $innerIso->from($value);

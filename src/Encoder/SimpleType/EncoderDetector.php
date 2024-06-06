@@ -15,7 +15,7 @@ use function Psl\Iter\any;
 final class EncoderDetector
 {
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string|null>
      */
     public function __invoke(Context $context): XmlEncoder
     {
@@ -45,7 +45,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     private function detectSimpleTypeEncoder(XsdType $type, Context $context): XmlEncoder
     {
@@ -59,12 +59,12 @@ final class EncoderDetector
         // Try to find a match for the extended simple type:
         // Or fallback to the default scalar encoder.
         return $meta->extends()
-            ->filter(static fn ($extend): bool => $extend['isSimple'])
+            ->filter(static fn ($extend): bool => $extend['isSimple'] ?? false)
             ->map(static fn ($extends) : XmlEncoder => $context->registry->findSimpleEncoderByNamespaceName(
                 $extends['namespace'],
                 $extends['type'],
             ))
-            ->unwrapOr(ScalarTypeEncoder::static());
+            ->unwrapOr(ScalarTypeEncoder::default());
     }
 
     private function detectIsListType(XsdType $type): bool

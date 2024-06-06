@@ -39,7 +39,7 @@ final class ComplexTypeBuilder
         $typeMeta = $type->getXsdType()->getMeta();
 
         $extends = $typeMeta->extends()
-            ->filter(static fn (array $extends): bool => !$extends['isSimple'])
+            ->filter(static fn (array $extends): bool => !($extends['isSimple'] ?? false))
             ->map(static fn (array $extends): Type => $allTypes->fetchByNameAndXmlNamespace($extends['type'], $extends['namespace']));
 
         return $extends

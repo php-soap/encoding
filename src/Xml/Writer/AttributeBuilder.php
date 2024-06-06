@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
-use Soap\Encoding\Encoder\Context;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Xml\Writer\Builder\Builder;
 use XMLWriter;
@@ -14,7 +13,6 @@ use function VeeWee\Xml\Writer\Builder\namespaced_attribute;
 final class AttributeBuilder implements Builder
 {
     public function __construct(
-        private readonly Context $context,
         private readonly XsdType $type,
         private readonly string $value
     ) {

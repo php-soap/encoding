@@ -10,6 +10,9 @@ use function VeeWee\Xml\Dom\Locator\Element\children as locateChildElements;
 
 final class ChildrenReader
 {
+    /**
+     * @param non-empty-string $xml
+     */
     public function __invoke(string $xml): string
     {
         $document = Document::fromXmlString($xml);
