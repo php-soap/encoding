@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Soap\Encoding\Exception\SoapFaultException;
+use Soap\Encoding\Fault\Guard\SoapFaultGuard;
 use Soap\Encoding\Xml\Reader\SoapEnvelopeReader;
 use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 
 #[CoversClass(SoapEnvelopeWriter::class)]
+#[CoversClass(SoapFaultGuard::class)]
 final class SoapEnvelopeReaderTest extends TestCase
 {
     /**
@@ -23,6 +27,29 @@ final class SoapEnvelopeReaderTest extends TestCase
         $actual = $reader($envelope);
 
         static::assertXmlStringEqualsXmlString($expected, $actual);
+    }
+
+    #[Test]
+    public function it_fails_reading_on_soap_12_fault(): void
+    {
+        $this->expectException(SoapFaultException::class);
+
+        $reader = new SoapEnvelopeReader();
+        $reader(<<<EOXML
+            <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+                <soap:Body xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+                    <soap:Fault xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+                        <soap:Code>
+                            <soap:Value>soap:Sender</soap:Value>
+                        </soap:Code>
+                        <soap:Reason>
+                            <soap:Text>Sender Timeout</soap:Text>
+                        </soap:Reason>
+                    </soap:Fault>
+                </soap:Body>
+            </soap:Envelope>
+        EOXML);
+
     }
 
     public static function provideEnvelopeCases()
