@@ -28,7 +28,6 @@ final class ElementEncoder implements XmlEncoder
     public function iso(Context $context): Iso
     {
         $typeEncoder = $this->typeEncoder;
-        $typeIso = $typeEncoder->iso($context);
 
         return new Iso(
             /**
@@ -36,7 +35,7 @@ final class ElementEncoder implements XmlEncoder
              */
             static fn (mixed $raw): string => (new XsdTypeXmlElementWriter())(
                 $context,
-                (new ElementValueBuilder($context, $typeIso, $raw))
+                (new ElementValueBuilder($context, $typeEncoder, $raw))
             ),
             /**
              * @psalm-param non-empty-string $xml

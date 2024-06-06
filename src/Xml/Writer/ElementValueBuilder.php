@@ -5,22 +5,24 @@ namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\Feature\CData;
+use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
-use VeeWee\Reflecta\Iso\Iso;
 use XMLWriter;
+use function VeeWee\Xml\Writer\Builder\cdata;
 use function VeeWee\Xml\Writer\Builder\children;
 use function VeeWee\Xml\Writer\Builder\value;
 
 final class ElementValueBuilder
 {
     /**
-     * @param Iso<mixed, string> $iso
+     * @param XmlEncoder<mixed, string> $encoder
      * @psalm-param mixed $value
      */
     public function __construct(
         private readonly Context $context,
-        private readonly Iso $iso,
+        private readonly XmlEncoder $encoder,
         private readonly mixed $value
     ) {
     }
@@ -32,7 +34,7 @@ final class ElementValueBuilder
     {
         yield from children([
             $this->buildXsiType(...),
-            value($this->iso->to($this->value))
+            $this->buildValue(...),
         ])($writer);
     }
 
@@ -50,5 +52,20 @@ final class ElementValueBuilder
             XsiTypeDetector::detectFromValue($this->context, $this->value),
             includeXsiTargetNamespace:  !$this->context->type->getMeta()->isQualified()->unwrapOr(false)
         ))($writer);
+    }
+
+    /**
+     * @return Generator<bool>
+     */
+    private function buildValue(XMLWriter $writer): Generator
+    {
+        $encoded = $this->encoder->iso($this->context)->to($this->value);
+
+        $builder = match (true) {
+            $this->encoder instanceof CData => cdata(value($encoded)),
+            default => value($encoded)
+        };
+
+        yield from $builder($writer);
     }
 }
