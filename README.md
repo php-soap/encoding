@@ -71,13 +71,40 @@ However, you can configure how the encoding should be done by adding your own en
 Some examples:
 
 ```php
-use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Encoder\SimpleType\DateTimeTypeEncoder;use Soap\Encoding\EncoderRegistry;
 use Soap\Xml\Xmlns;
 
 EncoderRegistry::default()
     ->addClassMap('urn:namespace', 'TypeA', TypeA::class)
     ->addClassMap('urn:namespace', 'TypeB', TypeB::class)
     ->addBackedEnum('urn:namespace', 'EnumA', EnumA::class)
-    ->addSimpleTypeConverter(Xmlns::xsd()->value(), 'dateTime', MyDateTimeEncoder::class)
+    ->addSimpleTypeConverter(Xmlns::xsd()->value(), 'dateTime', new DateTimeTypeEncoder('Y-m-d\TH:i:s'))
     ->addComplexTypeConverter('urn:namespace', 'TypeC', MySpecificTypeCEncoder::class);
+```
+
+## Encoder
+
+Encoding and decoding is based on small `XmlEncoder` classes that are responsible for encoding and decoding a specific type of data.
+You can either use one of the provided encoders or create your own.
+
+Building a custom encoder can look like this:
+
+```php
+use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\XmlEncoder;
+use VeeWee\Reflecta\Iso\Iso;
+
+/**
+ * @implements XmlEncoder<string, MyClass> 
+ */
+class MySpecificTypeCEncoder implements XmlEncoder
+{
+    public function iso(Context $context) : Iso
+    {
+        return new Iso(
+            to: static fn (MyClass $value): string => $myClass->toXmlString(),
+            from: static fn (string $value) => MyClass::fromXmlString($value),
+        );
+    }
+}
 ```
