@@ -31,9 +31,7 @@ final class ErrorHandlingEncoder implements XmlEncoder
             $meta = $context->type->getMeta();
             $isElement = $meta->isElement()->unwrapOr(false);
             $isAttribute = $meta->isAttribute()->unwrapOr(false);
-
             if (!$isElement && !$isAttribute) {
-                dd($context->type);
                 return null;
             }
 

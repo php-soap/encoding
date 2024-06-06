@@ -29,7 +29,6 @@ final class Encoder implements SoapEncoder
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
 
-        // TODO : What on failure? Is fallback assumption OK or error?
         $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
         $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
         $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::tryFrom(...));
@@ -44,8 +43,6 @@ final class Encoder implements SoapEncoder
         }
 
         $operation = new OperationBuilder($meta, $this->namespaces, $request);
-
-        // TODO : unwrap or throw very specific issue or fallback to a specific soap version?
         $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $bindingUse, $encodingStyle, $operation(...));
 
         return new SoapRequest(
