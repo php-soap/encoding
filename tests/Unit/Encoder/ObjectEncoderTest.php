@@ -137,7 +137,12 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                     ->withXmlTypeName('user')
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
-                    ->withXmlTargetNodeName('user'),
+                    ->withXmlTargetNodeName('user')
+                    ->withMeta(
+                        static fn (TypeMeta $meta): TypeMeta => $meta
+                            ->withIsQualified(true)
+                            ->withIsElement(true)
+                    ),
                 new PropertyCollection(
                     new Property(
                         'active',
@@ -162,7 +167,11 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                             ->withXmlTargetNodeName('hat')
                             ->withXmlNamespace('https://test')
                             ->withXmlNamespaceName('test')
-                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+                            ->withMeta(
+                                static fn (TypeMeta $meta): TypeMeta => $meta
+                                    ->withIsQualified(true)
+                                    ->withIsElement(true)
+                            )
                     )
                 )
             ),
@@ -172,7 +181,11 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
                     ->withXmlTargetNodeName('hat')
-                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true)),
+                    ->withMeta(
+                        static fn (TypeMeta $meta): TypeMeta => $meta
+                            ->withIsQualified(true)
+                            ->withIsElement(true)
+                    ),
                 new PropertyCollection(
                     new Property(
                         'color',

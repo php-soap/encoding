@@ -26,28 +26,38 @@ final class ErrorHandlingEncoder implements XmlEncoder
 
     public function iso(Context $context): Iso
     {
-        $meta = $context->type->getMeta();
-        $path = $meta->isSimple()
-            ->filter(static fn (bool $isSimple): bool => !$isSimple)
-            ->unwrapOr($context->type->getXmlTargetNodeName());
-        $path = $meta->isAttribute()
-            ->map(static fn (bool $isAttribute): string => '@' . $path)
-            ->unwrapOr($path);
         $innerIso = $this->encoder->iso($context);
+        $buildPath = static function() use ($context): ?string {
+            $meta = $context->type->getMeta();
+            $isElement = $meta->isElement()->unwrapOr(false);
+            $isAttribute = $meta->isAttribute()->unwrapOr(false);
+
+            if (!$isElement && !$isAttribute) {
+                dd($context->type);
+                return null;
+            }
+
+            $path = $context->type->getXmlTargetNodeName();
+            if ($isAttribute) {
+                return '@' . $path;
+            }
+
+            return $path;
+        };
 
         return new Iso(
-            static function (mixed $value) use ($innerIso, $context, $path): mixed {
+            static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
                 try {
                     return $innerIso->to($value);
                 } catch (Throwable $exception) {
-                    throw EncodingException::encodingValue($value, $context->type, $exception, $path);
+                    throw EncodingException::encodingValue($value, $context->type, $exception, $buildPath());
                 }
             },
-            static function (mixed $value) use ($innerIso, $context, $path): mixed {
+            static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
                 try {
                     return $innerIso->from($value);
                 } catch (Throwable $exception) {
-                    throw EncodingException::decodingValue($value, $context->type, $exception, $path);
+                    throw EncodingException::decodingValue($value, $context->type, $exception, $buildPath());
                 }
             }
         );
