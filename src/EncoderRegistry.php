@@ -37,7 +37,7 @@ final class EncoderRegistry
     {
         $qNameFormatter = new QNameFormatter();
         $xsd = Xmlns::xsd()->value();
-        $xsd1999 = 'http://www.w3.org/1999/XMLSchema'; // TODO : Move to Xmlns
+        $xsd1999 = Xmlns::xsd1999()->value();
 
         return new self(
             new MutableMap([
@@ -61,10 +61,10 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'ENTITIES') => new SimpleType\StringTypeEncoder(),
 
                 // Dates
-                $qNameFormatter($xsd, 'date') => new SimpleType\DateTypeEncoder(),
-                $qNameFormatter($xsd, 'dateTime') => new SimpleType\DateTimeTypeEncoder(),
-                // TODO : Check date types underneath;
-                // Should it be string or should it be "smarter" and support both a DateTimeInterface / string object as input?
+                $qNameFormatter($xsd, 'date') => SimpleType\DateTypeEncoder::default(),
+                $qNameFormatter($xsd, 'dateTime') => SimpleType\DateTimeTypeEncoder::default(),
+                // Currently only encoding other date/time-related types as string.
+                // It could be possible to use DateTimeInterface or even unix epoch int-s as well in the future.
                 $qNameFormatter($xsd, 'time') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'gYear') => new SimpleType\StringTypeEncoder(),
                 $qNameFormatter($xsd, 'gYearMonth') => new SimpleType\StringTypeEncoder(),
@@ -131,10 +131,8 @@ final class EncoderRegistry
                 $qNameFormatter($xsd1999, 'unsignedInt') => new SimpleType\IntTypeEncoder(),
                 $qNameFormatter($xsd1999, 'unsignedLong') => new SimpleType\IntTypeEncoder(),
                 $qNameFormatter($xsd1999, 'unsignedShort') => new SimpleType\IntTypeEncoder(),
-                $qNameFormatter($xsd1999, 'date') => new SimpleType\DateTypeEncoder(),
+                $qNameFormatter($xsd1999, 'date') => SimpleType\DateTypeEncoder::default(),
                 $qNameFormatter($xsd1999, 'time') => new SimpleType\StringTypeEncoder(),
-
-
             ]),
             new MutableMap([
                 // SOAP 1.1 ENC
