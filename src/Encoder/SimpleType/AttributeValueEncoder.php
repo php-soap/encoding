@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder\SimpleType;
 
-use RuntimeException;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Exception\RestrictionException;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
@@ -40,8 +40,7 @@ final class AttributeValueEncoder implements XmlEncoder
             ->unwrapOr(null);
 
         if ($fixed !== null && $value !== $fixed) {
-            // TODO custom exception
-            throw new RuntimeException(sprintf('Provided attribute value should be fixed to %s. Got %s', $fixed, $value));
+            throw RestrictionException::invalidFixedValue($fixed, $value);
         }
 
         return $value ? $this->typeEncoder->iso($context)->to($value) : null;

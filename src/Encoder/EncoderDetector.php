@@ -25,7 +25,7 @@ final class EncoderDetector
             $encoder = new RepeatingElementEncoder($encoder);
         }
 
-        return $encoder;
+        return new ErrorHandlingEncoder($encoder);
     }
 
     /**

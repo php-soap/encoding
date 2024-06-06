@@ -134,6 +134,7 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         return new TypeCollection(
             new Type(
                 XsdType::create('user')
+                    ->withXmlTypeName('user')
                     ->withXmlNamespace("https://test")
                     ->withXmlNamespaceName('test')
                     ->withXmlTargetNodeName('user'),
