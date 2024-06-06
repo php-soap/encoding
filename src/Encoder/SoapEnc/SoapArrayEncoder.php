@@ -5,6 +5,7 @@ namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Closure;
 use DOMElement;
+use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature\ListAware;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
@@ -18,6 +19,7 @@ use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
+use XMLWriter;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children;
@@ -27,25 +29,33 @@ use function VeeWee\Xml\Writer\Builder\prefixed_attribute;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @template T
- *
- * @implements XmlEncoder<string, list<T>>
+ * @implements XmlEncoder<list<mixed>, non-empty-string>
  */
 final class SoapArrayEncoder implements ListAware, XmlEncoder
 {
     /**
-     * @return Iso<string, list<T>>
+     * @return Iso<list<mixed>, non-empty-string>
      */
     public function iso(Context $context): Iso
     {
         return (new Iso(
+            /**
+             * @param list<mixed> $value
+             * @return non-empty-string
+             */
             fn (array $value): string => $this->encodeArray($context, $value),
+            /**
+             * @param non-empty-string $value
+             * @return list<mixed>
+             */
             fn (string $value): array => $this->decodeArray($context, $value),
         ));
     }
 
     /**
-     * @param list<T> $data
+     * @param list<mixed> $data
+     *
+     * @return non-empty-string
      */
     private function encodeArray(Context $context, array $data): string
     {
@@ -85,11 +95,15 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
         );
     }
 
+    /**
+     * @psalm-param mixed $value
+     * @return Closure(XMLWriter): Generator<bool>
+     */
     private function itemElement(Context $context, ?string $itemNodeName, string $itemType, mixed $value): Closure
     {
-        $buildValue = buildValue(ScalarTypeEncoder::static()->iso($context)->to($value));
+        $buildValue = buildValue(ScalarTypeEncoder::default()->iso($context)->to($value));
 
-        if ($context->bindingUse === BindingUse::ENCODED || $itemNodeName) {
+        if ($context->bindingUse === BindingUse::ENCODED || $itemNodeName !== null) {
             return element(
                 $itemNodeName ?? 'item',
                 children([
@@ -109,6 +123,10 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
         );
     }
 
+    /**
+     * @param non-empty-string $value
+     * @return list<mixed>
+     */
     private function decodeArray(Context $context, string $value): array
     {
         $document = Document::fromXmlString($value);
@@ -120,9 +138,10 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
              * @return list<mixed>
              */
             static function (array $list, DOMElement $item) use ($context): array {
+                /** @psalm-var mixed $value */
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    ScalarTypeEncoder::static(),
+                    ScalarTypeEncoder::default(),
                     $item
                 );
 

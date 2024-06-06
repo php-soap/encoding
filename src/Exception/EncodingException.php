@@ -35,6 +35,9 @@ final class EncodingException extends Exception implements ExceptionInterface
         $this->paths = $paths;
     }
 
+    /**
+     * @psalm-param mixed $value
+     */
     public static function encodingValue(
         mixed $value,
         XsdType $expectedType,
@@ -54,6 +57,9 @@ final class EncodingException extends Exception implements ExceptionInterface
         );
     }
 
+    /**
+     * @psalm-param mixed $value
+     */
     public static function decodingValue(
         mixed $value,
         XsdType $expectedType,
@@ -73,6 +79,9 @@ final class EncodingException extends Exception implements ExceptionInterface
         );
     }
 
+    /**
+     * @return list<string>
+     */
     public function getPaths(): array
     {
         return $this->paths;

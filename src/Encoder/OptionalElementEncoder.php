@@ -11,12 +11,12 @@ use VeeWee\Xml\Xmlns\Xmlns;
 
 /**
  * @template T of mixed
- * @implements XmlEncoder<string, T>
+ * @implements XmlEncoder<T, string>
  */
 final class OptionalElementEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, T> $elementEncoder
+     * @param XmlEncoder<T, string> $elementEncoder
      */
     public function __construct(
         private readonly XmlEncoder $elementEncoder
@@ -24,7 +24,7 @@ final class OptionalElementEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<string, T>
+     * @return Iso<T, string>
      */
     public function iso(Context $context): Iso
     {
@@ -41,11 +41,17 @@ final class OptionalElementEncoder implements XmlEncoder
         $elementIso = $this->elementEncoder->iso($context);
 
         return new Iso(
+            /**
+             * @param T|null $raw
+             */
             static fn (mixed $raw): string => match (true) {
                 $raw === null && $isNillable => (new XsdTypeXmlElementWriter())($context, new NilAttributeBuilder()),
                 $raw === null => '',
                 default => $elementIso->to($raw),
             },
+            /**
+             * @return T|null
+             */
             static function (string $xml) use ($elementIso) : mixed {
                 if ($xml === '') {
                     return null;

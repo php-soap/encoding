@@ -10,13 +10,12 @@ use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 
 /**
- * @template T of mixed
- * @implements XmlEncoder<string, T>
+ * @implements XmlEncoder<mixed, string>
  */
 final class ElementEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, T> $typeEncoder
+     * @param XmlEncoder<mixed, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -24,7 +23,7 @@ final class ElementEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<string, T>
+     * @return Iso<mixed, string>
      */
     public function iso(Context $context): Iso
     {
@@ -32,10 +31,17 @@ final class ElementEncoder implements XmlEncoder
         $typeIso = $typeEncoder->iso($context);
 
         return new Iso(
+            /**
+             * @psalm-param mixed $raw
+             */
             static fn (mixed $raw): string => (new XsdTypeXmlElementWriter())(
                 $context,
                 (new ElementValueBuilder($context, $typeIso, $raw))
             ),
+            /**
+             * @psalm-param non-empty-string $xml
+             * @psalm-return mixed
+             */
             static fn (string $xml): mixed => (new ElementValueReader())(
                 $context,
                 $typeEncoder,

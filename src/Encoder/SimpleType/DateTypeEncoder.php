@@ -10,7 +10,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<string, \DateTimeInterface>
+ * @implements XmlEncoder<\DateTimeInterface, string>
  */
 final class DateTypeEncoder implements XmlEncoder
 {
@@ -29,6 +29,7 @@ final class DateTypeEncoder implements XmlEncoder
 
     public static function local(): self
     {
+        /** @psalm-var DateTypeEncoder $instance */
         static $instance = new self(self::DATE_FORMAT_LOCAL);
 
         return $instance;
@@ -36,13 +37,14 @@ final class DateTypeEncoder implements XmlEncoder
 
     public static function timeZoned(): self
     {
+        /** @psalm-var DateTypeEncoder $instance */
         static $instance = new self(self::DATE_FORMAT_TIME_ZONED);
 
         return $instance;
     }
 
     /**
-     * @return Iso<string, DateTimeInterface>
+     * @return Iso<DateTimeInterface, string>
      */
     public function iso(Context $context): Iso
     {

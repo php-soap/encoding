@@ -22,24 +22,32 @@ use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @implements XmlEncoder<string, object>
+ * @implements XmlEncoder<object, non-empty-string>
  */
 final class SoapObjectEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<string, object>
+     * @return Iso<object, non-empty-string>
      */
     public function iso(Context $context): Iso
     {
         return (new Iso(
+            /**
+             * @return non-empty-string
+             */
             fn (object $value): string => $this->encodeArray($context, $value),
+            /**
+             * @param non-empty-string $value
+             */
             fn (string $value): object => $this->decodeArray($context, $value),
         ));
     }
 
+    /**
+     * @return non-empty-string
+     */
     private function encodeArray(Context $context, object $data): string
     {
-        $type = $context->type;
         $anyContext = $context->withType(XsdType::any());
 
         return (new XsdTypeXmlElementWriter())(
@@ -49,10 +57,10 @@ final class SoapObjectEncoder implements XmlEncoder
                 ...\Psl\Vec\map_with_key(
                     (array) $data,
                     static fn (mixed $key, mixed $value): Closure => element(
-                        $key,
+                        (string) $key,
                         children([
                             (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
-                            buildValue(ScalarTypeEncoder::static()->iso($context)->to($value))
+                            buildValue(ScalarTypeEncoder::default()->iso($context)->to($value))
                         ]),
                     )
                 )
@@ -60,6 +68,9 @@ final class SoapObjectEncoder implements XmlEncoder
         );
     }
 
+    /**
+     * @param non-empty-string $value
+     */
     private function decodeArray(Context $context, string $value): object
     {
         $document = Document::fromXmlString($value);
@@ -67,10 +78,11 @@ final class SoapObjectEncoder implements XmlEncoder
 
         return (object) readChildren($element)->reduce(
             static function (array $map, DOMElement $item) use ($context): array {
-                $key = $item->localName;
+                $key = $item->localName ?? 'unkown';
+                /** @psalm-var mixed $value */
                 $value = (new ElementValueReader())(
                     $context->withType(XsdType::any()),
-                    ScalarTypeEncoder::static(),
+                    ScalarTypeEncoder::default(),
                     $item
                 );
 

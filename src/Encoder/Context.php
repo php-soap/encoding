@@ -11,6 +11,9 @@ use Soap\WsdlReader\Model\Definitions\Namespaces;
 
 final class Context
 {
+    /**
+     * TODO : READONLY !
+     */
     public function __construct(
         public /*readonly*/ XsdType $type,
         public /*readonly*/ Metadata $metadata,

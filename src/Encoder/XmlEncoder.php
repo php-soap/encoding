@@ -7,13 +7,13 @@ namespace Soap\Encoding\Encoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @template I
- * @template O
+ * @template-covariant TData
+ * @template-covariant TXml
  */
 interface XmlEncoder
 {
     /**
-     * @return Iso<I, O>
+     * @return Iso<TData, TXml>
      */
     public function iso(Context $context): Iso;
 }

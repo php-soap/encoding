@@ -10,10 +10,13 @@ use function Psl\Type\int;
 use function Psl\Type\string;
 
 /**
- * @implements XmlEncoder<string, int>
+ * @implements XmlEncoder<int, string>
  */
 final class IntTypeEncoder implements XmlEncoder
 {
+    /**
+     * @return Iso<int, string>
+     */
     public function iso(Context $context): Iso
     {
         return (new Iso(

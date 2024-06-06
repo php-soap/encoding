@@ -19,13 +19,12 @@ use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\Xml\Xmlns;
 use stdClass;
 use function Psl\Dict\pull;
-use function Psl\Vec\map;
 
 final class EncoderRegistry
 {
     /**
-     * @param MutableMap<string, XmlEncoder> $simpleTypeMap
-     * @param MutableMap<string, XmlEncoder> $complextTypeMap
+     * @param MutableMap<string, XmlEncoder<mixed, string>> $simpleTypeMap
+     * @param MutableMap<string, XmlEncoder<mixed, string>> $complextTypeMap
      */
     private function __construct(
         private MutableMap $simpleTypeMap,
@@ -33,6 +32,9 @@ final class EncoderRegistry
     ) {
     }
 
+    /**
+     * @psalm-suppress InvalidArgument - It is not able to infer the underlying encoder generic types.
+     */
     public static function default(): self
     {
         $qNameFormatter = new QNameFormatter();
@@ -40,6 +42,7 @@ final class EncoderRegistry
         $xsd1999 = Xmlns::xsd1999()->value();
 
         return new self(
+            /** @var MutableMap<XmlEncoder<mixed, string>> */
             new MutableMap([
                 // Strings:
                 $qNameFormatter($xsd, 'string') => new SimpleType\StringTypeEncoder(),
@@ -134,6 +137,7 @@ final class EncoderRegistry
                 $qNameFormatter($xsd1999, 'date') => SimpleType\DateTypeEncoder::default(),
                 $qNameFormatter($xsd1999, 'time') => new SimpleType\StringTypeEncoder(),
             ]),
+            /** @var MutableMap<XmlEncoder<mixed, string>> */
             new MutableMap([
                 // SOAP 1.1 ENC
                 $qNameFormatter(EncodingStyle::SOAP_11->value, 'Array') => new SoapEnc\SoapArrayEncoder(),
@@ -161,7 +165,6 @@ final class EncoderRegistry
      * @param non-empty-string $namespace
      * @param non-empty-string $name
      * @param class-string $class
-     * @return $this
      */
     public function addClassMap(string $namespace, string $name, string $class): self
     {
@@ -174,10 +177,11 @@ final class EncoderRegistry
     }
 
     /**
+     * @template T of \BackedEnum
+     *
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @param enum-class $enumClass
-     * @return $this
+     * @param enum-string<T> $enumClass
      */
     public function addBackedEnum(string $namespace, string $name, string $enumClass): self
     {
@@ -192,7 +196,7 @@ final class EncoderRegistry
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @return $this
+     * @param XmlEncoder<mixed, string> $encoder
      */
     public function addSimpleTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
     {
@@ -207,7 +211,7 @@ final class EncoderRegistry
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @return $this
+     * @param XmlEncoder<mixed, string> $encoder
      */
     public function addComplexTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
     {
@@ -220,7 +224,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     public function findSimpleEncoderByXsdType(XsdType $type): XmlEncoder
     {
@@ -231,9 +235,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @param non-empty-string $namespace
-     * @param non-empty-string $name
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     public function findSimpleEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
     {
@@ -244,7 +246,7 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new SimpleType\ScalarTypeEncoder();
+        return SimpleType\ScalarTypeEncoder::default();
     }
 
     public function hasRegisteredSimpleTypeForXsdType(XsdType $type): bool
@@ -258,7 +260,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     public function findComplexEncoderByXsdType(XsdType $type): XmlEncoder
     {
@@ -269,9 +271,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @param non-empty-string $namespace
-     * @param non-empty-string $name
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     public function findComplexEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
     {
@@ -298,7 +298,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     public function detectEncoderForContext(Context $context): XmlEncoder
     {

@@ -13,6 +13,9 @@ use VeeWee\Reflecta\Iso\Iso;
  */
 final class Base64BinaryTypeEncoder implements XmlEncoder
 {
+    /**
+     * @return Iso<string, string>
+     */
     public function iso(Context $context): Iso
     {
         return (new Iso(

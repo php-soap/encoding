@@ -13,11 +13,16 @@ use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
 
 final class ElementValueReader
 {
+    /**
+     * @param XmlEncoder<mixed, string> $encoder
+     * @psalm-return mixed
+     */
     public function __invoke(
         Context $context,
         XmlEncoder $encoder,
         DOMElement $element
     ): mixed {
+        /** @var XmlEncoder<string, mixed> $encoder */
         $encoder = match (true) {
             $encoder instanceof DisregardXsiInformation => $encoder,
             default => XsiTypeDetector::detectEncoderFromXmlElement($context, $element)->unwrapOr($encoder)

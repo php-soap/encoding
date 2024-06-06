@@ -9,7 +9,9 @@ use stdClass;
 final class EncoderDetector
 {
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
+     *
+     * @psalm-suppress InvalidReturnType, PossiblyInvalidArgument, InvalidReturnStatement - The simple type detector could return string|null, but should not be an issue here.
      */
     public function __invoke(Context $context): XmlEncoder
     {
@@ -29,7 +31,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<string, mixed>
+     * @return XmlEncoder<mixed, string>
      */
     private function detectComplexTypeEncoder(XsdType $type, Context $context): XmlEncoder
     {
@@ -43,7 +45,7 @@ final class EncoderDetector
         // Try to find a match for the extended complex type:
         // Or fallback to the default object encoder.
         return $meta->extends()
-            ->filter(static fn ($extend): bool => !$extend['isSimple'])
+            ->filter(static fn ($extend): bool => !($extend['isSimple'] ?? false))
             ->map(static fn ($extends) : XmlEncoder => $context->registry->findComplexEncoderByNamespaceName(
                 $extends['namespace'],
                 $extends['type'],

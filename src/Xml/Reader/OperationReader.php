@@ -21,6 +21,7 @@ final class OperationReader
     /**
      * Reads all operation response message parts:
      *
+     * @param non-empty-string $xml
      * @return list<string>
      */
     public function __invoke(string $xml): array

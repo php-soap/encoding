@@ -7,14 +7,15 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\RestrictionException;
 use VeeWee\Reflecta\Iso\Iso;
+use function Psl\Type\scalar;
 
 /**
- * @implements XmlEncoder<string|null, mixed>
+ * @implements XmlEncoder<mixed, string|null>
  */
 final class AttributeValueEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<string, mixed> $typeEncoder
+     * @param XmlEncoder<mixed, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -22,7 +23,7 @@ final class AttributeValueEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<string, mixed>
+     * @return Iso<mixed, string|null>
      */
     public function iso(Context $context): Iso
     {
@@ -40,10 +41,13 @@ final class AttributeValueEncoder implements XmlEncoder
             ->unwrapOr(null);
 
         if ($fixed !== null && $value !== $fixed) {
-            throw RestrictionException::invalidFixedValue($fixed, $value);
+            throw RestrictionException::invalidFixedValue(
+                scalar()->assert($fixed),
+                scalar()->assert($value)
+            );
         }
 
-        return $value ? $this->typeEncoder->iso($context)->to($value) : null;
+        return $value !== null ? $this->typeEncoder->iso($context)->to($value) : null;
     }
 
     public function from(Context $context, ?string $value): mixed
@@ -55,6 +59,6 @@ final class AttributeValueEncoder implements XmlEncoder
         $meta = $context->type->getMeta();
         $default = $meta->fixed()->or($meta->default())->unwrapOr(null);
 
-        return $default ? $this->typeEncoder->iso($context)->from($default) : null;
+        return $default !== null ? $this->typeEncoder->iso($context)->from($default) : null;
     }
 }

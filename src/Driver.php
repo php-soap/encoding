@@ -25,7 +25,7 @@ final class Driver implements SoapDriver
         Wsdl1 $wsdl,
         ?ServiceSelectionCriteria $serviceSelectionCriteria = null,
         ?EncoderRegistry $registry = null
-    ) {
+    ): self {
         $registry ??= EncoderRegistry::default();
         $metadataProvider = new Wsdl1MetadataProvider(
             $wsdl,
@@ -54,7 +54,9 @@ final class Driver implements SoapDriver
         );
     }
 
-
+    /**
+     * @return mixed
+     */
     public function decode(string $method, SoapResponse $response)
     {
         return $this->decoder->decode($method, $response);

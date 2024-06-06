@@ -10,10 +10,13 @@ use function Psl\Type\float;
 use function Psl\Type\numeric_string;
 
 /**
- * @implements XmlEncoder<string, float>
+ * @implements XmlEncoder<float, string>
  */
 final class FloatTypeEncoder implements XmlEncoder
 {
+    /**
+     * @return Iso<float, string>
+     */
     public function iso(Context $context): Iso
     {
         return (new Iso(

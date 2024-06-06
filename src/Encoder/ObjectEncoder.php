@@ -17,7 +17,6 @@ use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
 use function Psl\Dict\map;
 use function Psl\Dict\reindex;
-use function Psl\invariant;
 use function Psl\Iter\any;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Iso\object_data;
@@ -29,26 +28,39 @@ use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @implements XmlEncoder<string, object|array>
+ * @template TObj extends object
+ *
+ * @implements XmlEncoder<TObj|array, non-empty-string>
  */
 final class ObjectEncoder implements XmlEncoder
 {
     /**
-     * @param class-string<object|array> $className
+     * @param class-string<TObj> $className
      */
     public function __construct(
         private readonly string $className
     ) {
     }
 
+    /**
+     * @return Iso<TObj|array, non-empty-string>
+     */
     public function iso(Context $context): Iso
     {
         $properties = $this->detectProperties($context);
 
         return new Iso(
+            /**
+             * @param TObj|array $value
+             * @return non-empty-string
+             */
             function (object|array $value) use ($context, $properties) : string {
                 return $this->to($context, $properties, $value);
             },
+            /**
+             * @param non-empty-string $value
+             * @return TObj
+             */
             function (string $value) use ($context, $properties) : object {
                 return $this->from($context, $properties, $value);
             }
@@ -56,7 +68,10 @@ final class ObjectEncoder implements XmlEncoder
     }
 
     /**
+     * @param TObj|array $data
      * @param array<string, Property> $properties
+     *
+     * @return non-empty-string
      */
     private function to(Context $context, array $properties, object|array $data): string
     {
@@ -83,6 +98,10 @@ final class ObjectEncoder implements XmlEncoder
                         function (Property $property) use ($context, $data, $defaultAction) : Closure {
                             $type = $property->getType();
                             $lens = $this->decorateLensForType(property($property->getName()), $type);
+                            /**
+                             * @psalm-var mixed $value
+                             * @psalm-suppress PossiblyInvalidArgument - Psalm gets lost in the lens.
+                             */
                             $value = $lens
                                 ->tryGet($data)
                                 ->catch(static fn () => null)
@@ -91,7 +110,6 @@ final class ObjectEncoder implements XmlEncoder
                             return $this->handleProperty(
                                 $property,
                                 onAttribute: fn (): Closure => $value ? (new AttributeBuilder(
-                                    $context,
                                     $type,
                                     $this->grabIsoForProperty($context, $property)->to($value)
                                 ))(...) : $defaultAction,
@@ -109,6 +127,9 @@ final class ObjectEncoder implements XmlEncoder
 
     /**
      * @param array<string, Property> $properties
+     * @param non-empty-string $data
+     *
+     * @return TObj
      */
     private function from(Context $context, array $properties, string $data): object
     {
@@ -121,6 +142,7 @@ final class ObjectEncoder implements XmlEncoder
                     $type = $property->getType();
                     $meta = $type->getMeta();
                     $isList = $meta->isList()->unwrapOr(false);
+                    /** @psalm-var string|null $value */
                     $value = $this->decorateLensForType(
                         index($property->getName()),
                         $type
@@ -132,7 +154,7 @@ final class ObjectEncoder implements XmlEncoder
 
                     return $this->handleProperty(
                         $property,
-                        onAttribute: fn (): mixed => $this->grabIsoForProperty($context, $property)->from($value),
+                        onAttribute: fn (): mixed => /** @psalm-suppress PossiblyNullArgument */$this->grabIsoForProperty($context, $property)->from($value),
                         onValue: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                         onElements: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                     );
@@ -141,6 +163,9 @@ final class ObjectEncoder implements XmlEncoder
         );
     }
 
+    /**
+     * @return Iso<mixed, string>
+     */
     private function grabIsoForProperty(Context $context, Property $property): Iso
     {
         $propertyContext = $context->withType($property->getType());
@@ -150,12 +175,12 @@ final class ObjectEncoder implements XmlEncoder
     }
 
     /**
-     * @template T
+     * @template X
      *
-     * @param Closure(): T $onAttribute
-     * @param Closure(): T $onValue
-     * @param Closure(): T $onElements
-     * @return T
+     * @param Closure(): X $onAttribute
+     * @param Closure(): X $onValue
+     * @param Closure(): X $onElements
+     * @return X
      */
     private function handleProperty(
         Property $property,
@@ -173,9 +198,12 @@ final class ObjectEncoder implements XmlEncoder
     }
 
     /**
-     * @param Lens<mixed, mixed> $lens
+     * @template S
+     * @template A
      *
-     * @return Lens<mixed, mixed>
+     * @param Lens<S, A> $lens
+     *
+     * @return Lens<S, A>
      */
     private function decorateLensForType(Lens $lens, XsdType $type): Lens
     {

@@ -10,6 +10,7 @@ use Soap\Engine\HttpBinding\SoapResponse;
 use Soap\Engine\Metadata\Metadata;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
+use function Psl\Type\non_empty_string;
 use function Psl\Vec\map;
 
 final class Decoder implements SoapDecoder
@@ -21,6 +22,9 @@ final class Decoder implements SoapDecoder
     ) {
     }
 
+    /**
+     * @psalm-return mixed
+     */
     public function decode(string $method, SoapResponse $response): mixed
     {
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
@@ -30,15 +34,21 @@ final class Decoder implements SoapDecoder
         $returnType = $methodInfo->getReturnType();
         $context = new Context($returnType, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
         $decoder = $this->registry->detectEncoderForContext($context);
+        $iso = $decoder->iso($context);
 
         // The SoapResponse only contains the payload of the response (with no headers).
         // It can be parsed directly as XML.
-        $parts = (new OperationReader($meta))($response->getPayload());
+        $parts = (new OperationReader($meta))(
+            non_empty_string()->assert($response->getPayload())
+        );
 
         return match(count($parts)) {
             0 => null,
-            1 => $decoder->iso($context)->from($parts[0]),
-            default => map($parts, $decoder->iso($context)->from(...)),
+            1 => $iso->from($parts[0]),
+            default => map(
+                $parts,
+                static fn (string $part): mixed => $iso->from($part)
+            ),
         };
     }
 }

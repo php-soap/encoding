@@ -13,9 +13,12 @@ final class XsdTypeXmlElementWriter
 {
     /**
      * @param callable(XMLWriter): Generator<bool> $children
+     *
+     * @return non-empty-string
      */
     public function __invoke(Context $context, callable $children): string
     {
+        /** @psalm-var non-empty-string */
         return Writer::inMemory()
             ->write(new ElementBuilder($context, $children(...)))
             ->map(memory_output());
