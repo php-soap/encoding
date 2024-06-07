@@ -3,6 +3,12 @@
 This package provides a pure PHP drop-in replacement for the `ext-soap` encoding logic.
 It can be used as a driver so that you don't have to install PHP's soap extension on your machine anymore.
 
+# Thanks
+
+This project was funded by the sponsorship of [butha.com](https://www.butha.com).
+
+<a href="https://www.butha.com"><img src="docs/butha.svg" width="200" alt="butha.com"></a>
+
 # Want to help out? 💚
 
 - [Become a Sponsor](https://github.com/php-soap/.github/blob/main/HELPING_OUT.md#sponsor)
@@ -11,13 +17,6 @@ It can be used as a driver so that you don't have to install PHP's soap extensio
 - [Help maintain these packages](https://github.com/php-soap/.github/blob/main/HELPING_OUT.md#maintain)
 
 Want more information about the future of this project? Check out this list of the [next big projects](https://github.com/php-soap/.github/blob/main/PROJECTS.md) we'll be working on.
-
-## Thanks
-
-This project was funded by the sponsorship of [butha.com](https://www.butha.com).
-
-<a href="https://www.butha.com"><img src="docs/butha.svg" width="200" alt="butha.com"></a>
-
 
 # Installation
 
