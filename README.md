@@ -95,10 +95,13 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<string, MyClass> 
+ * @implements XmlEncoder<MyClass, string> 
  */
 class MySpecificTypeCEncoder implements XmlEncoder
 {
+    /**
+     * @return Iso<MyClass, string>
+     */
     public function iso(Context $context) : Iso
     {
         return new Iso(
@@ -108,3 +111,6 @@ class MySpecificTypeCEncoder implements XmlEncoder
     }
 }
 ```
+
+**Note: ** An encoder is considered to be isomorphic : When calling `from` and `to` on the `Iso` object, the data should be the same.
+More information about the concept [can be found here](https://github.com/veewee/reflecta/blob/main/docs/isomorphisms.md).
