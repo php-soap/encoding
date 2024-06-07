@@ -43,7 +43,3 @@ EOXML
 $decoded = $driver->decode('Add', $response);
 
 var_dump($decoded);
-
-
-
-
