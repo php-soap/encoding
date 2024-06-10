@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding;
 
 use Psl\Collection\MutableMap;
+use Soap\Encoding\ClassMap\ClassMapCollection;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\EncoderDetector;
@@ -172,6 +173,19 @@ final class EncoderRegistry
             (new QNameFormatter())($namespace, $name),
             new OptionalElementEncoder(new ObjectEncoder($class))
         );
+
+        return $this;
+    }
+
+    public function addClassMapCollection(ClassMapCollection $classMapCollection): self
+    {
+        foreach ($classMapCollection as $classMap) {
+            $this->addClassMap(
+                $classMap->getXmlNamespace(),
+                $classMap->getXmlType(),
+                $classMap->getPhpClassName()
+            );
+        }
 
         return $this;
     }
