@@ -5,9 +5,9 @@ It can be used as a driver so that you don't have to install PHP's soap extensio
 
 # Thanks
 
-This project was funded by the sponsorship of [buhta.com](https://www.buhta.com).
+This project was funded by the sponsorship of [buhta.com](https://buhta.com).
 
-<a href="https://www.buhta.com"><img src="docs/buhta.svg" width="200" alt="buhta.com"></a>
+<a href="https://buhta.com"><img src="docs/buhta.svg" width="200" alt="buhta.com"></a>
 
 # Want to help out? 💚
 
