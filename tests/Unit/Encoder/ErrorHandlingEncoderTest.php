@@ -19,7 +19,7 @@ use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
 use stdClass;
 
-#[CoversClass(ErrorHandlingEncoderTest::class)]
+#[CoversClass(ErrorHandlingEncoder::class)]
 #[CoversClass(EncodingException::class)]
 final class ErrorHandlingEncoderTest extends AbstractEncoderTests
 {

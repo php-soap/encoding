@@ -15,6 +15,8 @@ use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Wsdl1Reader;
 
 #[CoversClass(SoapEncoder::class)]
+#[CoversClass(EncoderRegistry::class)]
+#[CoversClass(SoapEncoder\Context::class)]
 final class EncoderTest extends AbstractEncoderTest
 {
     private SoapEncoder $encoder;

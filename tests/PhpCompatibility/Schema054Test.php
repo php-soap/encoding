@@ -11,6 +11,7 @@ use Soap\Encoding\Encoder;
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
+#[CoversClass(Encoder\SoapEnc\ApacheMapEncoder::class)]
 final class Schema054Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML

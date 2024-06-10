@@ -6,6 +6,7 @@ namespace Soap\Encoding\Test\Integration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Decoder as SoapDecoder;
+use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\Decoder;
 use Soap\EngineIntegrationTests\AbstractDecoderTest;
@@ -15,6 +16,8 @@ use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Wsdl1Reader;
 
 #[CoversClass(SoapDecoder::class)]
+#[CoversClass(EncoderRegistry::class)]
+#[CoversClass(Context::class)]
 final class DecoderTest extends AbstractDecoderTest
 {
     private SoapDecoder $decoder;

@@ -11,23 +11,23 @@ use Soap\WsdlReader\Model\Definitions\Namespaces;
 
 final class Context
 {
-    /**
-     * TODO : READONLY !
-     */
     public function __construct(
-        public /*readonly*/ XsdType $type,
-        public /*readonly*/ Metadata $metadata,
-        public /*readonly*/ EncoderRegistry $registry,
-        public /*readonly*/ Namespaces $namespaces,
-        public /*readonly*/ BindingUse $bindingUse = BindingUse::LITERAL,
+        public readonly XsdType $type,
+        public readonly Metadata $metadata,
+        public readonly EncoderRegistry $registry,
+        public readonly Namespaces $namespaces,
+        public readonly BindingUse $bindingUse = BindingUse::LITERAL,
     ) {
     }
 
     public function withType(XsdType $type): self
     {
-        $new = clone $this;
-        $new->type = $type;
-
-        return $new;
+        return new self(
+            $type,
+            $this->metadata,
+            $this->registry,
+            $this->namespaces,
+            $this->bindingUse,
+        );
     }
 }

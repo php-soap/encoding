@@ -6,10 +6,12 @@ namespace Soap\Encoding\Test\Unit\Encoder\SimpleType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Encoding\Restriction\WhitespaceRestriction;
 use Soap\Encoding\Test\Unit\Encoder\AbstractEncoderTests;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(StringTypeEncoder::class)]
+#[CoversClass(WhitespaceRestriction::class)]
 final class StringTypeEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
