@@ -1,4 +1,4 @@
-# Encoder
+# Encoding
 
 This package provides a pure PHP drop-in replacement for the `ext-soap` encoding logic.
 It can be used as a driver so that you don't have to install PHP's soap extension on your machine anymore.
