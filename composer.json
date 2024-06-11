@@ -24,11 +24,10 @@
         "azjezz/psl": "^2.9.0",
         "veewee/reflecta": "^0.5.0",
         "veewee/xml": "^3.1",
-        "php-soap/engine": "^2.9.0",
+        "php-soap/engine": "^2.9",
         "php-soap/wsdl": "^1.6",
         "php-soap/xml": "^1.7",
-        "php-soap/wsdl-reader": "0.14.0",
-        "goetas-webservices/xsd-reader": "^0.4.6"
+        "php-soap/wsdl-reader": "~0.15"
     },
     "require-dev": {
         "vimeo/psalm": "^5.16",
