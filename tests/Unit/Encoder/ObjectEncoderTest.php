@@ -125,6 +125,47 @@ final class ObjectEncoderTest extends AbstractEncoderTests
             'xml' => '<tns:user xmlns:tns="https://test"><tns:active xmlns:tns="https://test">true</tns:active><tns:hat xmlns:tns="https://test"><tns:color xmlns:tns="https://test">green</tns:color></tns:hat></tns:user>',
             'data' => new User(active: true, hat: new Hat('green')),
         ];
+
+        yield 'unsupported-property-chars' => [
+            ...$baseConfig,
+            'context' => self::createContext(
+                $xsdType,
+                new TypeCollection(
+                    new Type(
+                        XsdType::create('user')
+                            ->withXmlTypeName('user')
+                            ->withXmlNamespace("https://test")
+                            ->withXmlNamespaceName('test')
+                            ->withXmlTargetNodeName('user')
+                            ->withMeta(
+                                static fn (TypeMeta $meta): TypeMeta => $meta
+                                    ->withIsQualified(true)
+                                    ->withIsElement(true)
+                            ),
+                        new PropertyCollection(
+                            new Property(
+                                'bon-jour',
+                                XsdType::create('bon-jour')
+                                    ->withXmlTypeName('boolean')
+                                    ->withXmlTargetNodeName('bon-jour')
+                                    ->withXmlNamespace(Xmlns::xsd()->value())
+                                    ->withXmlNamespaceName('xsd')
+                                    ->withMeta(
+                                        static fn (TypeMeta $meta): TypeMeta => $meta
+                                            ->withIsSimple(true)
+                                            ->withIsElement(true)
+                                            ->withIsQualified(true)
+                                    )
+                            ),
+                        )
+                    )
+                )
+            ),
+            'xml' => '<user><bon-jour>true</bon-jour></user>',
+            'data' => (object)[
+                'bonJour' => true,
+            ],
+        ];
     }
 
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Closure;
+use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
@@ -16,6 +17,7 @@ use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
 use function Psl\Dict\map;
+use function Psl\Dict\pull;
 use function Psl\Dict\reindex;
 use function Psl\Iter\any;
 use function Psl\Vec\sort_by;
@@ -97,7 +99,10 @@ final class ObjectEncoder implements XmlEncoder
                         $properties,
                         function (Property $property) use ($context, $data, $defaultAction) : Closure {
                             $type = $property->getType();
-                            $lens = $this->decorateLensForType(property($property->getName()), $type);
+                            $lens = $this->decorateLensForType(
+                                property(PhpPropertyNameNormalizer::normalize($property->getName())),
+                                $type
+                            );
                             /**
                              * @psalm-var mixed $value
                              * @psalm-suppress PossiblyInvalidArgument - Psalm gets lost in the lens.
@@ -136,7 +141,7 @@ final class ObjectEncoder implements XmlEncoder
         $nodes = (new DocumentToLookupArrayReader())($data);
 
         return object_data($this->className)->from(
-            map(
+            pull(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
                     $type = $property->getType();
@@ -158,7 +163,8 @@ final class ObjectEncoder implements XmlEncoder
                         onValue: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                         onElements: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                     );
-                }
+                },
+                static fn (Property $property) => PhpPropertyNameNormalizer::normalize($property->getName()),
             )
         );
     }
