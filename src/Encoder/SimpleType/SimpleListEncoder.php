@@ -9,6 +9,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Restriction\WhitespaceRestriction;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
+use function is_string;
 use function Psl\Vec\filter;
 use function Psl\Vec\map;
 

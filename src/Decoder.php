@@ -10,6 +10,7 @@ use Soap\Engine\HttpBinding\SoapResponse;
 use Soap\Engine\Metadata\Metadata;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
+use function count;
 use function Psl\Type\non_empty_string;
 use function Psl\Vec\map;
 

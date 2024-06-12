@@ -11,6 +11,10 @@ use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
 use VeeWee\Xml\Xmlns\Xmlns;
+use function is_bool;
+use function is_float;
+use function is_int;
+use function is_string;
 use function Psl\Option\none;
 use function Psl\Option\some;
 

@@ -16,6 +16,7 @@ use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
+use function is_array;
 use function Psl\Dict\map;
 use function Psl\Dict\pull;
 use function Psl\Dict\reindex;

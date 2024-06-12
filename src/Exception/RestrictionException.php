@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use Psl\Str;
 use Soap\Encoding\Formatter\QNameFormatter;
 use Soap\Engine\Metadata\Model\XsdType;
+use function is_scalar;
 
 final class RestrictionException extends InvalidArgumentException implements ExceptionInterface
 {
