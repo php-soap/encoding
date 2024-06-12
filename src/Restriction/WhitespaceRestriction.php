@@ -24,7 +24,7 @@ final class WhitespaceRestriction
         return match ($whitespace) {
             self::REPLACE => self::replace($value),
             self::COLLAPSE => self::collapse($value),
-            default => self::preserve($value),
+            default => $value,
         };
     }
 
