@@ -9,6 +9,7 @@ use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use stdClass;
@@ -106,5 +107,25 @@ final class OptionalElementEncoderTest extends AbstractEncoderTests
             'xml' => '',
             'data' => null,
         ];
+    }
+
+    public function test_it_can_decode_from_xml_item(): void
+    {
+        $encoder = new OptionalElementEncoder(new ElementEncoder(new StringTypeEncoder()));
+        $context = self::createContext(
+            $xsdType = XsdType::guess('string')
+                ->withXmlTargetNodeName('hello')
+                ->withMeta(
+                    static fn (TypeMeta $meta): TypeMeta => $meta
+                    ->withIsQualified(true)
+                    ->withIsNullable(true)
+                )
+        );
+
+        $item = Element::fromString('<hello>world</hello>');
+        $iso = $encoder->iso($context);
+        $actual = $iso->from($item);
+
+        static::assertEquals('world', $actual);
     }
 }

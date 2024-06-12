@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Xmlns\Xmlns;
 
 /**
@@ -48,16 +48,17 @@ final class OptionalElementEncoder implements XmlEncoder
             /**
              * @return T|null
              */
-            static function (string $xml) use ($elementIso) : mixed {
+            static function (Element|string $xml) use ($elementIso) : mixed {
                 if ($xml === '') {
                     return null;
                 }
 
-                $documentElement = Document::fromXmlString($xml)->locateDocumentElement();
+                $documentElement = ($xml instanceof Element ? $xml : Element::fromString($xml))->element();
                 if ($documentElement->getAttributeNS(Xmlns::xsi()->value(), 'nil') === 'true') {
                     return null;
                 }
 
+                /** @var Iso<T|null, Element|non-empty-string> $elementIso */
                 return $elementIso->from($xml);
             }
         );

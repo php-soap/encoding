@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\OperationReader;
 use Soap\Wsdl\Loader\CallbackLoader;
 use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
@@ -16,6 +17,7 @@ use Soap\WsdlReader\Wsdl1Reader;
 use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Exception\RuntimeException;
 use function Psl\Iter\first;
+use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Configurator\comparable;
 
 abstract class AbstractCompatibilityTests extends TestCase
@@ -124,7 +126,7 @@ abstract class AbstractCompatibilityTests extends TestCase
 
         $decoder = $registry->detectEncoderForContext($decodeContext);
         $params = (new OperationReader($method->getMeta()))($request);
-        $paramXml = implode('', $params);
+        $paramXml = implode('', map($params->elements(), static fn (Element $element): string => $element->value()));
         $decoded = $decoder->iso($decodeContext)->from($paramXml);
 
         static::assertEquals($this->expectDecoded(), $decoded);

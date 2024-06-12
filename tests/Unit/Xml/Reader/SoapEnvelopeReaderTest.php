@@ -26,7 +26,7 @@ final class SoapEnvelopeReaderTest extends TestCase
         $reader = new SoapEnvelopeReader();
         $actual = $reader($envelope);
 
-        static::assertXmlStringEqualsXmlString($expected, $actual);
+        static::assertXmlStringEqualsXmlString($expected, $actual->value());
     }
 
     #[Test]
@@ -63,7 +63,11 @@ final class SoapEnvelopeReaderTest extends TestCase
                     </soap:Body>
                 </soap:Envelope>
             EOXML,
-            '<Request>content</Request>',
+            <<<EOXML
+            <soap:Body xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+                <Request>content</Request>
+            </soap:Body>
+            EOXML,
         ];
 
         yield 'soap-1.2' => [
@@ -75,7 +79,11 @@ final class SoapEnvelopeReaderTest extends TestCase
                     </soap:Body>
                 </soap:Envelope>
             EOXML,
-            '<Request>content</Request>',
+            <<<EOXML
+                <soap:Body xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/">
+                    <Request>content</Request>
+                </soap:Body>
+            EOXML,
         ];
     }
 }

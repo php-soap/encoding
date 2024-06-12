@@ -74,12 +74,12 @@ final class ErrorHandlingEncoderTest extends AbstractEncoderTests
 
             $previous = $e->getPrevious();
             static::assertInstanceOf(EncodingException::class, $previous);
-            static::assertSame('Failed decoding type string as {https://test:hat}. Failed at path "hat.color".', $previous->getMessage());
+            static::assertSame('Failed decoding type Soap\Encoding\Xml\Node\Element as {https://test:hat}. Failed at path "hat.color".', $previous->getMessage());
             static::assertSame(['hat', 'color'], $previous->getPaths());
 
             $previous = $previous->getPrevious();
             static::assertInstanceOf(EncodingException::class, $previous);
-            static::assertSame('Failed decoding type string as {http://www.w3.org/2001/XMLSchema:float}. Failed at path "color".', $previous->getMessage());
+            static::assertSame('Failed decoding type Soap\Encoding\Xml\Node\Element as {http://www.w3.org/2001/XMLSchema:float}. Failed at path "color".', $previous->getMessage());
             static::assertSame(['color'], $previous->getPaths());
 
             return;

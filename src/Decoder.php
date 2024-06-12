@@ -11,7 +11,7 @@ use Soap\Engine\Metadata\Metadata;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use function count;
-use function Psl\Type\non_empty_string;
+use function Psl\invariant;
 use function Psl\Vec\map;
 
 final class Decoder implements SoapDecoder
@@ -39,9 +39,9 @@ final class Decoder implements SoapDecoder
 
         // The SoapResponse only contains the payload of the response (with no headers).
         // It can be parsed directly as XML.
-        $parts = (new OperationReader($meta))(
-            non_empty_string()->assert($response->getPayload())
-        );
+        $payload = $response->getPayload();
+        invariant($payload !== '', 'Expected a non-empty response payload. Received an empty HTTP response');
+        $parts = (new OperationReader($meta))($payload)->elements();
 
         return match(count($parts)) {
             0 => null,

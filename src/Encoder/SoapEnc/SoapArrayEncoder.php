@@ -11,6 +11,7 @@ use Soap\Encoding\Encoder\Feature\ListAware;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
@@ -18,7 +19,6 @@ use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
 use XMLWriter;
 use function count;
 use function Psl\Vec\map;
@@ -46,10 +46,13 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
              */
             fn (array $value): string => $this->encodeArray($context, $value),
             /**
-             * @param non-empty-string $value
+             * @param non-empty-string|Element $value
              * @return list<mixed>
              */
-            fn (string $value): array => $this->decodeArray($context, $value),
+            fn (string|Element $value): array => $this->decodeArray(
+                $context,
+                $value instanceof Element ? $value : Element::fromString($value)
+            ),
         ));
     }
 
@@ -125,13 +128,11 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
     }
 
     /**
-     * @param non-empty-string $value
      * @return list<mixed>
      */
-    private function decodeArray(Context $context, string $value): array
+    private function decodeArray(Context $context, Element $value): array
     {
-        $document = Document::fromXmlString($value);
-        $element = $document->locateDocumentElement();
+        $element = $value->element();
 
         return readChildren($element)->reduce(
             /**

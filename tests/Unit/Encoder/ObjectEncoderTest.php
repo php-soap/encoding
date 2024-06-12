@@ -8,6 +8,7 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Test\Fixture\Model\Hat;
 use Soap\Encoding\Test\Fixture\Model\User;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Engine\Metadata\Collection\PropertyCollection;
 use Soap\Engine\Metadata\Collection\TypeCollection;
 use Soap\Engine\Metadata\Metadata;
@@ -168,6 +169,51 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         ];
     }
 
+    public function test_it_can_decode_from_xml_item(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes());
+
+        $item = Element::fromString('<user><active>true</active><hat><color>green</color></hat></user>');
+        $iso = $encoder->iso($context);
+        $actual = $iso->from($item);
+
+        $expected = (object)[
+            'active' => true,
+            'hat' => (object)[
+                'color' => 'green',
+            ],
+        ];
+
+        static::assertEquals($expected, $actual);
+    }
+
+    public function test_it_can_encode_from_array(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes());
+
+        $data = [
+            'active' => true,
+            'hat' => [
+                'color' => 'green',
+            ],
+        ];
+        $iso = $encoder->iso($context);
+        $actual = $iso->to($data);
+
+        static::assertEquals('<user><active>true</active><hat><color>green</color></hat></user>', $actual);
+    }
 
     public static function buildTypes(
         bool $activeAsAttribute = false,

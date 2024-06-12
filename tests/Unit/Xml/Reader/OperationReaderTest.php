@@ -6,9 +6,11 @@ namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\OperationReader;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
+use function Psl\Vec\map;
 
 #[CoversClass(OperationReader::class)]
 final class OperationReaderTest extends TestCase
@@ -22,7 +24,10 @@ final class OperationReaderTest extends TestCase
         $reader = new OperationReader($meta);
         $actual = $reader($envelope);
 
-        static::assertSame($expected, $actual);
+        static::assertSame(
+            $expected,
+            map($actual->elements(), static fn (Element $element) => $element->value())
+        );
     }
 
     public static function provideEnvelopeCases()
