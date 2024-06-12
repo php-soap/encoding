@@ -8,6 +8,10 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\RestrictionException;
 use VeeWee\Reflecta\Iso\Iso;
+use function is_bool;
+use function is_float;
+use function is_int;
+use function is_string;
 
 /**
  * @implements XmlEncoder<mixed, string>

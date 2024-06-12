@@ -20,6 +20,7 @@ use Soap\WsdlReader\Parser\Xml\QnameParser;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
 use XMLWriter;
+use function count;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 use function VeeWee\Xml\Writer\Builder\children;

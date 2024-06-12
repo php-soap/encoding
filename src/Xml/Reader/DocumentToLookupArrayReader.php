@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Reader;
 
 use VeeWee\Xml\Dom\Document;
+use function array_key_exists;
 use function VeeWee\Xml\Dom\Locator\Attribute\attributes_list;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildElements;
 
