@@ -8,7 +8,6 @@ use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\Exception\InvalidArgumentException;
 use Soap\Engine\Metadata\Model\XsdType;
 use function Psl\Iter\any;
 
@@ -21,10 +20,6 @@ final class EncoderDetector
     {
         $type = $context->type;
         $meta = $type->getMeta();
-
-        if (!$meta->isSimple()->unwrapOr(false)) {
-            throw new InvalidArgumentException('Unable to detect a complex type in the simple type detector');
-        }
 
         $encoder = $this->detectSimpleTypeEncoder($type, $context);
         if (!$encoder instanceof Feature\ListAware && $this->detectIsListType($type)) {
