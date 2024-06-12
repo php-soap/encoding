@@ -30,45 +30,47 @@ final class ErrorHandlingEncoder implements XmlEncoder
     public function iso(Context $context): Iso
     {
         $innerIso = $this->encoder->iso($context);
-        $buildPath = static function () use ($context): ?string {
-            $meta = $context->type->getMeta();
-            $isElement = $meta->isElement()->unwrapOr(false);
-            $isAttribute = $meta->isAttribute()->unwrapOr(false);
-            if (!$isElement && !$isAttribute) {
-                return null;
-            }
-
-            $path = $context->type->getXmlTargetNodeName();
-            if ($isAttribute) {
-                return '@' . $path;
-            }
-
-            return $path;
-        };
 
         return new Iso(
             /**
              * @psalm-param TData $value
              * @psalm-return TXml
              */
-            static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
+            static function (mixed $value) use ($innerIso, $context): mixed {
                 try {
                     return $innerIso->to($value);
                 } catch (Throwable $exception) {
-                    throw EncodingException::encodingValue($value, $context->type, $exception, $buildPath());
+                    throw EncodingException::encodingValue($value, $context->type, $exception, self::buildPath($context));
                 }
             },
             /**
              * @psalm-param TXml $value
              * @psalm-return TData
              */
-            static function (mixed $value) use ($innerIso, $context, $buildPath): mixed {
+            static function (mixed $value) use ($innerIso, $context): mixed {
                 try {
                     return $innerIso->from($value);
                 } catch (Throwable $exception) {
-                    throw EncodingException::decodingValue($value, $context->type, $exception, $buildPath());
+                    throw EncodingException::decodingValue($value, $context->type, $exception, self::buildPath($context));
                 }
             }
         );
+    }
+
+    private static function buildPath(Context $context): ?string
+    {
+        $meta = $context->type->getMeta();
+        $isElement = $meta->isElement()->unwrapOr(false);
+        $isAttribute = $meta->isAttribute()->unwrapOr(false);
+        if (!$isElement && !$isAttribute) {
+            return null;
+        }
+
+        $path = $context->type->getXmlTargetNodeName();
+        if ($isAttribute) {
+            return '@' . $path;
+        }
+
+        return $path;
     }
 }
