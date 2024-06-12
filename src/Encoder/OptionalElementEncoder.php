@@ -32,20 +32,16 @@ final class OptionalElementEncoder implements XmlEncoder
         $meta = $type->getMeta();
         $elementIso = $this->elementEncoder->iso($context);
 
-        $isNullable = $meta->isNullable()->unwrapOr(false);
-        if (!$isNullable) {
+        if (!$meta->isNullable()->unwrapOr(false)) {
             return $elementIso;
         }
-
-        $isNillable = $meta->isNil()->unwrapOr(false);
-        $elementIso = $this->elementEncoder->iso($context);
 
         return new Iso(
             /**
              * @param T|null $raw
              */
             static fn (mixed $raw): string => match (true) {
-                $raw === null && $isNillable => (new XsdTypeXmlElementWriter())($context, new NilAttributeBuilder()),
+                $raw === null && $meta->isNil()->unwrapOr(false) => (new XsdTypeXmlElementWriter())($context, new NilAttributeBuilder()),
                 $raw === null => '',
                 default => $elementIso->to($raw),
             },
