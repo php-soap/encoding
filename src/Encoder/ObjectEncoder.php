@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Closure;
+use Exception;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
@@ -13,7 +14,7 @@ use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\Property;
-use Soap\Engine\Metadata\Model\XsdType;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
 use function is_array;
@@ -100,30 +101,27 @@ final class ObjectEncoder implements XmlEncoder
                         $properties,
                         function (Property $property) use ($context, $data, $defaultAction) : Closure {
                             $type = $property->getType();
-                            $lens = $this->decorateLensForType(
-                                property(PhpPropertyNameNormalizer::normalize($property->getName())),
-                                $type
-                            );
-                            /**
-                             * @psalm-var mixed $value
-                             * @psalm-suppress PossiblyInvalidArgument - Psalm gets lost in the lens.
-                             */
-                            $value = $lens
-                                ->tryGet($data)
-                                ->catch(static fn () => null)
-                                ->getResult();
+                            $meta = $type->getMeta();
+                            $isAttribute = $meta->isAttribute()->unwrapOr(false);
 
-                            return $this->handleProperty(
-                                $property,
-                                onAttribute: fn (): Closure => $value ? (new AttributeBuilder(
+                            /** @var mixed $value */
+                            $value = $this->runLens(
+                                property(PhpPropertyNameNormalizer::normalize($property->getName())),
+                                $meta,
+                                $data,
+                                null
+                            );
+
+                            return match(true) {
+                                $isAttribute => $value ? (new AttributeBuilder(
                                     $type,
                                     $this->grabIsoForProperty($context, $property)->to($value)
                                 ))(...) : $defaultAction,
-                                onValue: fn (): Closure => $value
+                                $property->getName() === '_' => $value
                                     ? buildValue($this->grabIsoForProperty($context, $property)->to($value))
                                     : (new NilAttributeBuilder())(...),
-                                onElements: fn (): Closure => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction,
-                            );
+                                default => $value ? raw($this->grabIsoForProperty($context, $property)->to($value)) : $defaultAction
+                            };
                         }
                     )
                 ]
@@ -149,23 +147,21 @@ final class ObjectEncoder implements XmlEncoder
                 function (Property $property) use ($context, $nodes): mixed {
                     $type = $property->getType();
                     $meta = $type->getMeta();
-                    $isList = $meta->isList()->unwrapOr(false);
-                    /** @psalm-var string|null $value */
-                    $value = $this->decorateLensForType(
-                        index($property->getName()),
-                        $type
-                    )
-                        ->tryGet($nodes)
-                        ->catch(static fn () => null)
-                        ->getResult();
-                    $defaultValue = $isList ? [] : null;
 
-                    return $this->handleProperty(
-                        $property,
-                        onAttribute: fn (): mixed => /** @psalm-suppress PossiblyNullArgument */$this->grabIsoForProperty($context, $property)->from($value),
-                        onValue: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
-                        onElements: fn (): mixed => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
+                    /** @var string|null $value */
+                    $value = $this->runLens(
+                        index($property->getName()),
+                        $meta,
+                        $nodes,
+                        null
                     );
+                    $defaultValue = $meta->isList()->unwrapOr(false) ? [] : null;
+
+                    /** @psalm-suppress PossiblyNullArgument */
+                    return match(true) {
+                        $meta->isAttribute()->unwrapOr(false) => $this->grabIsoForProperty($context, $property)->from($value),
+                        default => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
+                    };
                 },
                 static fn (Property $property) => PhpPropertyNameNormalizer::normalize($property->getName()),
             )
@@ -183,27 +179,14 @@ final class ObjectEncoder implements XmlEncoder
         return $encoder->iso($propertyContext);
     }
 
-    /**
-     * @template X
-     *
-     * @param Closure(): X $onAttribute
-     * @param Closure(): X $onValue
-     * @param Closure(): X $onElements
-     * @return X
-     */
-    private function handleProperty(
-        Property $property,
-        Closure $onAttribute,
-        Closure $onValue,
-        Closure $onElements,
-    ) {
-        $meta = $property->getType()->getMeta();
-
-        return match(true) {
-            $meta->isAttribute()->unwrapOr(false) => $onAttribute(),
-            $property->getName() === '_' => $onValue(),
-            default => $onElements()
-        };
+    private function runLens(Lens $lens, TypeMeta $meta, mixed $data, mixed $default): mixed
+    {
+        try {
+            /** @var mixed */
+            return $this->decorateLensForType($lens, $meta)->get($data);
+        } catch (Exception $e) {
+            return $default;
+        }
     }
 
     /**
@@ -214,9 +197,8 @@ final class ObjectEncoder implements XmlEncoder
      *
      * @return Lens<S, A>
      */
-    private function decorateLensForType(Lens $lens, XsdType $type): Lens
+    private function decorateLensForType(Lens $lens, TypeMeta $meta): Lens
     {
-        $meta = $type->getMeta();
         if ($meta->isNullable()->unwrapOr(false)) {
             return optional($lens);
         }
@@ -237,14 +219,13 @@ final class ObjectEncoder implements XmlEncoder
     private function detectProperties(Context $context): array
     {
         $type = (new ComplexTypeBuilder())($context);
-        $properties = reindex(
+
+        return reindex(
             sort_by(
                 $type->getProperties(),
                 static fn (Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
             ),
             static fn (Property $property): string => $property->getName(),
         );
-
-        return $properties;
     }
 }
