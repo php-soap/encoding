@@ -139,8 +139,10 @@ final class ObjectEncoder implements XmlEncoder
     private function from(Context $context, array $properties, string $data): object
     {
         $nodes = (new DocumentToLookupArrayReader())($data);
+        /** @var Iso<TObj, array<string, mixed>> $objectData */
+        $objectData = object_data($this->className);
 
-        return object_data($this->className)->from(
+        return $objectData->from(
             pull(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
