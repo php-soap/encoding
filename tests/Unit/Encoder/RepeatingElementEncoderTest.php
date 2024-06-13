@@ -7,6 +7,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\RepeatingElementEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\Xml\Xmlns;
@@ -47,5 +49,37 @@ final class RepeatingElementEncoderTest extends AbstractEncoderTests
             'xml' => '<x:item xmlns:x="http://example.com">a</x:item><x:item xmlns:x="http://example.com">b</x:item>',
             'data' => ['a', 'b'],
         ];
+    }
+
+    public function test_it_can_decode_from_xml_item(): void
+    {
+        $encoder = new RepeatingElementEncoder(new ElementEncoder(new StringTypeEncoder()));
+        $context = self::createContext(
+            $xsdType = XsdType::guess('string')
+                ->withXmlTargetNodeName('hello')
+                ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+        );
+
+        $item = Element::fromString('<hello>world</hello>');
+        $iso = $encoder->iso($context);
+        $actual = $iso->from($item);
+
+        static::assertEquals(['world'], $actual);
+    }
+
+    public function test_it_can_decode_from_xml_item_list(): void
+    {
+        $encoder = new RepeatingElementEncoder(new ElementEncoder(new StringTypeEncoder()));
+        $context = self::createContext(
+            $xsdType = XsdType::guess('string')
+                ->withXmlTargetNodeName('hello')
+                ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+        );
+
+        $item = new ElementList(Element::fromString('<hello>world</hello>'));
+        $iso = $encoder->iso($context);
+        $actual = $iso->from($item);
+
+        static::assertEquals(['world'], $actual);
     }
 }

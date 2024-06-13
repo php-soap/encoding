@@ -3,13 +3,12 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use DOMElement;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
 use function Psl\Str\join;
 use function Psl\Vec\map;
-use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 
 /**
  * @template T
@@ -57,11 +56,18 @@ final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
             /**
              * @return iterable<array-key, T>
              */
-            static function (string $xml) use ($innerIso): iterable {
-                $doc = Document::fromXmlString('<list>'.$xml.'</list>');
+            static function (Element|ElementList|string $xml) use ($innerIso): iterable {
 
-                return readChildren($doc->locateDocumentElement())->map(
-                    static fn (DOMElement $element): mixed => $innerIso->from($doc->stringifyNode($element))
+                $elements = match (true) {
+                    $xml instanceof Element => [$xml],
+                    $xml instanceof ElementList => $xml->elements(),
+                    default => ElementList::fromString('<list>'.$xml.'</list>')->elements()
+                };
+
+                /** @var Iso<T|null, Element|non-empty-string> $innerIso */
+                return map(
+                    $elements,
+                    static fn (Element $element): mixed => $innerIso->from($element)
                 );
             }
         );

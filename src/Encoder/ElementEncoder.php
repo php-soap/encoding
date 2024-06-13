@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\ElementValueBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
 
 /**
  * @implements XmlEncoder<mixed, string>
@@ -38,13 +38,13 @@ final class ElementEncoder implements XmlEncoder
                 (new ElementValueBuilder($context, $typeEncoder, $raw))
             ),
             /**
-             * @psalm-param non-empty-string $xml
+             * @psalm-param non-empty-string|Element $xml
              * @psalm-return mixed
              */
-            static fn (string $xml): mixed => (new ElementValueReader())(
+            static fn (Element|string $xml): mixed => (new ElementValueReader())(
                 $context,
                 $typeEncoder,
-                Document::fromXmlString($xml)->locateDocumentElement(),
+                ($xml instanceof Element ? $xml : Element::fromString($xml))->element()
             )
         );
     }

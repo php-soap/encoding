@@ -8,6 +8,7 @@ use Exception;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
@@ -62,11 +63,15 @@ final class ObjectEncoder implements XmlEncoder
                 return $this->to($context, $properties, $value);
             },
             /**
-             * @param non-empty-string $value
+             * @param non-empty-string|Element $value
              * @return TObj
              */
-            function (string $value) use ($context, $properties) : object {
-                return $this->from($context, $properties, $value);
+            function (string|Element $value) use ($context, $properties) : object {
+                return $this->from(
+                    $context,
+                    $properties,
+                    ($value instanceof Element ? $value : Element::fromString($value))
+                );
             }
         );
     }
@@ -131,11 +136,10 @@ final class ObjectEncoder implements XmlEncoder
 
     /**
      * @param array<string, Property> $properties
-     * @param non-empty-string $data
      *
      * @return TObj
      */
-    private function from(Context $context, array $properties, string $data): object
+    private function from(Context $context, array $properties, Element $data): object
     {
         $nodes = (new DocumentToLookupArrayReader())($data);
         /** @var Iso<TObj, array<string, mixed>> $objectData */

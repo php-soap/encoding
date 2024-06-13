@@ -19,6 +19,7 @@ use Soap\WsdlReader\Metadata\Detector\ApacheMapDetector;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\Xml\Xmlns;
 use stdClass;
+use Stringable;
 use function Psl\Dict\pull;
 
 final class EncoderRegistry
@@ -312,7 +313,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, string|Stringable>
      */
     public function detectEncoderForContext(Context $context): XmlEncoder
     {

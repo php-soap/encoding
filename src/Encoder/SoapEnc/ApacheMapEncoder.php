@@ -9,12 +9,12 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
+use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Xml\Dom\Document;
 use function Psl\Dict\merge;
 use function Psl\Type\string;
 use function VeeWee\Xml\Dom\Assert\assert_element;
@@ -39,9 +39,12 @@ final class ApacheMapEncoder implements XmlEncoder
              */
             fn (array $value): string => $this->encodeArray($context, $value),
             /**
-             * @param non-empty-string $value
+             * @param non-empty-string|Element $value
              */
-            fn (string $value): array => $this->decodeArray($context, $value),
+            fn (string|Element $value): array => $this->decodeArray(
+                $context,
+                $value instanceof Element ? $value : Element::fromString($value)
+            ),
         ));
     }
 
@@ -76,14 +79,10 @@ final class ApacheMapEncoder implements XmlEncoder
         );
     }
 
-    /**
-     * @param non-empty-string $value
-     */
-    private function decodeArray(Context $context, string $value): array
+    private function decodeArray(Context $context, Element $value): array
     {
-        $document = Document::fromXmlString($value);
-        $xpath = $document->xpath();
-        $element = $document->locateDocumentElement();
+        $element = $value->element();
+        $xpath = $value->document()->xpath();
 
         return readChildren($element)->reduce(
             static function (array $map, DOMElement $item) use ($context, $xpath): array {

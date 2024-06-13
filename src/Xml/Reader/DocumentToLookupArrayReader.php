@@ -3,21 +3,20 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
-use VeeWee\Xml\Dom\Document;
-use function array_key_exists;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use function VeeWee\Xml\Dom\Locator\Attribute\attributes_list;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildElements;
 
 final class DocumentToLookupArrayReader
 {
     /**
-     * @param non-empty-string $xml
-     * @return array<string, string>
+     * @return array<string, string|Element|ElementList>
      */
-    public function __invoke(string $xml): array
+    public function __invoke(Element $xml): array
     {
-        $doc = Document::fromXmlString($xml);
-        $root = $doc->locateDocumentElement();
+        $root = $xml->element();
+        /** @var array<string, string|Element|ElementList> $nodes */
         $nodes = [];
 
         // Read all child elements.
@@ -26,9 +25,17 @@ final class DocumentToLookupArrayReader
         $elements = readChildElements($root);
         foreach ($elements as $element) {
             $key = $element->localName ?? 'unknown';
-            $nodeValue = Document::fromXmlNode($element)->stringifyDocumentElement();
-            // For list-nodes, a concatenated string of the xml nodes will be generated.
-            $value = array_key_exists($key, $nodes) ? $nodes[$key].$nodeValue : $nodeValue;
+            $previousValue = $nodes[$key] ?? null;
+            $currentElement = Element::fromDOMElement($element);
+
+            // Incrementally build up lists.
+            /** @var string|Element|ElementList $value */
+            $value = match(true) {
+                $previousValue instanceof ElementList => $previousValue->append($currentElement),
+                $previousValue instanceof Element => new ElementList($previousValue, $currentElement),
+                default => $currentElement
+
+            };
             $nodes[$key] = $value;
         }
 
