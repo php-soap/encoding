@@ -13,6 +13,14 @@ use function Psl\Iter\any;
 
 final class EncoderDetector
 {
+    public static function default(): self
+    {
+        /** @var self $self */
+        static $self = new self();
+
+        return $self;
+    }
+
     /**
      * @return XmlEncoder<mixed, string|null>
      */

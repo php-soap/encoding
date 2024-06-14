@@ -317,6 +317,6 @@ final class EncoderRegistry
      */
     public function detectEncoderForContext(Context $context): XmlEncoder
     {
-        return (new EncoderDetector())($context);
+        return EncoderDetector::default()($context);
     }
 }

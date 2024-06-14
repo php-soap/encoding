@@ -10,6 +10,14 @@ use function Psl\Vec\flat_map;
 
 final class ComplexTypeBuilder
 {
+    public static function default(): self
+    {
+        /** @var self $self */
+        static $self = new self();
+
+        return $self;
+    }
+
     public function __invoke(Context $context): Type
     {
         $type = $context->metadata->getTypes()->fetchByNameAndXmlNamespace(
