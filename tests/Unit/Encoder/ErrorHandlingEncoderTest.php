@@ -66,8 +66,6 @@ final class ErrorHandlingEncoderTest extends AbstractEncoderTests
             $res = $encoder->iso($context)->from(
                 '<user><active>true</active><hat><color>not-a-float</color></hat></user>'
             );
-
-            dd($res);
         } catch (EncodingException $e) {
             static::assertSame('Failed decoding type string as {https://test:user}. Failed at path "user.hat.color".', $e->getMessage());
             static::assertSame(['user', 'hat', 'color'], $e->getPaths());
