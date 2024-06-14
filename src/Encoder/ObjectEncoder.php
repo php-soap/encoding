@@ -222,7 +222,7 @@ final class ObjectEncoder implements XmlEncoder
      */
     private function detectProperties(Context $context): array
     {
-        $type = (new ComplexTypeBuilder())($context);
+        $type = ComplexTypeBuilder::default()($context);
 
         return reindex(
             sort_by(
