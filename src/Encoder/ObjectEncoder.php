@@ -20,7 +20,7 @@ use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
 use function is_array;
 use function Psl\Dict\map;
-use function Psl\Dict\pull;
+use function Psl\Dict\map_with_key;
 use function Psl\Dict\reindex;
 use function Psl\Iter\any;
 use function Psl\Vec\sort_by;
@@ -102,16 +102,16 @@ final class ObjectEncoder implements XmlEncoder
                         XsiTypeDetector::detectFromValue($context, []),
                         includeXsiTargetNamespace: !$isAnyPropertyQualified,
                     )),
-                    ...map(
+                    ...map_with_key(
                         $properties,
-                        function (Property $property) use ($context, $data, $defaultAction) : Closure {
+                        function (string $normalizePropertyName, Property $property) use ($context, $data, $defaultAction) : Closure {
                             $type = $property->getType();
                             $meta = $type->getMeta();
                             $isAttribute = $meta->isAttribute()->unwrapOr(false);
 
                             /** @var mixed $value */
                             $value = $this->runLens(
-                                property(PhpPropertyNameNormalizer::normalize($property->getName())),
+                                property($normalizePropertyName),
                                 $meta,
                                 $data,
                                 null
@@ -146,7 +146,7 @@ final class ObjectEncoder implements XmlEncoder
         $objectData = object_data($this->className);
 
         return $objectData->from(
-            pull(
+            map(
                 $properties,
                 function (Property $property) use ($context, $nodes): mixed {
                     $type = $property->getType();
@@ -167,7 +167,6 @@ final class ObjectEncoder implements XmlEncoder
                         default => $value !== null ? $this->grabIsoForProperty($context, $property)->from($value) : $defaultValue,
                     };
                 },
-                static fn (Property $property) => PhpPropertyNameNormalizer::normalize($property->getName()),
             )
         );
     }
@@ -178,9 +177,9 @@ final class ObjectEncoder implements XmlEncoder
     private function grabIsoForProperty(Context $context, Property $property): Iso
     {
         $propertyContext = $context->withType($property->getType());
-        $encoder = $context->registry->detectEncoderForContext($propertyContext);
 
-        return $encoder->iso($propertyContext);
+        return $context->registry->detectEncoderForContext($propertyContext)
+            ->iso($propertyContext);
     }
 
     private function runLens(Lens $lens, TypeMeta $meta, mixed $data, mixed $default): mixed
@@ -229,7 +228,7 @@ final class ObjectEncoder implements XmlEncoder
                 $type->getProperties(),
                 static fn (Property $property): bool => !$property->getType()->getMeta()->isAttribute()->unwrapOr(false),
             ),
-            static fn (Property $property): string => $property->getName(),
+            static fn (Property $property): string => PhpPropertyNameNormalizer::normalize($property->getName()),
         );
     }
 }
