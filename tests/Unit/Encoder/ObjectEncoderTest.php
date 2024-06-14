@@ -5,6 +5,7 @@ namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\ObjectAccess;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Test\Fixture\Model\Hat;
 use Soap\Encoding\Test\Fixture\Model\User;
@@ -21,6 +22,7 @@ use stdClass;
 use function Psl\Fun\tap;
 
 #[CoversClass(ObjectEncoder::class)]
+#[CoversClass(ObjectAccess::class)]
 final class ObjectEncoderTest extends AbstractEncoderTests
 {
     public static function provideIsomorphicCases(): iterable
