@@ -5,6 +5,7 @@ namespace Soap\Encoding;
 
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Xml\Writer\OperationBuilder;
+use Soap\Encoding\Xml\Writer\ParameterBuilder;
 use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
@@ -13,8 +14,6 @@ use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
-use function Psl\Type\mixed;
-use function Psl\Type\non_empty_string;
 use function VeeWee\Reflecta\Lens\index;
 
 final class Encoder implements SoapEncoder
@@ -35,19 +34,17 @@ final class Encoder implements SoapEncoder
         $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
         $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::from(...));
 
-        $request = [];
+        $requestParams = [];
         foreach ($methodInfo->getParameters() as $index => $parameter) {
             $type = $parameter->getType();
             $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
-            /** @var mixed $argument */
-            $argument = index($index)->get($arguments);
+            /** @var mixed $value */
+            $value = index($index)->get($arguments);
 
-            $request[] = non_empty_string()->assert(
-                $this->registry->detectEncoderForContext($context)->iso($context)->to($argument)
-            );
+            $requestParams[] = (new ParameterBuilder($meta, $context, $value))(...);
         }
 
-        $operation = new OperationBuilder($meta, $this->namespaces, $request);
+        $operation = new OperationBuilder($meta, $this->namespaces, $requestParams);
         $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $bindingUse, $encodingStyle, $operation(...));
 
         return new SoapRequest(
