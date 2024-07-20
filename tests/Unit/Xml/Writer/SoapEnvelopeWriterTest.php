@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
+use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psl\Option\Option;
+use Soap\Encoding\Exception\EncodingException;
+use Soap\Encoding\Exception\ExceptionInterface;
 use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
+use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
@@ -33,6 +37,22 @@ final class SoapEnvelopeWriterTest extends TestCase
         $actual = $writer();
 
         static::assertXmlStringEqualsXmlString($expected, $actual);
+    }
+
+    public function test_it_can_fail_writing_with_encoding_exception(): void
+    {
+        $this->expectException(ExceptionInterface::class);
+
+        $writer = new SoapEnvelopeWriter(
+            SoapVersion::SOAP_11,
+            BindingUse::LITERAL,
+            some(EncodingStyle::SOAP_11),
+            static function () {
+                throw EncodingException::encodingValue('Oops', XsdType::any(), new Exception('previous'));
+                yield;
+            }
+        );
+        $writer();
     }
 
     public static function provideEnvelopeCases()

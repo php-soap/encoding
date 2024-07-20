@@ -38,7 +38,7 @@ final class Schema071Test extends AbstractCompatibilityTests
     #[Test]
     public function it_is_compatible_with_phps_encoding()
     {
-        static::markTestSkipped('Literal document seems about right - yet php soap uses the type instead of the part name. Not sure what to do here yet.');
+        static::markTestSkipped('Literal document seems about right - it seems to be taking the param name instead of the complextype name though. Not sure what to do here yet.');
     }
 
     protected function expectXml(): string

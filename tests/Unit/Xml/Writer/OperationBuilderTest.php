@@ -11,19 +11,21 @@ use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use VeeWee\Xml\Writer\Writer;
+use function Psl\Vec\map;
+use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Mapper\memory_output;
 
 #[CoversClass(OperationBuilder::class)]
 final class OperationBuilderTest extends TestCase
 {
     /**
-     *
+     * @param list<string> $parts
      * @dataProvider provideOperationCases
      */
     public function test_it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
     {
         $actual = Writer::inMemory()
-            ->write(new OperationBuilder($meta, new Namespaces([], []), $parts))
+            ->write(new OperationBuilder($meta, new Namespaces([], []), map($parts, raw(...))))
             ->map(memory_output());
 
         static::assertXmlStringEqualsXmlString($expected, $actual);
@@ -38,16 +40,16 @@ final class OperationBuilderTest extends TestCase
         yield 'document-single-part' => [
             $methodMeta->withBindingStyle(BindingStyle::DOCUMENT->value),
             [
-                '<parameters>
+                '<tns:AddRequest xmlns:tns="http://tempuri.org/">
                     <tns:a xmlns:tns="http://tempuri.org/">1</tns:a>
                     <tns:b xmlns:tns="http://tempuri.org/">2</tns:b>
-                </parameters>'
+                </tns:AddRequest>'
             ],
             <<<EOXML
-                <tns:Add xmlns:tns="http://tempuri.org/">
+                <tns:AddRequest xmlns:tns="http://tempuri.org/">
                     <tns:a xmlns:tns="http://tempuri.org/">1</tns:a>
                     <tns:b xmlns:tns="http://tempuri.org/">2</tns:b>
-                </tns:Add>
+                </tns:AddRequest>
             EOXML
         ];
         yield 'rpc-single-part' => [
