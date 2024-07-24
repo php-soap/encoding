@@ -1,57 +1,49 @@
 <?php
 declare(strict_types=1);
 
-namespace Soap\Encoding\Test\PhpCompatibility;
+namespace Soap\Encoding\Test\PhpCompatibility\Implied;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Decoder;
 use Soap\Encoding\Driver;
 use Soap\Encoding\Encoder;
+use Soap\Encoding\Test\PhpCompatibility\AbstractCompatibilityTests;
 
 #[CoversClass(Driver::class)]
 #[CoversClass(Encoder::class)]
 #[CoversClass(Decoder::class)]
-final class Schema049Test extends AbstractCompatibilityTests
+final class ImpliedSchema003Test extends AbstractCompatibilityTests
 {
     protected string $schema = <<<EOXML
-    <complexType name="testType2">
-        <sequence>
-            <element name="int" type="int"/>
-            <element name="int2" type="int"/>
-        </sequence>
-    </complexType>
-    <complexType name="testType">
-        <complexContent>
-            <restriction base="tns:testType2">
-                <sequence>
-                    <element name="int" type="int"/>
-                    <element name="int2" type="int"/>
-                </sequence>
-            </restriction>
-        </complexContent>
-    </complexType>
+    <element name="testType">
+        <complexType>
+            <sequence>
+                <element name="customerId" type="xsd:string" />
+                <element name="countryCode" type="xsd:string" minOccurs="0" maxOccurs="1" />
+            </sequence>
+        </complexType>
+    </element>
     EOXML;
     protected string $type = 'type="tns:testType"';
 
     protected function calculateParam(): mixed
     {
         return (object)[
-            "int" => 123,
-            "int2" => 456,
+            'customerId' => '123',
+            'countryCode' => null,
         ];
     }
 
     protected function expectXml(): string
     {
         return <<<XML
-        <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://test-uri/"
+         <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://test-uri/"
                            xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                            xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
             <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                 <tns:test>
                     <testParam xsi:type="tns:testType">
-                        <int xsi:type="xsd:int">123</int>
-                        <int2 xsi:type="xsd:int">456</int2>
+                        <customerId xsi:type="xsd:string">123</customerId>
                     </testParam>
                 </tns:test>
             </SOAP-ENV:Body>
