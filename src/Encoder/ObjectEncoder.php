@@ -106,10 +106,10 @@ final class ObjectEncoder implements XmlEncoder
                                     $type,
                                     $iso->to($value)
                                 ))(...) : $defaultAction,
-                                $property->getName() === '_' => $value
+                                $property->getName() === '_' => $value !== null
                                     ? buildValue($iso->to($value))
                                     : (new NilAttributeBuilder())(...),
-                                default => $value ? raw($iso->to($value)) : $defaultAction
+                                default => raw($iso->to($value))
                             };
                         }
                     )

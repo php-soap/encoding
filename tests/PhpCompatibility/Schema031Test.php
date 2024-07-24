@@ -27,6 +27,7 @@ final class Schema031Test extends AbstractCompatibilityTests
     {
         return (object)[
             "int" => 123,
+            "str" => "str",
         ];
     }
 
@@ -40,18 +41,11 @@ final class Schema031Test extends AbstractCompatibilityTests
                 <tns:test>
                     <testParam xsi:type="tns:testType">
                         <int xsi:type="xsd:int">123</int>
+                        <str xsi:type="xsd:string">str</str>
                     </testParam>
                 </tns:test>
             </SOAP-ENV:Body>
         </SOAP-ENV:Envelope>
         XML;
-    }
-
-    protected function expectDecoded(): mixed
-    {
-        return (object)[
-            "int" => 123,
-            "str" => null,
-        ];
     }
 }
