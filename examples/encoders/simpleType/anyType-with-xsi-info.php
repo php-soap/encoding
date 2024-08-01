@@ -6,7 +6,6 @@ use Soap\Encoding\Encoder\Feature\ElementContextEnhancer;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\EncoderRegistry;
-use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
 
@@ -41,17 +40,10 @@ EncoderRegistry::default()
             /**
              * This method allows to change the context on the wrapping elementEncoder.
              * By forcing the bindingUse to `ENCODED`, we can make sure the xsi:type attribute is added.
-             * We also make sure the type is not qualified so that the xsi:type prefix xmlns is imported as well.
              */
             public function enhanceElementContext(Context $context): Context
             {
-                return $context
-                    ->withBindingUse(BindingUse::ENCODED)
-                    ->withType(
-                        $context->type->withMeta(
-                            static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(false)
-                        )
-                    );
+                return $context->withBindingUse(BindingUse::ENCODED);
             }
         }
     );
