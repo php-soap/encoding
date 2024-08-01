@@ -47,10 +47,14 @@ final class ElementValueBuilder
             return;
         }
 
+        $context = $this->context;
+        $type = $context->type;
+
         yield from (new XsiAttributeBuilder(
             $this->context,
-            XsiTypeDetector::detectFromValue($this->context, $this->value),
-            includeXsiTargetNamespace:  !$this->context->type->getMeta()->isQualified()->unwrapOr(false)
+            XsiTypeDetector::detectFromValue($context, $this->value),
+            includeXsiTargetNamespace: $type->getXmlTargetNamespace() !== $type->getXmlNamespace()
+                || !$type->getMeta()->isQualified()->unwrapOr(false)
         ))($writer);
     }
 
