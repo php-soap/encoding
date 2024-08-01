@@ -4,12 +4,16 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
+use Soap\Encoding\Encoder\Feature\ElementContextEnhancer;
 use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
+use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
+use VeeWee\Reflecta\Iso\Iso;
 
 #[CoversClass(ElementEncoder::class)]
 final class ElementEncoderTest extends AbstractEncoderTests
@@ -55,6 +59,24 @@ final class ElementEncoderTest extends AbstractEncoderTests
             ...$baseConfig,
             'encoder' => $encoder = new ElementEncoder(new IntTypeEncoder()),
             'xml' => '<hello>32</hello>',
+            'data' => 32,
+        ];
+        yield 'context-enhancing-child-encoder' => [
+            ...$baseConfig,
+            'encoder' => $encoder = new ElementEncoder(new class implements ElementContextEnhancer, XmlEncoder {
+                public function iso(Context $context): Iso
+                {
+                    return (new IntTypeEncoder())->iso($context);
+                }
+
+                public function enhanceElementContext(Context $context): Context
+                {
+                    return $context->withType(
+                        $context->type->withXmlTargetNodeName('bonjour')
+                    );
+                }
+            }),
+            'xml' => '<bonjour>32</bonjour>',
             'data' => 32,
         ];
     }

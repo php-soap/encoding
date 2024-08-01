@@ -30,4 +30,15 @@ final class Context
             $this->bindingUse,
         );
     }
+
+    public function withBindingUse(BindingUse $bindingUse): self
+    {
+        return new self(
+            $this->type,
+            $this->metadata,
+            $this->registry,
+            $this->namespaces,
+            $bindingUse,
+        );
+    }
 }

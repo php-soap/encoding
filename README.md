@@ -126,3 +126,6 @@ class MySpecificTypeCEncoder implements XmlEncoder
 
 **Note:** An encoder is considered to be isomorphic : When calling `from` and `to` on the `Iso` object, the data should be the same.
 More information about the concept [can be found here](https://github.com/veewee/reflecta/blob/main/docs/isomorphisms.md).
+
+For a full list of available encoders, you can check the [Soap\Encoding\Encoder](src/Encoder) namespace.
+There are also some examples of common problems you can solve with these encoders in the [examples/encoders](examples/encoders) directory.
