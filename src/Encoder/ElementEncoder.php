@@ -28,6 +28,9 @@ final class ElementEncoder implements XmlEncoder
     public function iso(Context $context): Iso
     {
         $typeEncoder = $this->typeEncoder;
+        $context = $this->typeEncoder instanceof Feature\ElementContextEnhancer
+            ? $this->typeEncoder->enhanceElementContext($context)
+            : $context;
 
         return new Iso(
             /**

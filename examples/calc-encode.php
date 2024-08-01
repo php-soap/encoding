@@ -1,13 +1,12 @@
-<?php
+<?php declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once \dirname(__DIR__) . '/vendor/autoload.php';
 
 use Soap\Encoding\Driver;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\HttpBinding\SoapResponse;
 use Soap\Wsdl\Loader\StreamWrapperLoader;
 use Soap\WsdlReader\Locator\ServiceSelectionCriteria;
-use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
 use Soap\WsdlReader\Wsdl1Reader;
 
