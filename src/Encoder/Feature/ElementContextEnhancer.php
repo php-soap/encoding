@@ -16,4 +16,5 @@ use Soap\Encoding\Encoder\Context;
 interface ElementContextEnhancer
 {
     public function enhanceElementContext(Context $context): Context;
+    public function resolveXsiType(Context $context, mixed $value): Context;
 }

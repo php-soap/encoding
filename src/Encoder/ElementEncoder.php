@@ -38,7 +38,7 @@ final class ElementEncoder implements XmlEncoder
              */
             static fn (mixed $raw): string => (new XsdTypeXmlElementWriter())(
                 $context,
-                (new ElementValueBuilder($context, $typeEncoder, $raw))
+                (new ElementValueBuilder($typeEncoder instanceof Feature\ElementContextEnhancer ? ($context = $typeEncoder->resolveXsiType($context, $raw)) : $context, $typeEncoder, $raw))
             ),
             /**
              * @psalm-param non-empty-string|Element $xml
