@@ -7,12 +7,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\Feature\ElementContextEnhancer;
+use Soap\Encoding\Encoder\Feature\XsiTypeCalculator;
 use Soap\Encoding\Encoder\SimpleType\IntTypeEncoder;
 use Soap\Encoding\Encoder\SimpleType\StringTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
 
 #[CoversClass(ElementEncoder::class)]
@@ -25,7 +27,11 @@ final class ElementEncoderTest extends AbstractEncoderTests
             'context' => $context = self::createContext(
                 $xsdType = XsdType::guess('string')
                     ->withXmlTargetNodeName('hello')
-                    ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+                    ->withMeta(
+                        static fn (TypeMeta $meta): TypeMeta => $meta
+                        ->withIsQualified(true)
+                        ->withIsSimple(true)
+                    )
             ),
         ];
 
@@ -77,6 +83,32 @@ final class ElementEncoderTest extends AbstractEncoderTests
                 }
             }),
             'xml' => '<bonjour>32</bonjour>',
+            'data' => 32,
+        ];
+        yield 'xsi-type-calculating-encoder' => [
+            ...$baseConfig,
+            'encoder' => $encoder = new ElementEncoder(new class implements ElementContextEnhancer, XmlEncoder, XsiTypeCalculator {
+                public function iso(Context $context): Iso
+                {
+                    return (new IntTypeEncoder())->iso($context);
+                }
+
+                public function enhanceElementContext(Context $context): Context
+                {
+                    return $context->withBindingUse(BindingUse::ENCODED);
+                }
+
+                public function resolveXsiTypeForValue(Context $context, mixed $value): string
+                {
+                    return 'xsd:'.get_debug_type($value);
+                }
+
+                public function shouldIncludeXsiTargetNamespace(Context $context): bool
+                {
+                    return true;
+                }
+            }),
+            'xml' => '<hello xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:int" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">32</hello>',
             'data' => 32,
         ];
     }
