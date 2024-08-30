@@ -3,9 +3,11 @@ require_once \dirname(__DIR__, 3) . '/vendor/autoload.php';
 
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature\ElementContextEnhancer;
+use Soap\Encoding\Encoder\Feature\XsiTypeCalculator;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Xml\Writer\ElementValueBuilder;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
 
@@ -31,7 +33,8 @@ EncoderRegistry::default()
         'anyType',
         new class implements
             ElementContextEnhancer,
-            XmlEncoder {
+            XmlEncoder,
+            XsiTypeCalculator {
             public function iso(Context $context): Iso
             {
                 return (new ScalarTypeEncoder())->iso($context);
@@ -44,6 +47,32 @@ EncoderRegistry::default()
             public function enhanceElementContext(Context $context): Context
             {
                 return $context->withBindingUse(BindingUse::ENCODED);
+            }
+
+            /**
+             * Can be used to fine-tune the xsi:type element.
+             * For example, xsi:type="xsd:date" when dealing with value's like `DateTimeImmutable`.
+             *
+             * A default fallback function is provided in the ElementValueBuilder class.
+             */
+            public function resolveXsiTypeForValue(Context $context, mixed $value): string
+            {
+                return match (true) {
+                    $value instanceof \DateTime => 'xsd:datetime',
+                    $value instanceof \Date => 'xsd:date',
+                    default => ElementValueBuilder::resolveXsiTypeForValue($context, $value),
+                };
+            }
+
+            /**
+             * Determines if the xmlns of the xsi:type prefix should be imported.
+             * For example: xsd:date will import xmlns:xsd="...".
+             *
+             * A default fallback function is provided in the ElementValueBuilder class.
+             */
+            public function shouldIncludeXsiTargetNamespace(Context $context): bool
+            {
+                return ElementValueBuilder::shouldIncludeXsiTargetNamespace($context);
             }
         }
     );
