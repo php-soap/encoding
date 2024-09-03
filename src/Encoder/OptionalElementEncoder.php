@@ -13,7 +13,7 @@ use VeeWee\Xml\Xmlns\Xmlns;
  * @template T of mixed
  * @implements XmlEncoder<T, string>
  */
-final class OptionalElementEncoder implements XmlEncoder
+final class OptionalElementEncoder implements Feature\OptionalAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<T, string> $elementEncoder

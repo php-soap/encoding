@@ -82,4 +82,19 @@ final class RepeatingElementEncoderTest extends AbstractEncoderTests
 
         static::assertEquals(['world'], $actual);
     }
+
+    public function test_it_can_encode_from_null(): void
+    {
+        $encoder = new RepeatingElementEncoder(new ElementEncoder(new StringTypeEncoder()));
+        $context = self::createContext(
+            XsdType::guess('string')
+                ->withXmlTargetNodeName('hello')
+                ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true))
+        );
+
+        $iso = $encoder->iso($context);
+        $actual = $iso->to(null);
+
+        static::assertSame('', $actual);
+    }
 }
