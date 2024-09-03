@@ -39,9 +39,11 @@ final class EncoderDetector
         }
 
         if ($meta->isElement()->unwrapOr(false)) {
-            $encoder = new OptionalElementEncoder(
-                new ElementEncoder($encoder)
-            );
+            $encoder = new ElementEncoder($encoder);
+
+            if ($meta->isNullable()->unwrapOr(false)) {
+                $encoder = new OptionalElementEncoder($encoder);
+            }
         }
 
         return $encoder;

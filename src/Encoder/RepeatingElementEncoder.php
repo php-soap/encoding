@@ -12,7 +12,7 @@ use function Psl\Vec\map;
 
 /**
  * @template T
- * @implements XmlEncoder<iterable<array-key, T>, string>
+ * @implements XmlEncoder<iterable<array-key, T>|null, string>
  */
 final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
 {
@@ -25,7 +25,7 @@ final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
     }
 
     /**
-     * @return Iso<iterable<array-key, T>, string>
+     * @return Iso<iterable<array-key, T>|null, string>
      */
     public function iso(Context $context): Iso
     {
@@ -39,12 +39,12 @@ final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
 
         return new Iso(
             /**
-             * @param iterable<array-key, T> $raw
+             * @param iterable<array-key, T>|null $raw
              */
-            static function (iterable $raw) use ($innerIso): string {
+            static function (iterable|null $raw) use ($innerIso): string {
                 return join(
                     map(
-                        $raw,
+                        $raw ?? [],
                         /**
                          * @param T $item
                          */

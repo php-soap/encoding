@@ -51,6 +51,10 @@ final class EncoderDetector
             $encoder = new RepeatingElementEncoder($encoder);
         }
 
+        if (!$encoder instanceof Feature\OptionalAware && $meta->isNullable()->unwrapOr(false)) {
+            $encoder = new OptionalElementEncoder($encoder);
+        }
+
         $encoder = new ErrorHandlingEncoder($encoder);
 
         return $this->cache[$type] = $encoder;
