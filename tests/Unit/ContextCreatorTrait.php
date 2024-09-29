@@ -22,7 +22,8 @@ trait ContextCreatorTrait
 {
     public static function createContext(
         XsdType $currentType,
-        TypeCollection $allTypes = new TypeCollection()
+        TypeCollection $allTypes = new TypeCollection(),
+        ?EncoderRegistry $encoderRegistry = null
     ): Context {
         return new Context(
             $currentType,
@@ -30,7 +31,7 @@ trait ContextCreatorTrait
                 $allTypes,
                 new MethodCollection(),
             ),
-            EncoderRegistry::default(),
+            $encoderRegistry ?? EncoderRegistry::default(),
             self::buildNamespaces(),
         );
     }

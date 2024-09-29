@@ -27,7 +27,7 @@ use function VeeWee\Xml\Writer\Builder\value as buildValue;
  *
  * @implements XmlEncoder<TObj|array, non-empty-string>
  */
-final class ObjectEncoder implements XmlEncoder
+final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
 {
     /**
      * @param class-string<TObj> $className

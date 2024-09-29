@@ -14,7 +14,7 @@ use function Psl\Vec\map;
  * @template T
  * @implements XmlEncoder<iterable<array-key, T>|null, string>
  */
-final class RepeatingElementEncoder implements Feature\ListAware, XmlEncoder
+final class RepeatingElementEncoder implements Feature\ElementAware, Feature\ListAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<T, string> $typeEncoder
