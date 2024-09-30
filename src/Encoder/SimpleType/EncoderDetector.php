@@ -39,9 +39,11 @@ final class EncoderDetector
         }
 
         if ($meta->isElement()->unwrapOr(false)) {
-            $encoder = new ElementEncoder($encoder);
+            if (!$encoder instanceof Feature\ElementAware) {
+                $encoder = new ElementEncoder($encoder);
+            }
 
-            if ($meta->isNullable()->unwrapOr(false)) {
+            if ($meta->isNullable()->unwrapOr(false) && !$encoder instanceof Feature\OptionalAware) {
                 $encoder = new OptionalElementEncoder($encoder);
             }
         }

@@ -12,7 +12,7 @@ use VeeWee\Reflecta\Iso\Iso;
 /**
  * @implements XmlEncoder<mixed, string>
  */
-final class ElementEncoder implements XmlEncoder
+final class ElementEncoder implements Feature\ElementAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<mixed, string> $typeEncoder
