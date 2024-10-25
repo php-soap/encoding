@@ -17,6 +17,7 @@ use function is_int;
 use function is_string;
 use function Psl\Option\none;
 use function Psl\Option\some;
+use function sprintf;
 
 final class XsiTypeDetector
 {
