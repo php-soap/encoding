@@ -5,6 +5,7 @@ namespace Soap\Encoding;
 
 use Psl\Collection\MutableMap;
 use Soap\Encoding\ClassMap\ClassMapCollection;
+use Soap\Encoding\Encoder\AnyElementEncoder;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\EncoderDetector;
@@ -106,7 +107,6 @@ final class EncoderRegistry
                 $qNameFormatter($xsd, 'decimal') => new SimpleType\FloatTypeEncoder(),
 
                 // Scalar:
-                $qNameFormatter($xsd, 'any') => new SimpleType\ScalarTypeEncoder(),
                 $qNameFormatter($xsd, 'anyType') => new SimpleType\ScalarTypeEncoder(),
                 $qNameFormatter($xsd, 'anyXML') => new SimpleType\ScalarTypeEncoder(),
                 $qNameFormatter($xsd, 'anySimpleType') => new SimpleType\ScalarTypeEncoder(),
@@ -159,6 +159,9 @@ final class EncoderRegistry
 
                 // Apache Map
                 $qNameFormatter(ApacheMapDetector::NAMESPACE, 'Map') => new SoapEnc\ApacheMapEncoder(),
+
+                // Special XSD cases
+                $qNameFormatter($xsd, 'any') => new AnyElementEncoder(),
             ])
         );
     }

@@ -12,9 +12,9 @@ use VeeWee\Reflecta\Iso\Iso;
  * @template-covariant TXml
  *
  * @implements XmlEncoder<TData, TXml>
- *
+ * @implements Feature\DecoratingEncoder<TData, TXml>
  */
-final class ErrorHandlingEncoder implements XmlEncoder
+final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncoder
 {
     /**
      * @param XmlEncoder<TData, TXml> $encoder
@@ -22,6 +22,14 @@ final class ErrorHandlingEncoder implements XmlEncoder
     public function __construct(
         private readonly XmlEncoder $encoder
     ) {
+    }
+
+    /**
+     * @return XmlEncoder<TData, TXml>
+     */
+    public function decoratedEncoder(): XmlEncoder
+    {
+        return $this->encoder;
     }
 
     /**

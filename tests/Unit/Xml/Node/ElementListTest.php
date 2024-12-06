@@ -39,4 +39,20 @@ final class ElementListTest extends TestCase
         static::assertCount(1, $list->elements());
         static::assertSame($xml, $list->elements()[0]->value());
     }
+
+    public function test_it_can_load_nested_list(): void
+    {
+        $list = ElementList::fromLookupArray([
+            'hello' => $hello = Element::fromString('<hello>world</hello>'),
+            'world' => '',
+            '_' => '',
+            'attr' => 'foo',
+            'list' => new ElementList(
+                $list1 = Element::fromString('<list>1</list>'),
+                $list2 = Element::fromString('<list>2</list>'),
+            )
+        ]);
+
+        static::assertSame([$hello, $list1, $list2], $list->elements());
+    }
 }

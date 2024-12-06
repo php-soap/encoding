@@ -9,10 +9,13 @@ use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
 use function VeeWee\Xml\Dom\Predicate\is_element;
 
+/**
+ * @psalm-type LookupArray = array<string, string|Element|ElementList>
+ */
 final class DocumentToLookupArrayReader
 {
     /**
-     * @return array<string, string|Element|ElementList>
+     * @return LookupArray
      */
     public function __invoke(Element $xml): array
     {
@@ -55,7 +58,7 @@ final class DocumentToLookupArrayReader
         /** @var \iterable<DOMAttr> $attributes */
         $attributes = $root->attributes;
         foreach ($attributes as $attribute) {
-            $key = $attribute->localName ?? 'unkown';
+            $key = $attribute->localName ?? 'unknown';
             $nodes[$key] = $attribute->value;
         }
 
