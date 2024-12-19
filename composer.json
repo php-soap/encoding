@@ -22,12 +22,12 @@
     "require": {
         "php": "~8.2.0 || ~8.3.0 || ~8.4.0",
         "azjezz/psl": "^3.0",
-        "veewee/reflecta": "~0.10",
+        "veewee/reflecta": "~0.11",
         "veewee/xml": "^3.3",
-        "php-soap/engine": "^2.13",
+        "php-soap/engine": "^2.14",
         "php-soap/wsdl": "^1.12",
         "php-soap/xml": "^1.8",
-        "php-soap/wsdl-reader": "~0.18"
+        "php-soap/wsdl-reader": "~0.20"
     },
     "require-dev": {
         "vimeo/psalm": "^5.26",

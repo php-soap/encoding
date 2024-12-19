@@ -6,6 +6,7 @@ namespace Soap\Encoding\Encoder;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Engine\Metadata\Model\Property;
+use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
@@ -47,17 +48,21 @@ final class ObjectAccess
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
-            $typeMeta = $property->getType()->getMeta();
+            $propertyType = $property->getType();
+            $propertyTypeMeta = $propertyType->getMeta();
+            $propertyContext = $context->withType($propertyType);
             $name = $property->getName();
             $normalizedName = PhpPropertyNameNormalizer::normalize($name);
 
-            $shouldLensBeOptional = self::shouldLensBeOptional($typeMeta);
+            $encoder = $context->registry->detectEncoderForContext($propertyContext);
+            $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
-            $encoderLenses[$normalizedName] = $shouldLensBeOptional ? optional(property($normalizedName)) : property($normalizedName);
-            $decoderLenses[$normalizedName] = $shouldLensBeOptional ? optional(index($name)) : index($name);
-            $isos[$normalizedName] = self::grabIsoForProperty($context, $property);
 
-            $isAnyPropertyQualified = $isAnyPropertyQualified || $typeMeta->isQualified()->unwrapOr(false);
+            $encoderLenses[$normalizedName] = self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder, $type, $property);
+            $decoderLenses[$normalizedName] = self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder, $type, $property);
+            $isos[$normalizedName] = $encoder->iso($propertyContext);
+
+            $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
 
         return new self(
@@ -67,6 +72,46 @@ final class ObjectAccess
             $isos,
             $isAnyPropertyQualified
         );
+    }
+
+    /**
+     * @return Lens<object, mixed>
+     */
+    private static function createEncoderLensForType(
+        bool $shouldLensBeOptional,
+        string $normalizedName,
+        XmlEncoder $encoder,
+        Type $type,
+        Property $property,
+    ): Lens {
+        $lens = match (true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder->decoratedEncoder(), $type, $property),
+            $encoder instanceof Feature\ProvidesObjectEncoderLens => $encoder::createObjectEncoderLens($type, $property),
+            default => property($normalizedName)
+        };
+
+        /** @var Lens<object, mixed> */
+        return $shouldLensBeOptional ? optional($lens) : $lens;
+    }
+
+    /**
+     * @return Lens<array, mixed>
+     */
+    private static function createDecoderLensForType(
+        bool $shouldLensBeOptional,
+        string $name,
+        XmlEncoder $encoder,
+        Type $type,
+        Property $property,
+    ): Lens {
+        $lens = match(true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder->decoratedEncoder(), $type, $property),
+            $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
+            default => index($name),
+        };
+
+        /** @var Lens<array, mixed> */
+        return $shouldLensBeOptional ? optional($lens) : $lens;
     }
 
     private static function shouldLensBeOptional(TypeMeta $meta): bool
@@ -83,16 +128,5 @@ final class ObjectAccess
         }
 
         return false;
-    }
-
-    /**
-     * @return Iso<mixed, string>
-     */
-    private static function grabIsoForProperty(Context $context, Property $property): Iso
-    {
-        $propertyContext = $context->withType($property->getType());
-
-        return $context->registry->detectEncoderForContext($propertyContext)
-            ->iso($propertyContext);
     }
 }
