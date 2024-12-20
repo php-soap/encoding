@@ -7,7 +7,6 @@ use Psl\Collection\MutableMap;
 use Soap\Encoding\ClassMap\ClassMapCollection;
 use Soap\Encoding\Encoder\AnyElementEncoder;
 use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
@@ -205,7 +204,7 @@ final class EncoderRegistry
     {
         $this->simpleTypeMap->add(
             (new QNameFormatter())($namespace, $name),
-            new ElementEncoder(new SimpleType\BackedEnumTypeEncoder($enumClass))
+            new SimpleType\BackedEnumTypeEncoder($enumClass)
         );
 
         return $this;
