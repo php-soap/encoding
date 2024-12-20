@@ -211,6 +211,19 @@ final class EncoderRegistry
         return $this;
     }
 
+    public function addBackedEnumClassMapCollection(ClassMapCollection $classMapCollection): self
+    {
+        foreach ($classMapCollection as $classMap) {
+            $this->addBackedEnum(
+                $classMap->getXmlNamespace(),
+                $classMap->getXmlType(),
+                $classMap->getPhpClassName()
+            );
+        }
+
+        return $this;
+    }
+
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
