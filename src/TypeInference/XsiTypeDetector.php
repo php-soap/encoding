@@ -98,7 +98,7 @@ final class XsiTypeDetector
             sprintf(
                 '%s:%s',
                 $context->namespaces->lookupNameFromNamespace($type->getXmlNamespace())->unwrap(),
-                $type->getName()
+                $type->getXmlTypeName()
             )
         );
     }
