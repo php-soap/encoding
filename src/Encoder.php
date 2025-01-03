@@ -3,18 +3,14 @@ declare(strict_types=1);
 
 namespace Soap\Encoding;
 
-use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\Xml\Writer\OperationBuilder;
-use Soap\Encoding\Xml\Writer\ParameterBuilder;
-use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
+use Soap\Encoding\Encoder\Method\MethodContext;
+use Soap\Encoding\Encoder\Method\RequestEncoder;
 use Soap\Engine\Encoder as SoapEncoder;
 use Soap\Engine\HttpBinding\SoapRequest;
 use Soap\Engine\Metadata\Metadata;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
-use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\WsdlReader\Model\Definitions\Namespaces;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
-use function VeeWee\Reflecta\Lens\index;
+use function Psl\Type\mixed_vec;
 
 final class Encoder implements SoapEncoder
 {
@@ -29,26 +25,12 @@ final class Encoder implements SoapEncoder
     {
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
-
+        $methodContext = new MethodContext($methodInfo, $this->metadata, $this->registry, $this->namespaces);
         $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
-        $bindingUse = $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL);
-        $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::from(...));
-
-        $requestParams = [];
-        foreach ($methodInfo->getParameters() as $index => $parameter) {
-            $type = $parameter->getType();
-            $context = new Context($type, $this->metadata, $this->registry, $this->namespaces, $bindingUse);
-            /** @var mixed $value */
-            $value = index($index)->get($arguments);
-
-            $requestParams[] = (new ParameterBuilder($meta, $context, $value))(...);
-        }
-
-        $operation = new OperationBuilder($meta, $this->namespaces, $requestParams);
-        $writeEnvelope = new SoapEnvelopeWriter($soapVersion, $bindingUse, $encodingStyle, $operation(...));
+        $iso = (new RequestEncoder())->iso($methodContext);
 
         return new SoapRequest(
-            $writeEnvelope() . PHP_EOL,
+            $iso->to(mixed_vec()->assert($arguments)),
             $meta->location()->unwrap(),
             $meta->action()->unwrap(),
             match($soapVersion) {
