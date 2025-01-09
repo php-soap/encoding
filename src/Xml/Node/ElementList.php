@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Node;
 
 use Closure;
+use Countable;
 use DOMElement;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Stringable;
 use VeeWee\Xml\Dom\Document;
+use function count;
 use function Psl\Iter\reduce;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
@@ -15,7 +17,7 @@ use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 /**
  * @psalm-import-type LookupArray from DocumentToLookupArrayReader
  */
-final class ElementList implements Stringable
+final class ElementList implements Countable, Stringable
 {
     /** @var list<Element> */
     private array $elements;
@@ -110,5 +112,10 @@ final class ElementList implements Stringable
     public function __toString()
     {
         return $this->value();
+    }
+
+    public function count(): int
+    {
+        return count($this->elements);
     }
 }
