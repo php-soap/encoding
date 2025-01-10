@@ -55,4 +55,12 @@ final class ElementListTest extends TestCase
 
         static::assertSame([$hello, $list1, $list2], $list->elements());
     }
+
+    public function test_it_can_be_countded(): void
+    {
+        $list = new ElementList(Element::fromString('<hello>world</hello>'));
+
+        static::assertCount(1, $list->elements());
+        static::assertCount(1, $list);
+    }
 }
