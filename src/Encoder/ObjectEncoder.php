@@ -17,6 +17,7 @@ use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\Lens;
 use function is_array;
 use function Psl\Dict\map_with_key;
+use function Psl\Fun\lazy;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
@@ -42,7 +43,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     public function iso(Context $context): Iso
     {
-        $objectAccess = ObjectAccess::forContext($context);
+        $objectAccess = lazy(static fn (): ObjectAccess => ObjectAccess::forContext($context));
 
         return new Iso(
             /**
@@ -50,7 +51,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
              * @return non-empty-string
              */
             function (object|array $value) use ($context, $objectAccess) : string {
-                return $this->to($context, $objectAccess, $value);
+                return $this->to($context, $objectAccess(), $value);
             },
             /**
              * @param non-empty-string|Element $value
@@ -59,7 +60,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
             function (string|Element $value) use ($context, $objectAccess) : object {
                 return $this->from(
                     $context,
-                    $objectAccess,
+                    $objectAccess(),
                     ($value instanceof Element ? $value : Element::fromString($value))
                 );
             }
