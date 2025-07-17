@@ -7,10 +7,12 @@ use DOMAttr;
 use DOMNode;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
+use VeeWee\Xml\Xmlns\Xmlns;
 use function VeeWee\Xml\Dom\Predicate\is_element;
 
 /**
- * @psalm-type LookupArray = array<string, string|Element|ElementList>
+ * @psalm-type LookupArrayValue = string|Element|ElementList
+ * @psalm-type LookupArray = array<string, LookupArrayValue>
  */
 final class DocumentToLookupArrayReader
 {
@@ -20,7 +22,7 @@ final class DocumentToLookupArrayReader
     public function __invoke(Element $xml): array
     {
         $root = $xml->element();
-        /** @var array<string, string|Element|ElementList> $nodes */
+        /** @var LookupArray $nodes */
         $nodes = [];
 
         // Read all child elements.
@@ -38,7 +40,7 @@ final class DocumentToLookupArrayReader
             $currentElement = Element::fromDOMElement($element);
 
             // Incrementally build up lists.
-            /** @var string|Element|ElementList $value */
+            /** @var LookupArrayValue $value */
             $value = match(true) {
                 $previousValue instanceof ElementList => $previousValue->append($currentElement),
                 $previousValue instanceof Element => new ElementList($previousValue, $currentElement),
@@ -50,8 +52,8 @@ final class DocumentToLookupArrayReader
 
         // It might be possible that the child is a regular textNode.
         // In that case, we use '_' as the key and the value of the textNode as value.
-        if (!$nodes && $content = trim($root->textContent)) {
-            $nodes['_'] = $content;
+        if (!$nodes && $root->getAttributeNS(Xmlns::xsi()->value(), 'nil') !== 'true') {
+            $nodes['_'] = $root->textContent;
         }
 
         // All attributes also need to be added as key => value pairs.
