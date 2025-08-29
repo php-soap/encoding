@@ -8,7 +8,6 @@ use DOMElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature\ListAware;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
@@ -70,7 +69,7 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
                         ? [
                             new XsiAttributeBuilder(
                                 $context,
-                                XsiTypeDetector::detectFromValue($context, [])
+                                XsiAttributeBuilder::resolveXsiTypeForValue($context, [])
                             ),
                             prefixed_attribute(
                                 'SOAP-ENC',

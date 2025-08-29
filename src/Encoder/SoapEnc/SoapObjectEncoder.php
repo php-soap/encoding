@@ -8,7 +8,6 @@ use DOMElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
@@ -56,13 +55,13 @@ final class SoapObjectEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             children([
-                new XsiAttributeBuilder($context, XsiTypeDetector::detectFromValue($context, $data)),
+                new XsiAttributeBuilder($context, XsiAttributeBuilder::resolveXsiTypeForValue($context, $data)),
                 ...\Psl\Vec\map_with_key(
                     (array) $data,
                     static fn (mixed $key, mixed $value): Closure => element(
                         (string) $key,
                         children([
-                            (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
+                            (new XsiAttributeBuilder($anyContext, XsiAttributeBuilder::resolveXsiTypeForValue($anyContext, $value))),
                             buildValue(ScalarTypeEncoder::default()->iso($context)->to($value))
                         ]),
                     )

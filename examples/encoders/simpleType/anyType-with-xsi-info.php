@@ -7,7 +7,7 @@ use Soap\Encoding\Encoder\Feature\XsiTypeCalculator;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\EncoderRegistry;
-use Soap\Encoding\Xml\Writer\ElementValueBuilder;
+use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use VeeWee\Reflecta\Iso\Iso;
 
@@ -60,7 +60,7 @@ EncoderRegistry::default()
                 return match (true) {
                     $value instanceof \DateTime => 'xsd:datetime',
                     $value instanceof \Date => 'xsd:date',
-                    default => ElementValueBuilder::resolveXsiTypeForValue($context, $value),
+                    default => XsiAttributeBuilder::resolveXsiTypeForValue($context, $value),
                 };
             }
 
@@ -72,7 +72,7 @@ EncoderRegistry::default()
              */
             public function shouldIncludeXsiTargetNamespace(Context $context): bool
             {
-                return ElementValueBuilder::shouldIncludeXsiTargetNamespace($context);
+                return XsiAttributeBuilder::shouldIncludeXsiTargetNamespace($context);
             }
         }
     );

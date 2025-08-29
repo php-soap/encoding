@@ -7,8 +7,6 @@ use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\cdata;
 use function VeeWee\Xml\Writer\Builder\children;
@@ -43,48 +41,27 @@ final class ElementValueBuilder
      */
     private function buildXsiType(XMLWriter $writer): Generator
     {
-        if ($this->context->bindingUse !== BindingUse::ENCODED) {
-            return;
-        }
-
-        $context = $this->context;
-        [$xsiType, $includeXsiTargetNamespace] = match(true) {
-            $this->encoder instanceof Feature\XsiTypeCalculator => [
-                $this->encoder->resolveXsiTypeForValue($context, $this->value),
-                $this->encoder->shouldIncludeXsiTargetNamespace($context),
-            ],
-            default => [
-                self::resolveXsiTypeForValue($context, $this->value),
-                self::shouldIncludeXsiTargetNamespace($context),
-            ],
-        };
-
-        yield from (new XsiAttributeBuilder(
+        yield from XsiAttributeBuilder::forEncodedValue(
             $this->context,
-            $xsiType,
-            $includeXsiTargetNamespace,
-        ))($writer);
+            $this->encoder,
+            $this->value,
+        )($writer);
     }
 
     /**
-     * Can be used as a default fallback function when implementing the XsiTypeCalculator interface.
-     * Tells the XsiAttributeBuilder what xsi:type attribute should be set to for a given value.
+     * @deprecated Use XsiAttributeBuilder::resolveXsiTypeForValue() instead. Will be removed in 1.0.0.
      */
     public static function resolveXsiTypeForValue(Context $context, mixed $value): string
     {
-        return XsiTypeDetector::detectFromValue($context, $value);
+        return XsiAttributeBuilder::resolveXsiTypeForValue($context, $value);
     }
 
     /**
-     * Can be used as a default fallback function when implementing the XsiTypeCalculator interface.
-     * Tells the XsiAttributeBuilder that the prefix of the xsi:type should be imported as a xmlns namespace.
+     * @deprecated Use XsiAttributeBuilder::shouldIncludeXsiTargetNamespace() instead. Will be removed in 1.0.0.
      */
     public static function shouldIncludeXsiTargetNamespace(Context $context): bool
     {
-        $type = $context->type;
-
-        return $type->getXmlTargetNamespace() !== $type->getXmlNamespace()
-            || !$type->getMeta()->isQualified()->unwrapOr(false);
+        return XsiAttributeBuilder::shouldIncludeXsiTargetNamespace($context);
     }
 
     /**
