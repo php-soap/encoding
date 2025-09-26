@@ -6,7 +6,8 @@ namespace Soap\Encoding\TypeInference;
 use DOMElement;
 use Psl\Option\Option;
 use Soap\Encoding\Encoder\Context;
-use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Encoder\FixedIsoEncoder;
+use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
@@ -42,9 +43,9 @@ final class XsiTypeDetector
     }
 
     /**
-     * @return Option<XmlEncoder<mixed, string>>
+     * @return Option<XsdType>
      */
-    public static function detectEncoderFromXmlElement(Context $context, DOMElement $element): Option
+    public static function detectXsdTypeFromXmlElement(Context $context, DOMElement $element): Option
     {
         if ($context->bindingUse !== BindingUse::ENCODED) {
             return none();
@@ -70,14 +71,41 @@ final class XsiTypeDetector
             return none();
         }
 
-        $type = $context->type;
-        $meta = $type->getMeta();
+        return some(
+            // We create a new type based on the detected xsi:type, but we keep the meta information of the original type.
+            // This way we can still detect if the type is nullable, a union, used on an element, ...
+            $context->type
+                ->copy($localName)
+                ->withXmlTypeName($localName)
+                ->withXmlNamespace($namespaceUri)
+        );
+    }
+
+    /**
+     * @return Option<FixedIsoEncoder<mixed, string>>
+     */
+    public static function detectEncoderFromXmlElement(Context $context, DOMElement $element): Option
+    {
+        $requestedXsiType = self::detectXsdTypeFromXmlElement($context, $element);
+        if (!$requestedXsiType->isSome()) {
+            return none();
+        }
+
+        // Enhance context to avoid duplicate optionals, repeating elements, xsi:type detections, ...
+        $type = $requestedXsiType->unwrap();
+        $encoderDetectorTypeMeta = $type->getMeta()
+            ->withIsNullable(false)
+            ->withIsRepeatingElement(false);
+        $encoderDetectorContext = $context
+            ->withType($type->withMeta(static fn () => $encoderDetectorTypeMeta))
+            ->withBindingUse(BindingUse::LITERAL);
 
         return some(
-            match(true) {
-                $meta->isSimple()->unwrapOr(false) => $context->registry->findSimpleEncoderByNamespaceName($namespaceUri, $localName),
-                default => $context->registry->findComplexEncoderByNamespaceName($namespaceUri, $localName),
-            }
+            new FixedIsoEncoder(
+                $context->registry->detectEncoderForContext($encoderDetectorContext)->iso(
+                    $context->withType($type)
+                ),
+            )
         );
     }
 

@@ -49,7 +49,7 @@ final class ImpliedSchema012Test extends AbstractCompatibilityTests
             xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
             <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                 <tns:test>
-                    <testParam xsi:type="tns:ArrayOfCompany">
+                    <testParam xsi:type="tns:testType">
                         <Company xsi:type="tns:Company">
                             <ID xsi:type="xsd:int">0</ID>
                         </Company>

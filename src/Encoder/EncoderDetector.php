@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 use stdClass;
 use WeakMap;
 
@@ -42,10 +43,27 @@ final class EncoderDetector
 
         $meta = $type->getMeta();
 
-        $encoder = match(true) {
-            $meta->isSimple()->unwrapOr(false) => SimpleType\EncoderDetector::default()($context),
-            default => $this->detectComplexTypeEncoder($type, $context),
-        };
+        return $this->cache[$type] = $this->enhanceEncoder(
+            $context,
+            match(true) {
+                $meta->isSimple()->unwrapOr(false) => SimpleType\EncoderDetector::default()($context),
+                default => $this->detectComplexTypeEncoder($type, $context)
+            }
+        );
+    }
+
+    /**
+     * @param XmlEncoder<mixed, string> $encoder
+     * @return XmlEncoder<mixed, string>
+     */
+    private function enhanceEncoder(Context $context, XmlEncoder $encoder): XmlEncoder
+    {
+        $meta = $context->type->getMeta();
+        $isSimple = $meta->isSimple()->unwrapOr(false);
+
+        if (!$isSimple && !$encoder instanceof Feature\DisregardXsiInformation && $context->bindingUse === BindingUse::ENCODED) {
+            $encoder = new XsiTypeEncoder($encoder);
+        }
 
         if (!$encoder instanceof Feature\ListAware && $meta->isRepeatingElement()->unwrapOr(false)) {
             $encoder = new RepeatingElementEncoder($encoder);
@@ -55,9 +73,7 @@ final class EncoderDetector
             $encoder = new OptionalElementEncoder($encoder);
         }
 
-        $encoder = new ErrorHandlingEncoder($encoder);
-
-        return $this->cache[$type] = $encoder;
+        return new ErrorHandlingEncoder($encoder);
     }
 
     /**

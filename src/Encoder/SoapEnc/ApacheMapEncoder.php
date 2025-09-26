@@ -8,7 +8,6 @@ use DOMElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
@@ -58,18 +57,18 @@ final class ApacheMapEncoder implements XmlEncoder
         return (new XsdTypeXmlElementWriter())(
             $context,
             buildChildren([
-                new XsiAttributeBuilder($context, XsiTypeDetector::detectFromValue($context, $data)),
+                new XsiAttributeBuilder($context, XsiAttributeBuilder::resolveXsiTypeForValue($context, $data)),
                 ...\Psl\Vec\map_with_key(
                     $data,
                     static fn (mixed $key, mixed $value): Closure => element(
                         'item',
                         buildChildren([
                             element('key', buildChildren([
-                                (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $key))),
+                                (new XsiAttributeBuilder($anyContext, XsiAttributeBuilder::resolveXsiTypeForValue($anyContext, $key))),
                                 buildValue(ScalarTypeEncoder::default()->iso($context)->to($key))
                             ])),
                             element('value', buildChildren([
-                                (new XsiAttributeBuilder($anyContext, XsiTypeDetector::detectFromValue($anyContext, $value))),
+                                (new XsiAttributeBuilder($anyContext, XsiAttributeBuilder::resolveXsiTypeForValue($anyContext, $value))),
                                 buildValue(ScalarTypeEncoder::default()->iso($context)->to($value))
                             ])),
                         ]),

@@ -5,7 +5,6 @@ namespace Soap\Encoding\Encoder;
 
 use Closure;
 use Exception;
-use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
@@ -83,11 +82,12 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
             $context,
             writeChildren(
                 [
-                    (new XsiAttributeBuilder(
+                    XsiAttributeBuilder::forEncodedValue(
                         $context,
-                        XsiTypeDetector::detectFromValue($context, []),
-                        includeXsiTargetNamespace: !$objectAccess->isAnyPropertyQualified,
-                    )),
+                        $this,
+                        $data,
+                        forceIncludeXsiTargetNamespace: !$objectAccess->isAnyPropertyQualified,
+                    ),
                     ...map_with_key(
                         $objectAccess->properties,
                         static function (string $normalizePropertyName, Property $property) use ($objectAccess, $data, $defaultAction) : Closure {

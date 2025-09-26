@@ -9,7 +9,6 @@ use Soap\Encoding\Encoder\AnyElementEncoder;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\EncoderDetector;
 use Soap\Encoding\Encoder\ObjectEncoder;
-use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\SoapEnc;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -174,7 +173,7 @@ final class EncoderRegistry
     {
         $this->complextTypeMap->add(
             (new QNameFormatter())($namespace, $name),
-            new OptionalElementEncoder(new ObjectEncoder($class))
+            new ObjectEncoder($class)
         );
 
         return $this;
@@ -281,12 +280,17 @@ final class EncoderRegistry
 
     public function hasRegisteredSimpleTypeForXsdType(XsdType $type): bool
     {
-        $qNameFormatter = new QNameFormatter();
-
-        return $this->simpleTypeMap->contains($qNameFormatter(
+        return $this->hasRegisteredSimpleTypeForNamespaceName(
             $type->getXmlNamespace(),
             $type->getXmlTypeName()
-        ));
+        );
+    }
+
+    public function hasRegisteredSimpleTypeForNamespaceName(string $namespace, string $name): bool
+    {
+        $qNameFormatter = new QNameFormatter();
+
+        return $this->simpleTypeMap->contains($qNameFormatter($namespace, $name));
     }
 
     /**
@@ -312,19 +316,22 @@ final class EncoderRegistry
             return $found;
         }
 
-        return new OptionalElementEncoder(
-            new ObjectEncoder(stdClass::class)
-        );
+        return new ObjectEncoder(stdClass::class);
     }
 
     public function hasRegisteredComplexTypeForXsdType(XsdType $type): bool
     {
-        $qNameFormatter = new QNameFormatter();
-
-        return $this->complextTypeMap->contains($qNameFormatter(
+        return $this->hasRegisteredComplexTypeForNamespaceName(
             $type->getXmlNamespace(),
             $type->getXmlTypeName()
-        ));
+        );
+    }
+
+    public function hasRegisteredComplexTypeForNamespaceName(string $namespace, string $name): bool
+    {
+        $qNameFormatter = new QNameFormatter();
+
+        return $this->complextTypeMap->contains($qNameFormatter($namespace, $name));
     }
 
     /**

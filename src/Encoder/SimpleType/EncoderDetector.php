@@ -8,7 +8,9 @@ use Soap\Encoding\Encoder\ElementEncoder;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Encoder\XsiTypeEncoder;
 use Soap\Engine\Metadata\Model\XsdType;
+use Soap\WsdlReader\Model\Definitions\BindingUse;
 use function Psl\Iter\any;
 
 final class EncoderDetector
@@ -26,10 +28,21 @@ final class EncoderDetector
      */
     public function __invoke(Context $context): XmlEncoder
     {
+        return $this->enhanceEncoder(
+            $context,
+            $this->detectSimpleTypeEncoder($context)
+        );
+    }
+
+    /**
+     * @param XmlEncoder<mixed, string> $encoder
+     * @return XmlEncoder<mixed, string|null>
+     */
+    private function enhanceEncoder(Context $context, XmlEncoder $encoder): XmlEncoder
+    {
         $type = $context->type;
         $meta = $type->getMeta();
 
-        $encoder = $this->detectSimpleTypeEncoder($type, $context);
         if (!$encoder instanceof Feature\ListAware && $this->detectIsListType($type)) {
             $encoder = new SimpleListEncoder($encoder);
         }
@@ -43,6 +56,10 @@ final class EncoderDetector
                 $encoder = new ElementEncoder($encoder);
             }
 
+            if (!$encoder instanceof Feature\DisregardXsiInformation && $context->bindingUse === BindingUse::ENCODED) {
+                $encoder = new XsiTypeEncoder($encoder);
+            }
+
             if ($meta->isNullable()->unwrapOr(false) && !$encoder instanceof Feature\OptionalAware) {
                 $encoder = new OptionalElementEncoder($encoder);
             }
@@ -54,8 +71,9 @@ final class EncoderDetector
     /**
      * @return XmlEncoder<mixed, string>
      */
-    private function detectSimpleTypeEncoder(XsdType $type, Context $context): XmlEncoder
+    private function detectSimpleTypeEncoder(Context $context): XmlEncoder
     {
+        $type = $context->type;
         $meta = $type->getMeta();
 
         // Try to find a direct match:
