@@ -26,7 +26,9 @@ final class Encoder implements SoapEncoder
         $methodInfo = $this->metadata->getMethods()->fetchByName($method);
         $meta = $methodInfo->getMeta();
         $methodContext = new MethodContext($methodInfo, $this->metadata, $this->registry, $this->namespaces);
-        $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
+        $soapVersion = $meta->soapVersion()
+            ->map(static fn ($version) => SoapVersion::from($version))
+            ->unwrapOr(SoapVersion::SOAP_12);
         $iso = (new RequestEncoder())->iso($methodContext);
 
         return new SoapRequest(

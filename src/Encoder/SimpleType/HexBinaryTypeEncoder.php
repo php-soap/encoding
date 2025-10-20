@@ -7,6 +7,8 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Restriction\WhitespaceRestriction;
 use VeeWee\Reflecta\Iso\Iso;
+use function Psl\Encoding\Hex\decode;
+use function Psl\Encoding\Hex\encode;
 
 /**
  * @implements XmlEncoder<string, string>
@@ -19,8 +21,8 @@ final class HexBinaryTypeEncoder implements XmlEncoder
     public function iso(Context $context): Iso
     {
         return (new Iso(
-            static fn (string $value): string => mb_strtoupper(bin2hex($value)),
-            static fn (string $value): string => WhitespaceRestriction::collapse(hex2bin($value)),
+            static fn (string $value): string => mb_strtoupper(encode($value)),
+            static fn (string $value): string => WhitespaceRestriction::collapse(decode($value)),
         ));
     }
 }
