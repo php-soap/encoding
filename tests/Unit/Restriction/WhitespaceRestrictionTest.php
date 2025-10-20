@@ -4,34 +4,26 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Restriction;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Restriction\WhitespaceRestriction;
 
 #[CoversClass(WhitespaceRestriction::class)]
 final class WhitespaceRestrictionTest extends TestCase
 {
-    /**
-     *
-     * @dataProvider providePreserveValues
-     */
+    #[DataProvider('providePreserveValues')]
     public function test_it_can_preserve(string $input, string $expected): void
     {
         static::assertSame($expected, WhitespaceRestriction::preserve($input));
     }
 
-    /**
-     *
-     * @dataProvider provideReplaceValues
-     */
+    #[DataProvider('provideReplaceValues')]
     public function test_it_can_replace(string $input, string $expected): void
     {
         static::assertSame($expected, WhitespaceRestriction::replace($input));
     }
 
-    /**
-     *
-     * @dataProvider provideCollapseValues
-     */
+    #[DataProvider('provideCollapseValues')]
     public function test_it_can_collapse(string $input, string $expected): void
     {
         static::assertSame($expected, WhitespaceRestriction::collapse($input));

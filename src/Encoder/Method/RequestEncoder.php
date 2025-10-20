@@ -30,7 +30,9 @@ final class RequestEncoder implements SoapMethodEncoder
     {
         $meta = $context->method->getMeta();
         $context = $context->withBindingUse(
-            $meta->inputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL)
+            $meta->inputBindingUsage()
+                ->map(static fn ($value) => BindingUse::from($value))
+                ->unwrapOr(BindingUse::LITERAL)
         );
 
         /** @var Iso<list<mixed>, non-empty-string> */
@@ -57,8 +59,11 @@ final class RequestEncoder implements SoapMethodEncoder
     {
         $method = $context->method;
         $meta = $method->getMeta();
-        $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
-        $encodingStyle = $meta->inputEncodingStyle()->map(EncodingStyle::from(...));
+        $soapVersion = $meta->soapVersion()
+            ->map(static fn ($value) => SoapVersion::from($value))
+            ->unwrapOr(SoapVersion::SOAP_12);
+        $encodingStyle = $meta->inputEncodingStyle()
+            ->map(static fn ($value) => EncodingStyle::from($value));
 
         $requestParams = map_with_key(
             $method->getParameters(),

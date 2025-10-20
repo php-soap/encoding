@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\EncoderRegistry;
@@ -25,9 +26,7 @@ use function VeeWee\Xml\Writer\Mapper\memory_output;
 #[CoversClass(ParameterBuilder::class)]
 final class ParameterBuilderTest extends TestCase
 {
-    /**
-     * @dataProvider provideParameterCases
-     */
+    #[DataProvider('provideParameterCases')]
     public function test_it_can_write_a_soap_operation(MethodMeta $meta, Context $context, mixed $value, string $expected): void
     {
         $actual = Writer::inMemory()

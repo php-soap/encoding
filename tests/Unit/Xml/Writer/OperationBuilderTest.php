@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Writer\OperationBuilder;
 use Soap\Engine\Metadata\Model\MethodMeta;
@@ -20,8 +21,8 @@ final class OperationBuilderTest extends TestCase
 {
     /**
      * @param list<string> $parts
-     * @dataProvider provideOperationCases
      */
+    #[DataProvider('provideOperationCases')]
     public function test_it_can_write_a_soap_operation(MethodMeta $meta, array $parts, string $expected): void
     {
         $actual = Writer::inMemory()

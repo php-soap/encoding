@@ -28,7 +28,9 @@ final class ResponseEncoder implements SoapMethodEncoder
     {
         $meta = $context->method->getMeta();
         $context = $context->withBindingUse(
-            $meta->outputBindingUsage()->map(BindingUse::from(...))->unwrapOr(BindingUse::LITERAL)
+            $meta->outputBindingUsage()
+                ->map(static fn ($value) => BindingUse::from($value))
+                ->unwrapOr(BindingUse::LITERAL)
         );
 
         /** @var Iso<list<mixed>, string> */
@@ -56,8 +58,11 @@ final class ResponseEncoder implements SoapMethodEncoder
             return '';
         }
 
-        $soapVersion = $meta->soapVersion()->map(SoapVersion::from(...))->unwrapOr(SoapVersion::SOAP_12);
-        $encodingStyle = $meta->outputEncodingStyle()->map(EncodingStyle::from(...));
+        $soapVersion = $meta->soapVersion()
+            ->map(static fn ($value) => SoapVersion::from($value))
+            ->unwrapOr(SoapVersion::SOAP_12);
+        $encodingStyle = $meta->outputEncodingStyle()
+            ->map(static fn ($value) => EncodingStyle::from($value));
 
         $returnType = $method->getReturnType();
         $typeContext = $context->createXmlEncoderContextForType($returnType);

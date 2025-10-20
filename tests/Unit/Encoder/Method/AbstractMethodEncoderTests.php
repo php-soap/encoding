@@ -2,6 +2,7 @@
 
 namespace Soap\Encoding\Test\Unit\Encoder\Method;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Method\MethodContext;
 use Soap\Encoding\Encoder\Method\SoapMethodEncoder;
@@ -17,10 +18,7 @@ abstract class AbstractMethodEncoderTests extends TestCase
      */
     abstract public static function provideIsomorphicCases(): iterable;
 
-    /**
-     *
-     * @dataProvider provideIsomorphicCases
-     */
+    #[DataProvider('provideIsomorphicCases')]
     public function test_it_can_decode_from_xml(SoapMethodEncoder $encoder, MethodContext $context, string $xml, mixed $data): void
     {
         $iso = $encoder->iso($context);
@@ -29,10 +27,7 @@ abstract class AbstractMethodEncoderTests extends TestCase
         static::assertEquals($data, $actual);
     }
 
-    /**
-     *
-     * @dataProvider provideIsomorphicCases
-     */
+    #[DataProvider('provideIsomorphicCases')]
     public function test_it_can_encode_into_xml(SoapMethodEncoder $encoder, MethodContext $context, string $xml, mixed $data): void
     {
         $iso = $encoder->iso($context);

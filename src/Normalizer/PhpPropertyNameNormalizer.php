@@ -19,7 +19,7 @@ final class PhpPropertyNameNormalizer
     }
 
     /**
-     * @param literal-string $regexp
+     * @param non-empty-string $regexp
      */
     private static function camelCase(string $word, string $regexp):string
     {
