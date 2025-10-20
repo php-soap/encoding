@@ -10,7 +10,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<\DateTimeInterface, string>
+ * @implements XmlEncoder<DateTimeInterface, string>
  */
 final class DateTypeEncoder implements XmlEncoder
 {

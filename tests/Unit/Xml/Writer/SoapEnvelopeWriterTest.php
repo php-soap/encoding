@@ -6,6 +6,7 @@ namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psl\Option\Option;
 use Soap\Encoding\Exception\EncodingException;
@@ -22,10 +23,7 @@ use function VeeWee\Xml\Writer\Builder\raw;
 #[CoversClass(SoapEnvelopeWriter::class)]
 final class SoapEnvelopeWriterTest extends TestCase
 {
-    /**
-     *
-     * @dataProvider provideEnvelopeCases
-     */
+    #[DataProvider('provideEnvelopeCases')]
     public function test_it_can_write_a_soap_envelope(
         SoapVersion $version,
         BindingUse $bindingUse,

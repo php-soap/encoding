@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Reader\OperationReader;
@@ -15,10 +16,7 @@ use function Psl\Vec\map;
 #[CoversClass(OperationReader::class)]
 final class OperationReaderTest extends TestCase
 {
-    /**
-     *
-     * @dataProvider provideEnvelopeCases
-     */
+    #[DataProvider('provideEnvelopeCases')]
     public function test_it_can_read_a_soap_envelope(MethodMeta $meta, string $envelope, array $expected): void
     {
         $reader = new OperationReader($meta);

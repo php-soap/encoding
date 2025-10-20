@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Xml\Writer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Exception\SoapFaultException;
@@ -17,10 +18,7 @@ use Soap\WsdlReader\Model\Definitions\SoapVersion;
 #[CoversClass(SoapFaultGuard::class)]
 final class SoapEnvelopeReaderTest extends TestCase
 {
-    /**
-     *
-     * @dataProvider provideEnvelopeCases
-     */
+    #[DataProvider('provideEnvelopeCases')]
     public function test_it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
     {
         $reader = new SoapEnvelopeReader();

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Fault\Encoder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -18,10 +19,7 @@ abstract class AbstractFaultEncoderTests extends TestCase
      */
     abstract public static function provideIsomorphicCases(): iterable;
 
-    /**
-     *
-     * @dataProvider provideIsomorphicCases
-     */
+    #[DataProvider('provideIsomorphicCases')]
     public function test_it_can_decode_from_xml(SoapFaultEncoder $encoder, ?string $xml, mixed $data): void
     {
         $iso = $encoder->iso();
@@ -30,10 +28,7 @@ abstract class AbstractFaultEncoderTests extends TestCase
         static::assertEquals($data, $actual);
     }
 
-    /**
-     *
-     * @dataProvider provideIsomorphicCases
-     */
+    #[DataProvider('provideIsomorphicCases')]
     public function test_it_can_encode_into_xml(SoapFaultEncoder $encoder, ?string $xml, mixed $data): void
     {
         $iso = $encoder->iso();

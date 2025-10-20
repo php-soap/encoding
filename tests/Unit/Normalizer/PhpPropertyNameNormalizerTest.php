@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Normalizer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 
@@ -11,10 +12,7 @@ use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 final class PhpPropertyNameNormalizerTest extends TestCase
 {
 
-    /**
-     *
-     * @dataProvider provideCases
-     */
+    #[DataProvider('provideCases')]
     public function test_it_can_normalize(string $in, string $expected): void
     {
         static::assertEquals($expected, PhpPropertyNameNormalizer::normalize($in));
