@@ -17,6 +17,7 @@ final class Context
         public readonly EncoderRegistry $registry,
         public readonly Namespaces $namespaces,
         public readonly BindingUse $bindingUse = BindingUse::LITERAL,
+        public readonly bool $skipXsiTypeDetection = false,
     ) {
     }
 
@@ -28,6 +29,7 @@ final class Context
             $this->registry,
             $this->namespaces,
             $this->bindingUse,
+            $this->skipXsiTypeDetection,
         );
     }
 
@@ -39,6 +41,19 @@ final class Context
             $this->registry,
             $this->namespaces,
             $bindingUse,
+            $this->skipXsiTypeDetection,
+        );
+    }
+
+    public function withSkipXsiTypeDetection(bool $skipXsiTypeDetection): self
+    {
+        return new self(
+            $this->type,
+            $this->metadata,
+            $this->registry,
+            $this->namespaces,
+            $this->bindingUse,
+            $skipXsiTypeDetection,
         );
     }
 }

@@ -8,7 +8,6 @@ use Psl\Option\Option;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\FixedIsoEncoder;
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
 use VeeWee\Xml\Xmlns\Xmlns;
@@ -47,10 +46,6 @@ final class XsiTypeDetector
      */
     public static function detectXsdTypeFromXmlElement(Context $context, DOMElement $element): Option
     {
-        if ($context->bindingUse !== BindingUse::ENCODED) {
-            return none();
-        }
-
         $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type');
         if (!$xsiType) {
             return none();
@@ -98,7 +93,7 @@ final class XsiTypeDetector
             ->withIsRepeatingElement(false);
         $encoderDetectorContext = $context
             ->withType($type->withMeta(static fn () => $encoderDetectorTypeMeta))
-            ->withBindingUse(BindingUse::LITERAL);
+            ->withSkipXsiTypeDetection(true);
 
         return some(
             new FixedIsoEncoder(

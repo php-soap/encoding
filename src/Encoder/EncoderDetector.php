@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use stdClass;
 use WeakMap;
 
@@ -61,7 +60,7 @@ final class EncoderDetector
         $meta = $context->type->getMeta();
         $isSimple = $meta->isSimple()->unwrapOr(false);
 
-        if (!$isSimple && !$encoder instanceof Feature\DisregardXsiInformation && $context->bindingUse === BindingUse::ENCODED) {
+        if (!$isSimple && !$encoder instanceof Feature\DisregardXsiInformation && !$context->skipXsiTypeDetection) {
             $encoder = new XsiTypeEncoder($encoder);
         }
 

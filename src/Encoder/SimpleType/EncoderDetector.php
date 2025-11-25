@@ -10,7 +10,6 @@ use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Encoder\XsiTypeEncoder;
 use Soap\Engine\Metadata\Model\XsdType;
-use Soap\WsdlReader\Model\Definitions\BindingUse;
 use function Psl\Iter\any;
 
 final class EncoderDetector
@@ -56,7 +55,7 @@ final class EncoderDetector
                 $encoder = new ElementEncoder($encoder);
             }
 
-            if (!$encoder instanceof Feature\DisregardXsiInformation && $context->bindingUse === BindingUse::ENCODED) {
+            if (!$encoder instanceof Feature\DisregardXsiInformation && !$context->skipXsiTypeDetection) {
                 $encoder = new XsiTypeEncoder($encoder);
             }
 
