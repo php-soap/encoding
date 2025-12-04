@@ -39,6 +39,12 @@ final class XsiAttributeBuilder
             return children([]);
         }
 
+        // Skip xsi:type declaration for anonymous complexTypes : they don't have an accessible name.
+        $meta = $context->type->getMeta();
+        if ($meta->isLocal()->unwrapOr(false)) {
+            return children([]);
+        }
+
         [$xsiType, $includeXsiTargetNamespace] = match(true) {
             $encoder instanceof Feature\XsiTypeCalculator => [
                 $encoder->resolveXsiTypeForValue($context, $value),
