@@ -49,7 +49,7 @@ final class Schema036Test extends AbstractCompatibilityTests
                 <tns:test>
                     <testParam xsi:type="tns:testType">
                         <int xsi:type="xsd:int">123</int>
-                        <testType2 xsi:type="tns:testType2">
+                        <testType2>
                             <int xsi:type="xsd:int">123</int>
                         </testType2>
                     </testParam>
