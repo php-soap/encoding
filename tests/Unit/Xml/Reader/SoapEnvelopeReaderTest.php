@@ -13,16 +13,17 @@ use Soap\Encoding\Fault\Guard\SoapFaultGuard;
 use Soap\Encoding\Xml\Reader\SoapEnvelopeReader;
 use Soap\Encoding\Xml\Writer\SoapEnvelopeWriter;
 use Soap\WsdlReader\Model\Definitions\SoapVersion;
+use const LIBXML_NOCDATA;
 
 #[CoversClass(SoapEnvelopeWriter::class)]
 #[CoversClass(SoapFaultGuard::class)]
 final class SoapEnvelopeReaderTest extends TestCase
 {
     #[DataProvider('provideEnvelopeCases')]
-    public function test_it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected): void
+    public function test_it_can_read_a_soap_envelope(SoapVersion $version, string $envelope, string $expected, int $libXmlOptions = 0): void
     {
         $reader = new SoapEnvelopeReader();
-        $actual = $reader($envelope);
+        $actual = $reader($envelope, $libXmlOptions);
 
         static::assertXmlStringEqualsXmlString($expected, $actual->value());
     }
@@ -82,6 +83,23 @@ final class SoapEnvelopeReaderTest extends TestCase
                     <Request>content</Request>
                 </soap:Body>
             EOXML,
+        ];
+
+        yield 'xml-options' => [
+            SoapVersion::SOAP_12,
+            <<<EOXML
+                <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/">
+                    <soap:Body xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/">
+                        <Request><![CDATA[content]]></Request>
+                    </soap:Body>
+                </soap:Envelope>
+            EOXML,
+            <<<EOXML
+                <soap:Body xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/">
+                    <Request>content</Request>
+                </soap:Body>
+            EOXML,
+            LIBXML_NOCDATA
         ];
     }
 }

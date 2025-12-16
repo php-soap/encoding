@@ -12,15 +12,16 @@ use Soap\Encoding\Xml\Reader\OperationReader;
 use Soap\Engine\Metadata\Model\MethodMeta;
 use Soap\WsdlReader\Model\Definitions\BindingStyle;
 use function Psl\Vec\map;
+use const LIBXML_NOCDATA;
 
 #[CoversClass(OperationReader::class)]
 final class OperationReaderTest extends TestCase
 {
     #[DataProvider('provideEnvelopeCases')]
-    public function test_it_can_read_a_soap_envelope(MethodMeta $meta, string $envelope, array $expected): void
+    public function test_it_can_read_a_soap_envelope(MethodMeta $meta, string $envelope, array $expected, int $libXmlOptions = 0): void
     {
         $reader = new OperationReader($meta);
-        $actual = $reader($envelope);
+        $actual = $reader($envelope, $libXmlOptions);
 
         static::assertSame(
             $expected,
@@ -91,5 +92,19 @@ final class OperationReaderTest extends TestCase
                 '<c>c</c>',
             ],
         ];
+
+        yield 'xml-options' => [
+            $methodMeta->withBindingStyle(BindingStyle::DOCUMENT->value),
+            <<<EOXML
+                <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+                    <soap:Body xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+                        <Request><![CDATA[content]]></Request>
+                    </soap:Body>
+                </soap:Envelope>
+            EOXML,
+            ['<Request>content</Request>'],
+            LIBXML_NOCDATA
+        ];
+
     }
 }

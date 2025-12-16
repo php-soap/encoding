@@ -8,15 +8,18 @@ use Soap\Encoding\Xml\Node\Element;
 use Soap\Xml\Locator\SoapBodyLocator;
 use VeeWee\Xml\Dom\Document;
 use function VeeWee\Xml\Dom\Assert\assert_element;
+use function VeeWee\Xml\Dom\Configurator\loader;
+use function VeeWee\Xml\Dom\Loader\xml_string_loader;
 
 final class SoapEnvelopeReader
 {
     /**
      * @param non-empty-string $xml
+     * @param int $libXmlOptions - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
      */
-    public function __invoke(string $xml): Element
+    public function __invoke(string $xml, int $libXmlOptions = 0): Element
     {
-        $envelope = Document::fromXmlString($xml);
+        $envelope = Document::configure(loader(xml_string_loader($xml, $libXmlOptions)));
 
         // Make sure it does not contain a fault response before parsing the body parts.
         (new SoapFaultGuard())($envelope);

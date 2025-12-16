@@ -22,14 +22,15 @@ final class OperationReader
      * Reads all operation response message parts:
      *
      * @param non-empty-string $xml
+     * @param int $libXmlOptions - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
      */
-    public function __invoke(string $xml): ElementList
+    public function __invoke(string $xml, int $libXmlOptions = 0): ElementList
     {
         $bindingStyle = BindingStyle::tryFrom($this->meta->bindingStyle()->unwrapOr(BindingStyle::DOCUMENT->value));
 
         // The Response can contain out of multiple response parts.
         // Therefore, it is being wrapped by a central root element:
-        $body = (new SoapEnvelopeReader())($xml);
+        $body = (new SoapEnvelopeReader())($xml, $libXmlOptions);
         $bodyElement = $body->element();
 
         $elements = match($bindingStyle) {
