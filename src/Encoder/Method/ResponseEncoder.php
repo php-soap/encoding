@@ -101,7 +101,7 @@ final class ResponseEncoder implements SoapMethodEncoder
         // The SoapResponse only contains the payload of the response (with no headers).
         // It can be parsed directly as XML.
         invariant($xml !== '', 'Expected a non-empty response payload. Received an empty HTTP response');
-        $parts = (new OperationReader($meta))($xml)->elements();
+        $parts = (new OperationReader($meta))($xml, $context->registry->decoderLibXmlOptions())->elements();
 
         return map(
             $parts,

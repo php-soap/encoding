@@ -26,10 +26,12 @@ final class EncoderRegistry
     /**
      * @param MutableMap<string, XmlEncoder<mixed, string>> $simpleTypeMap
      * @param MutableMap<string, XmlEncoder<mixed, string>> $complextTypeMap
+     * @param int $decoderLibXmlOptions - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
      */
     private function __construct(
         private MutableMap $simpleTypeMap,
-        private MutableMap $complextTypeMap
+        private MutableMap $complextTypeMap,
+        private int $decoderLibXmlOptions = 0,
     ) {
     }
 
@@ -340,5 +342,23 @@ final class EncoderRegistry
     public function detectEncoderForContext(Context $context): XmlEncoder
     {
         return EncoderDetector::default()($context);
+    }
+
+    /**
+     * @param int $libXmlOptions - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
+     */
+    public function setDecoderLibXmlOptions(int $libXmlOptions): self
+    {
+        $this->decoderLibXmlOptions = $libXmlOptions;
+
+        return $this;
+    }
+
+    /**
+     * @return int - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
+     */
+    public function decoderLibXmlOptions(): int
+    {
+        return $this->decoderLibXmlOptions;
     }
 }
