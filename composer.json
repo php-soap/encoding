@@ -22,10 +22,10 @@
     "require": {
         "php": "~8.3.0 || ~8.4.0 || ~8.5.0",
         "php-standard-library/php-standard-library": "^3.0 || ^4.0 || ^5.0 || ^6.0",
-        "veewee/reflecta": "~0.11",
-        "veewee/xml": "^3.3",
-        "php-soap/engine": "^2.16",
-        "php-soap/wsdl": "^1.14",
+        "veewee/reflecta": "~0.16",
+        "veewee/xml": "^3.6",
+        "php-soap/engine": "^2.19",
+        "php-soap/wsdl": "^1.18",
         "php-soap/xml": "^1.9",
         "php-soap/wsdl-reader": "^0.30"
     },
