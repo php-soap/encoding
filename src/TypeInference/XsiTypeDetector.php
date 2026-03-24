@@ -46,23 +46,21 @@ final class XsiTypeDetector
      */
     public static function detectXsdTypeFromXmlElement(Context $context, DOMElement $element): Option
     {
-        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type');
+        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type') ?: $element->getAttribute('xsi:type');
         if (!$xsiType) {
             return none();
         }
 
         [$prefix, $localName] = (new QnameParser)($xsiType);
-        if (!$prefix || !$localName) {
+        if (!$localName) {
             return none();
         }
 
-        $namespace = $context->namespaces->lookupNamespaceFromName($prefix);
-        if (!$namespace->isSome()) {
-            return none();
-        }
+        $namespaceUri = $prefix
+            ? $element->lookupNamespaceURI($prefix) ?? $context->namespaces->lookupNamespaceFromName($prefix)->unwrapOr(null)
+            : $element->lookupNamespaceURI(null) ?? $element->namespaceURI;
 
-        $namespaceUri = $namespace->unwrap();
-        if (!$namespaceUri) {
+        if ($namespaceUri === null || $namespaceUri === '') {
             return none();
         }
 
