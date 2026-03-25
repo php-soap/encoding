@@ -96,10 +96,17 @@ final class XsiAttributeBuilder
         // Add xmlns for target namespace
         [$prefix] = (new QnameParser())($this->xsiType);
         if ($prefix && $this->includeXsiTargetNamespace) {
-            yield from namespace_attribute(
-                $this->context->namespaces->lookupNamespaceFromName($prefix)->unwrap(),
-                $prefix
-            )($writer);
+            $type = $this->context->type;
+            $elementPrefix = $type->getXmlTargetNamespaceName();
+            $isQualified = $type->getMeta()->isQualified()->unwrapOr(false);
+
+            // Skip if the wrapping element already declared this namespace via namespaced_element()
+            if (!($isQualified && $elementPrefix === $prefix)) {
+                yield from namespace_attribute(
+                    $this->context->namespaces->lookupNamespaceFromName($prefix)->unwrap(),
+                    $prefix
+                )($writer);
+            }
         }
 
         yield from namespaced_attribute(
