@@ -64,6 +64,7 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
                 ->unwrapOr($innerIso),
         };
 
+        /** @psalm-suppress ImplicitToStringCast - Encoders accept string|Element in from() */
         return $iso->from($value);
     }
 }
