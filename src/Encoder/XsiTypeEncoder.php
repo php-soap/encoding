@@ -41,6 +41,9 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
         );
     }
 
+    /**
+     * @param Iso<mixed, string> $innerIso
+     */
     private function to(Iso $innerIso, mixed $value): string
     {
         // There is no way to know what xsi:type to use when encoding any type.
@@ -49,6 +52,9 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
         return $innerIso->to($value);
     }
 
+    /**
+     * @param Iso<mixed, string> $innerIso
+     */
     private function from(Context $context, Iso $innerIso, Element $value): mixed
     {
         $iso = match (true) {
