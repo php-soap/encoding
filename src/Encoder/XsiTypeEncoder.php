@@ -43,18 +43,20 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
 
     private function to(Iso $innerIso, mixed $value): string
     {
+        // There is no way to know what xsi:type to use when encoding any type.
+        // The type defined in the wsdl will always be used to encode the value.
+        // If you want more control over the encoded type, please control how to encode by using the MatchingValueEncoder.
         return $innerIso->to($value);
     }
 
     private function from(Context $context, Iso $innerIso, Element $value): mixed
     {
-        /** @var XmlEncoder<string, mixed> $encoder */
-        $encoder = match (true) {
-            $this->encoder instanceof Feature\DisregardXsiInformation => $this->encoder,
-            default => XsiTypeDetector::detectEncoderFromXmlElement($context, $value->element())->unwrapOr($this->encoder)
+        $iso = match (true) {
+            $this->encoder instanceof Feature\DisregardXsiInformation => $innerIso,
+            default => XsiTypeDetector::detectEncoderFromXmlElement($context, $value->element())
+                ->map(static fn (XmlEncoder $encoder): Iso => $encoder->iso($context))
+                ->unwrapOr($innerIso),
         };
-
-        $iso = $encoder === $this->encoder ? $innerIso : $encoder->iso($context);
 
         return $iso->from($value);
     }
