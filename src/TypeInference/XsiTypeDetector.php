@@ -124,7 +124,14 @@ final class XsiTypeDetector
 
     private static function cacheKey(XsdType $type): string
     {
-        return $type->getXmlNamespace() . '|' . $type->getXmlTypeName();
+        $meta = $type->getMeta();
+
+        return $type->getXmlNamespace() . '|' . $type->getXmlTypeName()
+            . '|' . ($meta->isElement()->unwrapOr(false) ? 'e' : '')
+            . ($meta->isAttribute()->unwrapOr(false) ? 'a' : '')
+            . ($meta->isNullable()->unwrapOr(false) ? 'n' : '')
+            . ($meta->isList()->unwrapOr(false) ? 'l' : '')
+            . ($meta->isQualified()->unwrapOr(false) ? 'q' : '');
     }
 
     /**
