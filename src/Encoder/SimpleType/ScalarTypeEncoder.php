@@ -33,12 +33,17 @@ final class ScalarTypeEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
+        $intIso = (new IntTypeEncoder())->iso($context);
+        $floatIso = (new FloatTypeEncoder())->iso($context);
+        $stringIso = (new StringTypeEncoder())->iso($context);
+        $boolIso = (new BoolTypeEncoder())->iso($context);
+
         return (new Iso(
             static fn (mixed $value): string => match(true) {
-                is_int($value) => (new IntTypeEncoder())->iso($context)->to($value),
-                is_float($value) => (new FloatTypeEncoder())->iso($context)->to($value),
-                is_string($value) => (new StringTypeEncoder())->iso($context)->to($value),
-                is_bool($value) => (new BoolTypeEncoder())->iso($context)->to($value),
+                is_int($value) => $intIso->to($value),
+                is_float($value) => $floatIso->to($value),
+                is_string($value) => $stringIso->to($value),
+                is_bool($value) => $boolIso->to($value),
                 default => throw RestrictionException::unsupportedValueType($context->type, $value)
             },
             static function (string $value) use ($context): mixed {
