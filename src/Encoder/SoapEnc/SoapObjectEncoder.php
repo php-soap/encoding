@@ -78,7 +78,7 @@ final class SoapObjectEncoder implements XmlEncoder
             static function (array $map, DOMElement $item) use ($context): array {
                 $key = $item->localName ?? 'unkown';
                 /** @psalm-var mixed $value */
-                $value = (new ElementValueReader())(
+                $value = ElementValueReader::forEncoder(
                     $context->withType(XsdType::any()),
                     ScalarTypeEncoder::default(),
                     $item

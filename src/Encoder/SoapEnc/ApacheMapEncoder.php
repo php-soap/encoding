@@ -87,7 +87,7 @@ final class ApacheMapEncoder implements XmlEncoder
             static function (array $map, DOMElement $item) use ($context, $xpath): array {
                 $key = $xpath->evaluate('string(./key)', string(), $item);
                 /** @psalm-var mixed $value */
-                $value = (new ElementValueReader())(
+                $value = ElementValueReader::forEncoder(
                     $context->withType(XsdType::any()),
                     ScalarTypeEncoder::default(),
                     assert_element($xpath->querySingle('./value', $item))

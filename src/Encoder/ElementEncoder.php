@@ -32,21 +32,22 @@ final class ElementEncoder implements Feature\ElementAware, XmlEncoder
             ? $this->typeEncoder->enhanceElementContext($context)
             : $context;
 
+        $typeIso = $typeEncoder->iso($context);
+
         return new Iso(
             /**
              * @psalm-param mixed $raw
              */
             static fn (mixed $raw): string => (new XsdTypeXmlElementWriter())(
                 $context,
-                (new ElementValueBuilder($context, $typeEncoder, $raw))
+                ElementValueBuilder::fromIso($context, $typeEncoder, $typeIso, $raw)
             ),
             /**
              * @psalm-param non-empty-string|Element $xml
              * @psalm-return mixed
              */
-            static fn (Element|string $xml): mixed => (new ElementValueReader())(
-                $context,
-                $typeEncoder,
+            static fn (Element|string $xml): mixed => ElementValueReader::forIso(
+                $typeIso,
                 ($xml instanceof Element ? $xml : Element::fromString($xml))->element()
             )
         );

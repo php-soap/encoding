@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Writer;
 
+use Closure;
 use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\XmlEncoder;
+use VeeWee\Reflecta\Iso\Iso;
 use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\cdata;
 use function VeeWee\Xml\Writer\Builder\children;
@@ -15,14 +17,36 @@ use function VeeWee\Xml\Writer\Builder\value;
 final class ElementValueBuilder
 {
     /**
+     * @param list<Closure(XMLWriter): Generator<bool>> $builders
+     */
+    private function __construct(
+        private readonly array $builders,
+    ) {
+    }
+
+    /**
      * @param XmlEncoder<mixed, string> $encoder
      * @psalm-param mixed $value
      */
-    public function __construct(
-        private readonly Context $context,
-        private readonly XmlEncoder $encoder,
-        private readonly mixed $value
-    ) {
+    public static function fromEncoder(Context $context, XmlEncoder $encoder, mixed $value): self
+    {
+        return new self([
+            XsiAttributeBuilder::forEncodedValue($context, $encoder, $value),
+            self::valueWriter($encoder, static fn (): string => $encoder->iso($context)->to($value)),
+        ]);
+    }
+
+    /**
+     * @param XmlEncoder<mixed, string> $encoder
+     * @param Iso<mixed, string> $iso
+     * @psalm-param mixed $value
+     */
+    public static function fromIso(Context $context, XmlEncoder $encoder, Iso $iso, mixed $value): self
+    {
+        return new self([
+            XsiAttributeBuilder::forEncodedValue($context, $encoder, $value),
+            self::valueWriter($encoder, static fn (): string => $iso->to($value)),
+        ]);
     }
 
     /**
@@ -30,52 +54,24 @@ final class ElementValueBuilder
      */
     public function __invoke(XMLWriter $writer): Generator
     {
-        yield from children([
-            $this->buildXsiType(...),
-            $this->buildValue(...),
-        ])($writer);
+        yield from children($this->builders)($writer);
     }
 
     /**
-     * @return Generator<bool>
+     * @param XmlEncoder<mixed, string> $encoder
+     * @param Closure(): string $valueProvider
+     *
+     * @return Closure(XMLWriter): Generator<bool>
      */
-    private function buildXsiType(XMLWriter $writer): Generator
+    private static function valueWriter(XmlEncoder $encoder, Closure $valueProvider): Closure
     {
-        yield from XsiAttributeBuilder::forEncodedValue(
-            $this->context,
-            $this->encoder,
-            $this->value,
-        )($writer);
-    }
+        $isCData = $encoder instanceof Feature\CData;
 
-    /**
-     * @deprecated Use XsiAttributeBuilder::resolveXsiTypeForValue() instead. Will be removed in 1.0.0.
-     */
-    public static function resolveXsiTypeForValue(Context $context, mixed $value): string
-    {
-        return XsiAttributeBuilder::resolveXsiTypeForValue($context, $value);
-    }
+        return static function (XMLWriter $writer) use ($isCData, $valueProvider): Generator {
+            $encoded = $valueProvider();
+            $builder = $isCData ? cdata(value($encoded)) : value($encoded);
 
-    /**
-     * @deprecated Use XsiAttributeBuilder::shouldIncludeXsiTargetNamespace() instead. Will be removed in 1.0.0.
-     */
-    public static function shouldIncludeXsiTargetNamespace(Context $context): bool
-    {
-        return XsiAttributeBuilder::shouldIncludeXsiTargetNamespace($context);
-    }
-
-    /**
-     * @return Generator<bool>
-     */
-    private function buildValue(XMLWriter $writer): Generator
-    {
-        $encoded = $this->encoder->iso($this->context)->to($this->value);
-
-        $builder = match (true) {
-            $this->encoder instanceof Feature\CData => cdata(value($encoded)),
-            default => value($encoded)
+            yield from $builder($writer);
         };
-
-        yield from $builder($writer);
     }
 }
