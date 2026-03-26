@@ -10,7 +10,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Soap\\Encoding\\Test\\": "tests/"
+            "Soap\\Encoding\\Test\\": "tests/",
+            "Soap\\Encoding\\Benchmarks\\": "benchmarks/"
         }
     },
     "authors": [
@@ -37,7 +38,8 @@
         "php-standard-library/psalm-plugin": "^2.3",
         "php-soap/engine-integration-tests": "^1.10",
         "php-soap/psr18-transport": "^1.8",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+        "phpbench/phpbench": "^1.6"
     },
     "config": {
         "allow-plugins": {
