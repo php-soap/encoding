@@ -5,8 +5,10 @@ namespace Soap\Encoding\TypeInference;
 
 use DOMElement;
 use Psl\Option\Option;
+use Soap\Encoding\Cache\ScopedCache;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\FixedIsoEncoder;
+use Soap\Encoding\EncoderRegistry;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
@@ -21,6 +23,18 @@ use function sprintf;
 
 final class XsiTypeDetector
 {
+    /**
+     * @return ScopedCache<EncoderRegistry, FixedIsoEncoder<mixed, string>>
+     *
+     * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, MixedReturnStatement
+     */
+    private static function cache(): ScopedCache
+    {
+        static $cache = new ScopedCache();
+
+        return $cache;
+    }
+
     /**
      * @psalm-param mixed $value
      */
@@ -84,22 +98,40 @@ final class XsiTypeDetector
             return none();
         }
 
-        // Enhance context to avoid duplicate optionals, repeating elements, xsi:type detections, ...
         $type = $requestedXsiType->unwrap();
-        $encoderDetectorTypeMeta = $type->getMeta()
-            ->withIsNullable(false)
-            ->withIsRepeatingElement(false);
-        $encoderDetectorContext = $context
-            ->withType($type->withMeta(static fn () => $encoderDetectorTypeMeta))
-            ->withSkipXsiTypeDetection(true);
 
         return some(
-            new FixedIsoEncoder(
-                $context->registry->detectEncoderForContext($encoderDetectorContext)->iso(
-                    $context->withType($type)
-                ),
+            self::cache()->lookup(
+                $context->registry,
+                self::cacheKey($type),
+                static function () use ($context, $type): FixedIsoEncoder {
+                    $normalizedMeta = $type->getMeta()
+                        ->withIsNullable(false)
+                        ->withIsRepeatingElement(false);
+                    $detectorContext = $context
+                        ->withType($type->withMeta(static fn () => $normalizedMeta))
+                        ->withSkipXsiTypeDetection(true);
+
+                    return new FixedIsoEncoder(
+                        $context->registry->detectEncoderForContext($detectorContext)->iso(
+                            $context->withType($type)
+                        )
+                    );
+                }
             )
         );
+    }
+
+    private static function cacheKey(XsdType $type): string
+    {
+        $meta = $type->getMeta();
+
+        return $type->getXmlNamespace() . '|' . $type->getXmlTypeName()
+            . '|' . ($meta->isElement()->unwrapOr(false) ? 'e' : '')
+            . ($meta->isAttribute()->unwrapOr(false) ? 'a' : '')
+            . ($meta->isNullable()->unwrapOr(false) ? 'n' : '')
+            . ($meta->isList()->unwrapOr(false) ? 'l' : '')
+            . ($meta->isQualified()->unwrapOr(false) ? 'q' : '');
     }
 
     /**

@@ -3,17 +3,12 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\Cache\ScopedCache;
 use Soap\Engine\Metadata\Model\XsdType;
 use stdClass;
-use WeakMap;
 
 final class EncoderDetector
 {
-    /**
-     * @var WeakMap<XsdType, XmlEncoder<mixed, string>>
-     */
-    private WeakMap $cache;
-
     public static function default(): self
     {
         /** @var self $self */
@@ -22,10 +17,16 @@ final class EncoderDetector
         return $self;
     }
 
-    private function __construct()
+    /**
+     * @return ScopedCache<XsdType, XmlEncoder<mixed, string>>
+     *
+     * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, MixedReturnStatement
+     */
+    private static function cache(): ScopedCache
     {
-        /** @var WeakMap<XsdType, XmlEncoder<mixed, string>> cache */
-        $this->cache = new WeakMap();
+        static $cache = new ScopedCache();
+
+        return $cache;
     }
 
     /**
@@ -35,18 +36,27 @@ final class EncoderDetector
      */
     public function __invoke(Context $context): XmlEncoder
     {
-        $type = $context->type;
-        if ($cached = $this->cache[$type] ?? null) {
-            return $cached;
-        }
+        return self::cache()->lookup(
+            $context->type,
+            'encoder',
+            fn (): XmlEncoder => $this->detect($context)
+        );
+    }
 
-        $meta = $type->getMeta();
+    /**
+     * @return XmlEncoder<mixed, string>
+     *
+     * @psalm-suppress PossiblyInvalidArgument - The simple type detector could return string|null, but should not be an issue here.
+     */
+    private function detect(Context $context): XmlEncoder
+    {
+        $meta = $context->type->getMeta();
 
-        return $this->cache[$type] = $this->enhanceEncoder(
+        return $this->enhanceEncoder(
             $context,
             match(true) {
                 $meta->isSimple()->unwrapOr(false) => SimpleType\EncoderDetector::default()($context),
-                default => $this->detectComplexTypeEncoder($type, $context)
+                default => $this->detectComplexTypeEncoder($context->type, $context)
             }
         );
     }
