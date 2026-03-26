@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Soap\Encoding\Cache\ScopedCache;
+use Soap\Encoding\EncoderRegistry;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Engine\Metadata\Model\Property;
@@ -32,7 +34,34 @@ final class ObjectAccess
     ) {
     }
 
+    /**
+     * @return ScopedCache<EncoderRegistry, self>
+     *
+     * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, MixedReturnStatement
+     */
+    private static function cache(): ScopedCache
+    {
+        static $cache = new ScopedCache();
+
+        return $cache;
+    }
+
+    private static function cacheKey(Context $context): string
+    {
+        return $context->type->getXmlNamespace() . '|' . $context->type->getName()
+            . '|' . $context->bindingUse->value;
+    }
+
     public static function forContext(Context $context): self
+    {
+        return self::cache()->lookup(
+            $context->registry,
+            self::cacheKey($context),
+            static fn (): self => self::build($context)
+        );
+    }
+
+    private static function build(Context $context): self
     {
         $type = ComplexTypeBuilder::default()($context);
 
