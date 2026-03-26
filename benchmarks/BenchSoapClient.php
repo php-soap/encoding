@@ -14,7 +14,7 @@ class BenchSoapClient extends \SoapClient
 {
     public ?string $mockResponse = null;
 
-    public function __doRequest(string $request, string $location, string $action, int $version, bool $oneWay = false): ?string
+    public function __doRequest(string $request, string $location, string $action, int $version, bool $oneWay = false, ?string $uriParserClass = null): ?string
     {
         return $this->mockResponse;
     }
