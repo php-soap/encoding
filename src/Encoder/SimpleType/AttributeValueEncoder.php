@@ -27,17 +27,22 @@ final class AttributeValueEncoder implements XmlEncoder
      */
     public function iso(Context $context): Iso
     {
+        $typeIso = $this->typeEncoder->iso($context);
+
         return (new Iso(
-            fn (mixed $value): ?string => $this->to($context, $value),
-            fn (?string $value): mixed => $this->from($context, $value),
+            fn (mixed $value): ?string => $this->to($context, $typeIso, $value),
+            fn (?string $value): mixed => $this->from($context, $typeIso, $value),
         ));
     }
 
-    public function to(Context $context, mixed $value): ?string
+    /**
+     * @param Iso<mixed, string> $typeIso
+     */
+    private function to(Context $context, Iso $typeIso, mixed $value): ?string
     {
         $meta = $context->type->getMeta();
         $fixed = $meta->fixed()
-            ->map(fn (string $fixed): mixed => $this->typeEncoder->iso($context)->from($fixed))
+            ->map(static fn (string $fixed): mixed => $typeIso->from($fixed))
             ->unwrapOr(null);
 
         if ($fixed !== null && $value !== $fixed) {
@@ -47,18 +52,21 @@ final class AttributeValueEncoder implements XmlEncoder
             );
         }
 
-        return $value !== null ? $this->typeEncoder->iso($context)->to($value) : null;
+        return $value !== null ? $typeIso->to($value) : null;
     }
 
-    public function from(Context $context, ?string $value): mixed
+    /**
+     * @param Iso<mixed, string> $typeIso
+     */
+    private function from(Context $context, Iso $typeIso, ?string $value): mixed
     {
         if ($value !== null) {
-            return $this->typeEncoder->iso($context)->from($value);
+            return $typeIso->from($value);
         }
 
         $meta = $context->type->getMeta();
         $default = $meta->fixed()->or($meta->default())->unwrapOr(null);
 
-        return $default !== null ? $this->typeEncoder->iso($context)->from($default) : null;
+        return $default !== null ? $typeIso->from($default) : null;
     }
 }
