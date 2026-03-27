@@ -7,9 +7,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use Soap\Encoding\Fault\Encoder\Soap11FaultEncoder;
 use Soap\Encoding\Fault\Soap11Fault;
 use VeeWee\Xml\Dom\Document;
-use function VeeWee\Xml\Dom\Configurator\loader;
 use function VeeWee\Xml\Dom\Configurator\trim_spaces;
-use function VeeWee\Xml\Dom\Loader\xml_string_loader;
 
 #[CoversClass(Soap11FaultEncoder::class)]
 #[CoversClass(Soap11Fault::class)]
@@ -23,16 +21,15 @@ final class Soap11FaultEncoderTest extends AbstractFaultEncoderTests
 
         yield 'required-fields-only' => [
             ...$baseConfig,
-            'xml' => Document::configure(
-                trim_spaces(),
-                loader(xml_string_loader(
-                    <<<EOXML
+            'xml' => Document::fromXmlString(
+                <<<EOXML
                     <env:Fault xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
                         <faultcode>a:Microsoft.Dynamics.ServiceBrokerException</faultcode>
                         <faultstring>Invalid input parameter x</faultstring>
                     </env:Fault>
                     EOXML
-                ))
+                ,
+                trim_spaces()
             )->stringifyDocumentElement(),
             'data' => new Soap11Fault(
                 faultCode: 'a:Microsoft.Dynamics.ServiceBrokerException',
@@ -41,10 +38,8 @@ final class Soap11FaultEncoderTest extends AbstractFaultEncoderTests
         ];
         yield 'all-fields' => [
             ...$baseConfig,
-            'xml' => Document::configure(
-                trim_spaces(),
-                loader(xml_string_loader(
-                    <<<EOXML
+            'xml' => Document::fromXmlString(
+                <<<EOXML
                     <env:Fault xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
                         <faultcode>a:Microsoft.Dynamics.ServiceBrokerException</faultcode>
                         <faultstring>Invalid input parameter x</faultstring>
@@ -52,7 +47,8 @@ final class Soap11FaultEncoderTest extends AbstractFaultEncoderTests
                         <detail><element>value</element></detail>
                     </env:Fault>
                     EOXML
-                ))
+                ,
+                trim_spaces()
             )->stringifyDocumentElement(),
             'data' => new Soap11Fault(
                 faultCode: 'a:Microsoft.Dynamics.ServiceBrokerException',

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Xml\Node;
 
-use DOMDocument;
+use Dom\XMLDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Xml\Node\Element;
@@ -25,8 +25,7 @@ final class ElementTest extends TestCase
 
     public function test_it_can_be_constructed_from_dom_element(): void
     {
-        $document = new DOMDocument();
-        $document->loadXML($xml = '<hello>world</hello>');
+        $document = XMLDocument::createFromString($xml = '<hello>world</hello>');
         $element = Element::fromDOMElement($DOMElement = $document->documentElement);
 
         static::assertSame($DOMElement, $element->element());

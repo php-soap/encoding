@@ -90,9 +90,9 @@ final class Soap11FaultEncoder implements SoapFaultEncoder
         $detail = $xpath->query('./detail');
 
         return new Soap11Fault(
-            faultCode: WhitespaceRestriction::collapse($xpath->querySingle('./faultcode')->textContent),
-            faultString: WhitespaceRestriction::collapse($xpath->querySingle('./faultstring')->textContent),
-            faultActor: $actor->count() ? trim($actor->expectFirst()->textContent) : null,
+            faultCode: WhitespaceRestriction::collapse($xpath->querySingle('./faultcode')->textContent ?? ''),
+            faultString: WhitespaceRestriction::collapse($xpath->querySingle('./faultstring')->textContent ?? ''),
+            faultActor: $actor->count() ? trim($actor->expectFirst()->textContent ?? '') : null,
             detail: $detail->count() ? Document::fromXmlNode($detail->expectFirst())->stringifyDocumentElement() : null,
         );
     }

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\TypeInference;
 
-use DOMElement;
+use Dom\Element;
 use Psl\Option\Option;
 use Soap\Encoding\Cache\ScopedCache;
 use Soap\Encoding\Encoder\Context;
@@ -58,10 +58,10 @@ final class XsiTypeDetector
     /**
      * @return Option<XsdType>
      */
-    public static function detectXsdTypeFromXmlElement(Context $context, DOMElement $element): Option
+    public static function detectXsdTypeFromXmlElement(Context $context, Element $element): Option
     {
-        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type') ?: $element->getAttribute('xsi:type');
-        if (!$xsiType) {
+        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type') ?? $element->getAttribute('xsi:type');
+        if ($xsiType === null || $xsiType === '') {
             return none();
         }
 
@@ -91,7 +91,7 @@ final class XsiTypeDetector
     /**
      * @return Option<FixedIsoEncoder<mixed, string>>
      */
-    public static function detectEncoderFromXmlElement(Context $context, DOMElement $element): Option
+    public static function detectEncoderFromXmlElement(Context $context, Element $element): Option
     {
         $requestedXsiType = self::detectXsdTypeFromXmlElement($context, $element);
         if (!$requestedXsiType->isSome()) {

@@ -3,14 +3,15 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Node;
 
-use DOMElement;
+use Dom\Element as DomElement;
 use Stringable;
 use VeeWee\Xml\Dom\Document;
 use function Psl\invariant;
+use function VeeWee\Xml\Dom\Assert\assert_document;
 
 final class Element implements Stringable
 {
-    private ?DOMElement $element = null;
+    private ?DomElement $element = null;
     /**
      * @var non-empty-string|null
      */
@@ -32,7 +33,7 @@ final class Element implements Stringable
         return $new;
     }
 
-    public static function fromDOMElement(DOMElement $element): self
+    public static function fromDOMElement(DomElement $element): self
     {
         $new =  new self();
         $new->element = $element;
@@ -41,7 +42,7 @@ final class Element implements Stringable
         return $new;
     }
 
-    public function element(): DOMElement
+    public function element(): DomElement
     {
         if (!$this->element) {
             invariant($this->value !== null, 'Expected an XML value to be present');
@@ -66,7 +67,7 @@ final class Element implements Stringable
 
     public function document(): Document
     {
-        return Document::fromUnsafeDocument($this->element()->ownerDocument);
+        return Document::fromUnsafeDocument(assert_document($this->element()->ownerDocument));
     }
 
     /**

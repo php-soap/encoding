@@ -36,7 +36,7 @@ EncoderRegistry::default()
                 $targetElementName = $context->type->getXmlTargetNodeName();
                 return new Iso(
                     to: static fn (array $data): string => document_encode([$targetElementName => $data])
-                        ->manipulate(static fn (\DOMDocument $document) => $document->documentElement->setAttributeNS(
+                        ->manipulate(static fn (\Dom\XMLDocument $document) => $document->documentElement->setAttributeNS(
                             VeeWee\Xml\Xmlns\Xmlns::xsi()->value(),
                             'xsi:type',
                             'custom:type'
