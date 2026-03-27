@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
-use DOMAttr;
-use DOMNode;
+use Dom\Attr;
+use Dom\Node;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
 use VeeWee\Xml\Xmlns\Xmlns;
@@ -28,14 +28,14 @@ final class DocumentToLookupArrayReader
         // Read all child elements.
         // The key is the name of the elements
         // The value is the raw XML for those element(s)
-        /** @var iterable<DOMNode> $children */
+        /** @var iterable<Node> $children */
         $children = $root->childNodes;
         foreach ($children as $element) {
             if (!is_element($element)) {
                 continue;
             }
 
-            $key = $element->localName ?? 'unknown';
+            $key = $element->localName;
             $previousValue = $nodes[$key] ?? null;
             $currentElement = Element::fromDOMElement($element);
 
@@ -53,14 +53,14 @@ final class DocumentToLookupArrayReader
         // It might be possible that the child is a regular textNode.
         // In that case, we use '_' as the key and the value of the textNode as value.
         if (!$nodes && $root->getAttributeNS(Xmlns::xsi()->value(), 'nil') !== 'true') {
-            $nodes['_'] = $root->textContent;
+            $nodes['_'] = $root->textContent ?? '';
         }
 
         // All attributes also need to be added as key => value pairs.
-        /** @var \iterable<DOMAttr> $attributes */
+        /** @var \iterable<Attr> $attributes */
         $attributes = $root->attributes;
         foreach ($attributes as $attribute) {
-            $key = $attribute->localName ?? 'unknown';
+            $key = $attribute->localName;
             $nodes[$key] = $attribute->value;
         }
 

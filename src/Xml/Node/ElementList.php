@@ -5,7 +5,7 @@ namespace Soap\Encoding\Xml\Node;
 
 use Closure;
 use Countable;
-use DOMElement;
+use Dom\Element as DomElement;
 use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Stringable;
 use VeeWee\Xml\Dom\Document;
@@ -69,7 +69,7 @@ final class ElementList implements Countable, Stringable
 
         return new self(
             ...readChildren($doc->locateDocumentElement())->map(
-                static fn (DOMElement $element): Element => Element::fromDOMElement($element)
+                static fn (DomElement $element): Element => Element::fromDOMElement($element)
             )
         );
     }

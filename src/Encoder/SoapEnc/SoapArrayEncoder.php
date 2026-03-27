@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Closure;
-use DOMElement;
+use Dom\Element as DomElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature\ListAware;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -100,7 +100,7 @@ final class SoapArrayEncoder implements ListAware, XmlEncoder
              * @param list<mixed> $list
              * @return list<mixed>
              */
-            static function (array $list, DOMElement $item) use ($iso): array {
+            static function (array $list, DomElement $item) use ($iso): array {
                 /** @var mixed $value */
                 $value = $iso->from(Element::fromDOMElement($item));
 

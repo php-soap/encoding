@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Reader;
 
-use DOMElement;
+use Dom\Element;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
@@ -19,7 +19,7 @@ final class ElementValueReader
     public function __invoke(
         Context $context,
         XmlEncoder $encoder,
-        DOMElement $element
+        Element $element
     ): mixed {
         return self::forEncoder($context, $encoder, $element);
     }
@@ -28,7 +28,7 @@ final class ElementValueReader
      * @param XmlEncoder<mixed, string> $encoder
      * @psalm-return mixed
      */
-    public static function forEncoder(Context $context, XmlEncoder $encoder, DOMElement $element): mixed
+    public static function forEncoder(Context $context, XmlEncoder $encoder, Element $element): mixed
     {
         return $encoder->iso($context)->from(
             readValue($element, string())
@@ -39,7 +39,7 @@ final class ElementValueReader
      * @param Iso<mixed, string> $iso
      * @psalm-return mixed
      */
-    public static function forIso(Iso $iso, DOMElement $element): mixed
+    public static function forIso(Iso $iso, Element $element): mixed
     {
         return $iso->from(
             readValue($element, string())

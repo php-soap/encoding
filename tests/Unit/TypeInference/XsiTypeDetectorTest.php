@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\TypeInference;
 
-use DOMDocument;
-use DOMElement;
+use Dom\Element;
+use Dom\XMLDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Test\Unit\ContextCreatorTrait;
@@ -62,10 +62,8 @@ final class XsiTypeDetectorTest extends TestCase
      */
     public function test_it_detects_xsi_type_without_xsi_namespace_declaration(): void
     {
-        $doc = new DOMDocument();
-        $doc->loadXML('<element xmlns:tns="https://test"/>');
+        $doc = XMLDocument::createFromString('<element xmlns:tns="https://test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="tns:MyType"/>');
         $element = $doc->documentElement;
-        $element->setAttribute('xsi:type', 'tns:MyType');
 
         $context = self::createContext(XsdType::guess('anyType'));
         $result = XsiTypeDetector::detectXsdTypeFromXmlElement($context, $element);
@@ -114,8 +112,7 @@ final class XsiTypeDetectorTest extends TestCase
      */
     public function test_it_falls_back_to_wsdl_namespaces_when_dom_has_no_declaration(): void
     {
-        $doc = new DOMDocument();
-        $doc->loadXML('<element xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>');
+        $doc = XMLDocument::createFromString('<element xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>');
         $element = $doc->documentElement;
         $element->setAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'xsi:type', 'tns:MyType');
 
@@ -140,10 +137,9 @@ final class XsiTypeDetectorTest extends TestCase
         static::assertFalse($result->isSome());
     }
 
-    private function createElement(string $xml): DOMElement
+    private function createElement(string $xml): Element
     {
-        $doc = new DOMDocument();
-        $doc->loadXML($xml);
+        $doc = XMLDocument::createFromString($xml);
 
         return $doc->documentElement;
     }

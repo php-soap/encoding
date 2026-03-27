@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Closure;
-use DOMElement;
+use Dom\Element as DomElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -75,8 +75,8 @@ final class SoapObjectEncoder implements XmlEncoder
         $element = $value->element();
 
         return (object) readChildren($element)->reduce(
-            static function (array $map, DOMElement $item) use ($context): array {
-                $key = $item->localName ?? 'unkown';
+            static function (array $map, DomElement $item) use ($context): array {
+                $key = $item->localName;
                 /** @psalm-var mixed $value */
                 $value = ElementValueReader::forEncoder(
                     $context->withType(XsdType::any()),

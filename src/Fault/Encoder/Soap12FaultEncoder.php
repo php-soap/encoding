@@ -135,11 +135,11 @@ final class Soap12FaultEncoder implements SoapFaultEncoder
         $detail = $xpath->query('./env:Detail');
 
         return new Soap12Fault(
-            code: WhitespaceRestriction::collapse($xpath->querySingle('./env:Code/env:Value')->textContent),
-            reason: WhitespaceRestriction::collapse($xpath->querySingle('./env:Reason/env:Text')->textContent),
-            subCode: $subCode->count() ? WhitespaceRestriction::collapse($subCode->expectFirst()->textContent) : null,
-            node: $node->count() ? trim($node->expectFirst()->textContent) : null,
-            role: $role->count() ? trim($role->expectFirst()->textContent) : null,
+            code: WhitespaceRestriction::collapse($xpath->querySingle('./env:Code/env:Value')->textContent ?? ''),
+            reason: WhitespaceRestriction::collapse($xpath->querySingle('./env:Reason/env:Text')->textContent ?? ''),
+            subCode: $subCode->count() ? WhitespaceRestriction::collapse($subCode->expectFirst()->textContent ?? '') : null,
+            node: $node->count() ? trim($node->expectFirst()->textContent ?? '') : null,
+            role: $role->count() ? trim($role->expectFirst()->textContent ?? '') : null,
             detail: $detail->count() ? Document::fromXmlNode($detail->expectFirst())->stringifyDocumentElement() : null,
         );
     }

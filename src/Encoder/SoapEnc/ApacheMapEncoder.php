@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Closure;
-use DOMElement;
+use Dom\Element as DomElement;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -84,7 +84,7 @@ final class ApacheMapEncoder implements XmlEncoder
         $xpath = $value->document()->xpath();
 
         return readChildren($element)->reduce(
-            static function (array $map, DOMElement $item) use ($context, $xpath): array {
+            static function (array $map, DomElement $item) use ($context, $xpath): array {
                 $key = $xpath->evaluate('string(./key)', string(), $item);
                 /** @psalm-var mixed $value */
                 $value = ElementValueReader::forEncoder(
