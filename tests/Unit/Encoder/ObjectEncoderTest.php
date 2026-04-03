@@ -109,6 +109,23 @@ final class ObjectEncoderTest extends AbstractEncoderTests
             'xml' => '<user active="true"><hat><color>green</color></hat></user>',
             'data' => new User(active: true, hat: new Hat('green')),
         ];
+        yield 'with-falsy-attribute' => [
+            ...$baseConfig,
+            'context' => self::createContext($xsdType, self::buildTypes(activeAsAttribute: true)),
+            'xml' => '<user active="false"><hat><color>green</color></hat></user>',
+            'data' => (object)[
+                'active' => false,
+                'hat' => (object)[
+                    'color' => 'green',
+                ],
+            ],
+        ];
+        yield 'class-objects-with-falsy-attribute' => [
+            'encoder' => new ObjectEncoder(User::class),
+            'context' => $withClassMap(self::createContext($xsdType, self::buildTypes(activeAsAttribute: true))),
+            'xml' => '<user active="false"><hat><color>green</color></hat></user>',
+            'data' => new User(active: false, hat: new Hat('green')),
+        ];
 
         yield 'wsdl-example-objects' => [
             ...$baseConfig,
