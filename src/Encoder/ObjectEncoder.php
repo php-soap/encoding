@@ -103,7 +103,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                             $iso = $objectAccess->isos[$normalizePropertyName];
 
                             return match(true) {
-                                $isAttribute => $value ? (new AttributeBuilder(
+                                $isAttribute => $value !== null ? (new AttributeBuilder(
                                     $type,
                                     $iso->to($value)
                                 ))(...) : $defaultAction,
