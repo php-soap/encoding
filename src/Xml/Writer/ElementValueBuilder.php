@@ -8,7 +8,7 @@ use Generator;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\XmlEncoder;
-use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Iso\IsoInterface;
 use XMLWriter;
 use function VeeWee\Xml\Writer\Builder\cdata;
 use function VeeWee\Xml\Writer\Builder\children;
@@ -25,7 +25,7 @@ final class ElementValueBuilder
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, string, mixed> $encoder
      * @psalm-param mixed $value
      */
     public static function fromEncoder(Context $context, XmlEncoder $encoder, mixed $value): self
@@ -37,11 +37,11 @@ final class ElementValueBuilder
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
-     * @param Iso<mixed, string> $iso
+     * @param XmlEncoder<mixed, mixed, mixed, mixed> $encoder
+     * @param IsoInterface<mixed, mixed, string, mixed> $iso
      * @psalm-param mixed $value
      */
-    public static function fromIso(Context $context, XmlEncoder $encoder, Iso $iso, mixed $value): self
+    public static function fromIso(Context $context, XmlEncoder $encoder, IsoInterface $iso, mixed $value): self
     {
         return new self([
             XsiAttributeBuilder::forEncodedValue($context, $encoder, $value),
@@ -58,7 +58,7 @@ final class ElementValueBuilder
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, mixed, mixed> $encoder
      * @param Closure(): string $valueProvider
      *
      * @return Closure(XMLWriter): Generator<bool>

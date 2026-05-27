@@ -24,7 +24,7 @@ use function VeeWee\Xml\Writer\Mapper\memory_output;
 final class Soap11FaultEncoder implements SoapFaultEncoder
 {
     /**
-     * @return Iso<Soap11Fault, non-empty-string>
+     * @return Iso<Soap11Fault, Soap11Fault, non-empty-string, non-empty-string>
      */
     public function iso(): Iso
     {

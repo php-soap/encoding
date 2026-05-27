@@ -19,12 +19,12 @@ use function Psl\Vec\map_with_key;
 use function VeeWee\Reflecta\Lens\index;
 
 /**
- * @template-implements SoapMethodEncoder<list<mixed>, non-empty-string>
+ * @template-implements SoapMethodEncoder<list<mixed>, list<mixed>, non-empty-string, non-empty-string>
  */
 final class RequestEncoder implements SoapMethodEncoder
 {
     /**
-     * @return Iso<list<mixed>, non-empty-string>
+     * @return Iso<list<mixed>, list<mixed>, non-empty-string, non-empty-string>
      */
     public function iso(MethodContext $context): Iso
     {
@@ -35,7 +35,7 @@ final class RequestEncoder implements SoapMethodEncoder
                 ->unwrapOr(BindingUse::LITERAL)
         );
 
-        /** @var Iso<list<mixed>, non-empty-string> */
+        /** @var Iso<list<mixed>, list<mixed>, non-empty-string, non-empty-string> */
         return new Iso(
             /**
              * @param list<mixed> $arguments

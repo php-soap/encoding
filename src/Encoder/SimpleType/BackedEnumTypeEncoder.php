@@ -10,7 +10,7 @@ use VeeWee\Reflecta\Iso\Iso;
 use function Psl\Type\backed_enum;
 
 /**
- * @implements XmlEncoder<BackedEnum, string>
+ * @implements XmlEncoder<BackedEnum, BackedEnum, string, string>
  */
 final class BackedEnumTypeEncoder implements XmlEncoder
 {
@@ -23,7 +23,7 @@ final class BackedEnumTypeEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<BackedEnum, string>
+     * @return Iso<BackedEnum, BackedEnum, string, string>
      */
     public function iso(Context $context): Iso
     {

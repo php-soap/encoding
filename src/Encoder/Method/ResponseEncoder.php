@@ -17,12 +17,12 @@ use function Psl\invariant;
 use function Psl\Vec\map;
 
 /**
- * @template-implements SoapMethodEncoder<mixed, string>
+ * @template-implements SoapMethodEncoder<list<mixed>, list<mixed>, string, string>
  */
 final class ResponseEncoder implements SoapMethodEncoder
 {
     /**
-     * @return Iso<mixed, string>
+     * @return Iso<list<mixed>, list<mixed>, string, string>
      */
     public function iso(MethodContext $context): Iso
     {
@@ -33,7 +33,7 @@ final class ResponseEncoder implements SoapMethodEncoder
                 ->unwrapOr(BindingUse::LITERAL)
         );
 
-        /** @var Iso<list<mixed>, string> */
+        /** @var Iso<list<mixed>, list<mixed>, string, string> */
         return new Iso(
             /**
              * @param list<mixed> $arguments

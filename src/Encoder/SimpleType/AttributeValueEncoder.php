@@ -7,15 +7,16 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\RestrictionException;
 use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Iso\IsoInterface;
 use function Psl\Type\scalar;
 
 /**
- * @implements XmlEncoder<mixed, string|null>
+ * @implements XmlEncoder<mixed, mixed, string|null, string|null>
  */
 final class AttributeValueEncoder implements XmlEncoder
 {
     /**
-     * @param XmlEncoder<mixed, string> $typeEncoder
+     * @param XmlEncoder<mixed, mixed, string, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -23,7 +24,7 @@ final class AttributeValueEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<mixed, string|null>
+     * @return Iso<mixed, mixed, string|null, string|null>
      */
     public function iso(Context $context): Iso
     {
@@ -36,9 +37,9 @@ final class AttributeValueEncoder implements XmlEncoder
     }
 
     /**
-     * @param Iso<mixed, string> $typeIso
+     * @param IsoInterface<mixed, mixed, string, string> $typeIso
      */
-    private function to(Context $context, Iso $typeIso, mixed $value): ?string
+    private function to(Context $context, IsoInterface $typeIso, mixed $value): ?string
     {
         $meta = $context->type->getMeta();
         $fixed = $meta->fixed()
@@ -56,9 +57,9 @@ final class AttributeValueEncoder implements XmlEncoder
     }
 
     /**
-     * @param Iso<mixed, string> $typeIso
+     * @param IsoInterface<mixed, mixed, string, string> $typeIso
      */
-    private function from(Context $context, Iso $typeIso, ?string $value): mixed
+    private function from(Context $context, IsoInterface $typeIso, ?string $value): mixed
     {
         if ($value !== null) {
             return $typeIso->from($value);

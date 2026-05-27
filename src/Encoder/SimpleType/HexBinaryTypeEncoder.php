@@ -11,12 +11,12 @@ use function Psl\Encoding\Hex\decode;
 use function Psl\Encoding\Hex\encode;
 
 /**
- * @implements XmlEncoder<string, string>
+ * @implements XmlEncoder<string, string, string, string>
  */
 final class HexBinaryTypeEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<string, string>
+     * @return Iso<string, string, string, string>
      */
     public function iso(Context $context): Iso
     {

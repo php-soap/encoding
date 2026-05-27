@@ -12,12 +12,12 @@ use function Psl\Encoding\Base64\decode;
 use function Psl\Encoding\Base64\encode;
 
 /**
- * @implements XmlEncoder<string, string>
+ * @implements XmlEncoder<string, string, string, string>
  */
 final class Base64BinaryTypeEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<string, string>
+     * @return Iso<string, string, string, string>
      */
     public function iso(Context $context): Iso
     {

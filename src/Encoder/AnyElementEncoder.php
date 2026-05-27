@@ -19,11 +19,11 @@ use function Psl\Type\string;
 use function Psl\Type\vec;
 
 /**
- * @implements XmlEncoder<array|string|null, string>
+ * @implements XmlEncoder<array|string|null, array<array-key, string>|string|null, string, ElementList|string>
  *
  * @psalm-import-type LookupArray from DocumentToLookupArrayReader
  *
- * @template-implements Feature\ProvidesObjectDecoderLens<LookupArray, ElementList>
+ * @template-implements Feature\ProvidesObjectDecoderLens<LookupArray, LookupArray, ElementList, ElementList>
  */
 final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAware, Feature\ProvidesObjectDecoderLens, XmlEncoder
 {
@@ -32,7 +32,7 @@ final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAwar
      * It will contain all the XML tags available in the object that is surrounding the 'any' property.
      * Properties that are already known by the object, will be omitted.
      *
-     * @return Lens<LookupArray, ElementList>
+     * @return Lens<LookupArray, LookupArray, ElementList, ElementList>
      */
     public static function createObjectDecoderLens(Type $parentType, Property $currentProperty): Lens
     {
@@ -51,7 +51,7 @@ final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAwar
          */
         $omit = static fn (array $data): array => diff_by_key($data, array_flip($omittedKeys));
 
-        /** @var Lens<LookupArray, ElementList> */
+        /** @var Lens<LookupArray, LookupArray, ElementList, ElementList> */
         return Lens::readonly(
             /**
              * @psalm-suppress MixedArgumentTypeCoercion - Psalm gets confused about the result of omit.
@@ -62,7 +62,7 @@ final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAwar
     }
 
     /**
-     * @return Iso<array|string|null, string>
+     * @return Iso<array|string|null, array<array-key, string>|string|null, string, ElementList|string>
      */
     public function iso(Context $context): Iso
     {

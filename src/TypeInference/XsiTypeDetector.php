@@ -9,6 +9,8 @@ use Soap\Encoding\Cache\ScopedCache;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\FixedIsoEncoder;
 use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Xml\Node\Element as XmlElement;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
@@ -24,7 +26,7 @@ use function sprintf;
 final class XsiTypeDetector
 {
     /**
-     * @return ScopedCache<EncoderRegistry, FixedIsoEncoder<mixed, string>>
+     * @return ScopedCache<EncoderRegistry, FixedIsoEncoder<mixed, mixed, string|null, XmlElement|ElementList|string|null>>
      *
      * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, MixedReturnStatement
      */
@@ -89,7 +91,7 @@ final class XsiTypeDetector
     }
 
     /**
-     * @return Option<FixedIsoEncoder<mixed, string>>
+     * @return Option<FixedIsoEncoder<mixed, mixed, string|null, XmlElement|ElementList|string|null>>
      */
     public static function detectEncoderFromXmlElement(Context $context, Element $element): Option
     {

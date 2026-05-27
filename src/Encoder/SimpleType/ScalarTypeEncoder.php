@@ -14,7 +14,7 @@ use function is_int;
 use function is_string;
 
 /**
- * @implements XmlEncoder<mixed, string>
+ * @implements XmlEncoder<mixed, scalar, string, string>
  */
 final class ScalarTypeEncoder implements XmlEncoder
 {
@@ -29,7 +29,7 @@ final class ScalarTypeEncoder implements XmlEncoder
     /**
      * Will parse scalar values but accepts mixed to throw exceptions on invalid types.
      *
-     * @return Iso<mixed, string>
+     * @return Iso<mixed, scalar, string, string>
      */
     public function iso(Context $context): Iso
     {

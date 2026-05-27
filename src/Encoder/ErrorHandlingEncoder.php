@@ -8,16 +8,18 @@ use Throwable;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @template-covariant TData
- * @template-covariant TXml
+ * @template TDataIn
+ * @template TDataOut
+ * @template TXmlOut
+ * @template TXmlIn
  *
- * @implements XmlEncoder<TData, TXml>
- * @implements Feature\DecoratingEncoder<TData, TXml>
+ * @implements XmlEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn>
+ * @implements Feature\DecoratingEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn>
  */
 final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncoder
 {
     /**
-     * @param XmlEncoder<TData, TXml> $encoder
+     * @param XmlEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn> $encoder
      */
     public function __construct(
         private readonly XmlEncoder $encoder
@@ -25,7 +27,7 @@ final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncode
     }
 
     /**
-     * @return XmlEncoder<TData, TXml>
+     * @return XmlEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn>
      */
     public function decoratedEncoder(): XmlEncoder
     {
@@ -33,7 +35,7 @@ final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncode
     }
 
     /**
-     * @return Iso<TData, TXml>
+     * @return Iso<TDataIn, TDataOut, TXmlOut, TXmlIn>
      */
     public function iso(Context $context): Iso
     {
@@ -41,8 +43,8 @@ final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncode
 
         return new Iso(
             /**
-             * @psalm-param TData $value
-             * @psalm-return TXml
+             * @psalm-param TDataIn $value
+             * @psalm-return TXmlOut
              */
             static function (mixed $value) use ($innerIso, $context): mixed {
                 try {
@@ -52,8 +54,8 @@ final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncode
                 }
             },
             /**
-             * @psalm-param TXml $value
-             * @psalm-return TData
+             * @psalm-param TXmlIn $value
+             * @psalm-return TDataOut
              */
             static function (mixed $value) use ($innerIso, $context): mixed {
                 try {

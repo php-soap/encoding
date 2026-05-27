@@ -23,12 +23,12 @@ use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @implements XmlEncoder<array<array-key, mixed>, non-empty-string>
+ * @implements XmlEncoder<array<array-key, mixed>, array<array-key, mixed>, non-empty-string, non-empty-string>
  */
 final class ApacheMapEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<array<array-key, mixed>, non-empty-string>
+     * @return Iso<array<array-key, mixed>, array<array-key, mixed>, non-empty-string, non-empty-string>
      */
     public function iso(Context $context): Iso
     {

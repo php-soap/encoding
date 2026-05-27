@@ -10,12 +10,12 @@ use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<mixed, string>
+ * @implements XmlEncoder<mixed, mixed, non-empty-string, Element|non-empty-string>
  */
 final class ElementEncoder implements Feature\ElementAware, XmlEncoder
 {
     /**
-     * @param XmlEncoder<mixed, string> $typeEncoder
+     * @param XmlEncoder<mixed, mixed, string, string> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -23,7 +23,7 @@ final class ElementEncoder implements Feature\ElementAware, XmlEncoder
     }
 
     /**
-     * @return Iso<mixed, string>
+     * @return Iso<mixed, mixed, non-empty-string, Element|non-empty-string>
      */
     public function iso(Context $context): Iso
     {

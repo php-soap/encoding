@@ -22,12 +22,12 @@ use function VeeWee\Xml\Writer\Builder\prefixed_attribute;
 use function VeeWee\Xml\Writer\Builder\raw as buildRaw;
 
 /**
- * @implements XmlEncoder<list<mixed>, non-empty-string>
+ * @implements XmlEncoder<list<mixed>, list<mixed>, non-empty-string, non-empty-string>
  */
 final class SoapArrayEncoder implements ListAware, XmlEncoder
 {
     /**
-     * @return Iso<list<mixed>, non-empty-string>
+     * @return Iso<list<mixed>, list<mixed>, non-empty-string, non-empty-string>
      */
     public function iso(Context $context): Iso
     {

@@ -6,14 +6,14 @@ namespace Soap\Encoding\Xml\Reader;
 use Dom\Element;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
-use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Iso\IsoInterface;
 use function Psl\Type\string;
 use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
 
 final class ElementValueReader
 {
     /**
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, string, string> $encoder
      * @psalm-return mixed
      */
     public function __invoke(
@@ -25,7 +25,7 @@ final class ElementValueReader
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, string, string> $encoder
      * @psalm-return mixed
      */
     public static function forEncoder(Context $context, XmlEncoder $encoder, Element $element): mixed
@@ -36,10 +36,10 @@ final class ElementValueReader
     }
 
     /**
-     * @param Iso<mixed, string> $iso
+     * @param IsoInterface<mixed, mixed, string, string> $iso
      * @psalm-return mixed
      */
-    public static function forIso(Iso $iso, Element $element): mixed
+    public static function forIso(IsoInterface $iso, Element $element): mixed
     {
         return $iso->from(
             readValue($element, string())

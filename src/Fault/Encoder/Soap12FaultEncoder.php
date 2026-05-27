@@ -25,7 +25,7 @@ final class Soap12FaultEncoder implements SoapFaultEncoder
     private const ENV_NAMESPACE = 'http://www.w3.org/2003/05/soap-envelope';
 
     /**
-     * @return Iso<Soap12Fault, non-empty-string>
+     * @return Iso<Soap12Fault, Soap12Fault, non-empty-string, non-empty-string>
      */
     public function iso(): Iso
     {
