@@ -8,12 +8,12 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<bool, string>
+ * @implements XmlEncoder<bool, bool, string, string>
  */
 final class BoolTypeEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<bool, string>
+     * @return Iso<bool, bool, string, string>
      */
     public function iso(Context $context): Iso
     {

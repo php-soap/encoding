@@ -2,16 +2,18 @@
 
 namespace Soap\Encoding\Encoder\Method;
 
-use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Iso\IsoInterface;
 
 /**
- * @template-covariant TData
- * @template-covariant TXml
+ * @template-covariant TDataIn
+ * @template-covariant TDataOut
+ * @template-covariant TXmlOut
+ * @template-covariant TXmlIn
  */
 interface SoapMethodEncoder
 {
     /**
-     * @return Iso<TData, TXml>
+     * @return IsoInterface<TDataIn, TDataOut, TXmlOut, TXmlIn>
      */
-    public function iso(MethodContext $context): Iso;
+    public function iso(MethodContext $context): IsoInterface;
 }

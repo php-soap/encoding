@@ -10,7 +10,7 @@ use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<DateTimeInterface, string>
+ * @implements XmlEncoder<DateTimeInterface, DateTimeImmutable, string, string>
  */
 final class DateTimeTypeEncoder implements XmlEncoder
 {
@@ -44,7 +44,7 @@ final class DateTimeTypeEncoder implements XmlEncoder
     }
 
     /**
-     * @return Iso<DateTimeInterface, string>
+     * @return Iso<DateTimeInterface, DateTimeImmutable, string, string>
      */
     public function iso(Context $context): Iso
     {

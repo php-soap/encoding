@@ -9,6 +9,8 @@ use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\OptionalElementEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Encoder\XsiTypeEncoder;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\XsdType;
 use function Psl\Iter\any;
 
@@ -23,7 +25,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<mixed, string|null>
+     * @return XmlEncoder<mixed, mixed, string|null, ElementList|Element|string|null>
      */
     public function __invoke(Context $context): XmlEncoder
     {
@@ -34,8 +36,8 @@ final class EncoderDetector
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
-     * @return XmlEncoder<mixed, string|null>
+     * @param XmlEncoder<mixed, mixed, string, string> $encoder
+     * @return XmlEncoder<mixed, mixed, string|null, ElementList|Element|string|null>
      */
     private function enhanceEncoder(Context $context, XmlEncoder $encoder): XmlEncoder
     {
@@ -68,7 +70,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, string>
      */
     private function detectSimpleTypeEncoder(Context $context): XmlEncoder
     {

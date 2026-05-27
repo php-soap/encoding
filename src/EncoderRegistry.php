@@ -13,19 +13,20 @@ use Soap\Encoding\Encoder\SimpleType;
 use Soap\Encoding\Encoder\SoapEnc;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Formatter\QNameFormatter;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Metadata\Detector\ApacheMapDetector;
 use Soap\WsdlReader\Model\Definitions\EncodingStyle;
 use Soap\Xml\Xmlns;
 use stdClass;
-use Stringable;
 use function Psl\Dict\pull;
 
 final class EncoderRegistry
 {
     /**
-     * @param MutableMap<string, XmlEncoder<mixed, string>> $simpleTypeMap
-     * @param MutableMap<string, XmlEncoder<mixed, string>> $complextTypeMap
+     * @param MutableMap<string, XmlEncoder<mixed, mixed, string, string>> $simpleTypeMap
+     * @param MutableMap<string, XmlEncoder<mixed, mixed, string, Element|ElementList|string>> $complextTypeMap
      * @param int $decoderLibXmlOptions - bitmask of LIBXML_* constants https://www.php.net/manual/en/libxml.constants.php
      */
     private function __construct(
@@ -45,7 +46,7 @@ final class EncoderRegistry
         $xsd1999 = Xmlns::xsd1999()->value();
 
         return new self(
-            /** @var MutableMap<XmlEncoder<mixed, string>> */
+            /** @var MutableMap<XmlEncoder<mixed, mixed, string, string>> */
             new MutableMap([
                 // Strings:
                 $qNameFormatter($xsd, 'string') => new SimpleType\StringTypeEncoder(),
@@ -139,7 +140,7 @@ final class EncoderRegistry
                 $qNameFormatter($xsd1999, 'date') => SimpleType\DateTypeEncoder::default(),
                 $qNameFormatter($xsd1999, 'time') => new SimpleType\StringTypeEncoder(),
             ]),
-            /** @var MutableMap<XmlEncoder<mixed, string>> */
+            /** @var MutableMap<XmlEncoder<mixed, mixed, string, Element|ElementList|string>> */
             new MutableMap([
                 // SOAP 1.1 ENC
                 $qNameFormatter(EncodingStyle::SOAP_11->value, 'Array') => new SoapEnc\SoapArrayEncoder(),
@@ -227,7 +228,7 @@ final class EncoderRegistry
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, string, string> $encoder
      */
     public function addSimpleTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
     {
@@ -242,7 +243,7 @@ final class EncoderRegistry
     /**
      * @param non-empty-string $namespace
      * @param non-empty-string $name
-     * @param XmlEncoder<mixed, string> $encoder
+     * @param XmlEncoder<mixed, mixed, string, Element|ElementList|string> $encoder
      */
     public function addComplexTypeConverter(string $namespace, string $name, XmlEncoder $encoder): self
     {
@@ -255,7 +256,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, string>
      */
     public function findSimpleEncoderByXsdType(XsdType $type): XmlEncoder
     {
@@ -266,7 +267,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, string>
      */
     public function findSimpleEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
     {
@@ -296,7 +297,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, Element|ElementList|string>
      */
     public function findComplexEncoderByXsdType(XsdType $type): XmlEncoder
     {
@@ -307,7 +308,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, Element|ElementList|string>
      */
     public function findComplexEncoderByNamespaceName(string $namespace, string $name): XmlEncoder
     {
@@ -337,7 +338,7 @@ final class EncoderRegistry
     }
 
     /**
-     * @return XmlEncoder<mixed, string|Stringable>
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
      */
     public function detectEncoderForContext(Context $context): XmlEncoder
     {

@@ -21,12 +21,12 @@ use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @implements XmlEncoder<object, non-empty-string>
+ * @implements XmlEncoder<object, object, non-empty-string, non-empty-string>
  */
 final class SoapObjectEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<object, non-empty-string>
+     * @return Iso<object, object, non-empty-string, non-empty-string>
      */
     public function iso(Context $context): Iso
     {

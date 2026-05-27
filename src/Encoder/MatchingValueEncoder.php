@@ -11,18 +11,18 @@ use function Psl\invariant;
  * This encoder can be used to select an encoder based on the value being encoded.
  * For decoding, it will always use the default encoder.
  *
- * @psalm-type MatchedEncoderInfo = Context | array{0: Context, 1 ?: XmlEncoder<mixed, string>|null}
+ * @psalm-type MatchedEncoderInfo = Context | array{0: Context, 1 ?: XmlEncoder<mixed, mixed, string, Element|string>|null}
  * @psalm-type MatchingEncoderDetector = \Closure(Context, mixed): MatchedEncoderInfo
  *
  * @psalm-suppress UnusedClass
  *
- * @implements XmlEncoder<mixed, string>
+ * @implements XmlEncoder<mixed, mixed, string, Element|string>
  */
 final readonly class MatchingValueEncoder implements XmlEncoder
 {
     /**
      * @param MatchingEncoderDetector $encoderDetector
-     * @param XmlEncoder<mixed, string> $defaultEncoder
+     * @param XmlEncoder<mixed, mixed, string, Element|string> $defaultEncoder
      */
     public function __construct(
         private Closure $encoderDetector,
@@ -32,7 +32,6 @@ final readonly class MatchingValueEncoder implements XmlEncoder
 
     public function iso(Context $context): Iso
     {
-        /** @var Iso<string, mixed> $defaultIso */
         $defaultIso = $this->defaultEncoder->iso($context);
 
         return new Iso(

@@ -12,7 +12,7 @@ use VeeWee\Reflecta\Iso\Iso;
 interface SoapFaultEncoder
 {
     /**
-     * @return Iso<TFault, non-empty-string>
+     * @return Iso<TFault, TFault, non-empty-string, non-empty-string>
      */
     public function iso(): Iso;
 }

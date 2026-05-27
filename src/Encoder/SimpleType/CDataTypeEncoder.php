@@ -14,12 +14,12 @@ use VeeWee\Reflecta\Iso\Iso;
  * When writing the data to the XML element, it will be wrapped in a CDATA section.
  *
  * @psalm-suppress UnusedClass
- * @implements XmlEncoder<string, string>
+ * @implements XmlEncoder<string, string, string, string>
  */
 final class CDataTypeEncoder implements Feature\CData, XmlEncoder
 {
     /**
-     * @return Iso<string, string>
+     * @return Iso<string, string, string, string>
      */
     public function iso(Context $context): Iso
     {

@@ -8,18 +8,19 @@ use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use VeeWee\Reflecta\Iso\Iso;
+use VeeWee\Reflecta\Iso\IsoInterface;
 use VeeWee\Xml\Xmlns\Xmlns;
 use function count;
 use function is_string;
 
 /**
  * @template T of mixed
- * @implements XmlEncoder<T, string>
+ * @implements XmlEncoder<T, T, string, ElementList|Element|string>
  */
 final class OptionalElementEncoder implements Feature\ElementAware, Feature\OptionalAware, XmlEncoder
 {
     /**
-     * @param XmlEncoder<T, string> $elementEncoder
+     * @param XmlEncoder<T, T, string|null, ElementList|Element|string|null> $elementEncoder
      */
     public function __construct(
         private readonly XmlEncoder $elementEncoder
@@ -27,12 +28,13 @@ final class OptionalElementEncoder implements Feature\ElementAware, Feature\Opti
     }
 
     /**
-     * @return Iso<T, string>
+     * @return IsoInterface<T, T, string, ElementList|Element|string>
      */
-    public function iso(Context $context): Iso
+    public function iso(Context $context): IsoInterface
     {
         $type = $context->type;
         $meta = $type->getMeta();
+        /** @var IsoInterface<T, T, string, ElementList|Element|string> $elementIso */
         $elementIso = $this->elementEncoder->iso($context);
         $isList = $meta->isList()->unwrapOr(false);
 
@@ -72,7 +74,7 @@ final class OptionalElementEncoder implements Feature\ElementAware, Feature\Opti
                     return null;
                 }
 
-                /** @var Iso<T|null, ElementList|Element|non-empty-string> $elementIso */
+                /** @var Iso<T|null, T|null, ElementList|Element|non-empty-string, ElementList|Element|non-empty-string> $elementIso */
                 return $elementIso->from($xml);
             }
         );

@@ -10,6 +10,7 @@ use function array_unshift;
 use function count;
 use function preg_split;
 use function Psl\Type\non_empty_string;
+use function ucfirst;
 
 final class PhpPropertyNameNormalizer
 {
@@ -29,7 +30,7 @@ final class PhpPropertyNameNormalizer
         }
 
         $keepUnchanged = array_shift($parts);
-        $parts = array_map(\ucfirst(...), $parts);
+        $parts = array_map(ucfirst(...), $parts);
         array_unshift($parts, $keepUnchanged);
 
         return non_empty_string()->assert(

@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Cache\ScopedCache;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\XsdType;
 use stdClass;
 
@@ -18,7 +20,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return ScopedCache<XsdType, XmlEncoder<mixed, string>>
+     * @return ScopedCache<XsdType, XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>>
      *
      * @psalm-suppress LessSpecificReturnStatement, MoreSpecificReturnType, MixedReturnStatement
      */
@@ -30,9 +32,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
-     *
-     * @psalm-suppress InvalidArgument, InvalidReturnType, PossiblyInvalidArgument, InvalidReturnStatement - The simple type detector could return string|null, but should not be an issue here.
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
      */
     public function __invoke(Context $context): XmlEncoder
     {
@@ -44,9 +44,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
-     *
-     * @psalm-suppress PossiblyInvalidArgument - The simple type detector could return string|null, but should not be an issue here.
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
      */
     private function detect(Context $context): XmlEncoder
     {
@@ -62,8 +60,8 @@ final class EncoderDetector
     }
 
     /**
-     * @param XmlEncoder<mixed, string> $encoder
-     * @return XmlEncoder<mixed, string>
+     * @param XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null> $encoder
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
      */
     private function enhanceEncoder(Context $context, XmlEncoder $encoder): XmlEncoder
     {
@@ -86,7 +84,7 @@ final class EncoderDetector
     }
 
     /**
-     * @return XmlEncoder<mixed, string>
+     * @return XmlEncoder<mixed, mixed, string, Element|ElementList|string>
      */
     private function detectComplexTypeEncoder(XsdType $type, Context $context): XmlEncoder
     {

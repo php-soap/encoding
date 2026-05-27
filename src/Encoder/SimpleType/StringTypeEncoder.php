@@ -9,12 +9,12 @@ use Soap\Encoding\Restriction\WhitespaceRestriction;
 use VeeWee\Reflecta\Iso\Iso;
 
 /**
- * @implements XmlEncoder<string, string>
+ * @implements XmlEncoder<string, string, string, string>
  */
 final class StringTypeEncoder implements XmlEncoder
 {
     /**
-     * @return Iso<string, string>
+     * @return Iso<string, string, string, string>
      */
     public function iso(Context $context): Iso
     {

@@ -12,12 +12,12 @@ use function Psl\Vec\map;
 
 /**
  * @template T
- * @implements XmlEncoder<iterable<array-key, T>|null, string>
+ * @implements XmlEncoder<iterable<array-key, T>|null, iterable<array-key, T>, string, Element|ElementList|string>
  */
 final class RepeatingElementEncoder implements Feature\ElementAware, Feature\ListAware, XmlEncoder
 {
     /**
-     * @param XmlEncoder<T, string> $typeEncoder
+     * @param XmlEncoder<T, T, string|null, Element|ElementList|string|null> $typeEncoder
      */
     public function __construct(
         private readonly XmlEncoder $typeEncoder
@@ -25,7 +25,7 @@ final class RepeatingElementEncoder implements Feature\ElementAware, Feature\Lis
     }
 
     /**
-     * @return Iso<iterable<array-key, T>|null, string>
+     * @return Iso<iterable<array-key, T>|null, iterable<array-key, T>, string, Element|ElementList|string>
      */
     public function iso(Context $context): Iso
     {
@@ -47,8 +47,12 @@ final class RepeatingElementEncoder implements Feature\ElementAware, Feature\Lis
                         $raw ?? [],
                         /**
                          * @param T $item
+                         *
+                         * The inner XML output slot is `string|null` because it mirrors the shared aggregate
+                         * encoder type, but element encoders always produce a string in the to() direction;
+                         * the cast only collapses type-level nullability inherited from the aggregate.
                          */
-                        static fn (mixed $item): string => $innerIso->to($item)
+                        static fn (mixed $item): string => (string) $innerIso->to($item)
                     ),
                     ''
                 );
@@ -64,7 +68,7 @@ final class RepeatingElementEncoder implements Feature\ElementAware, Feature\Lis
                     default => ElementList::fromString('<list>'.$xml.'</list>')->elements()
                 };
 
-                /** @var Iso<T|null, Element|non-empty-string> $innerIso */
+                /** @var Iso<T|null, T|null, Element|non-empty-string, Element|non-empty-string> $innerIso */
                 return map(
                     $elements,
                     static fn (Element $element): mixed => $innerIso->from($element)

@@ -13,7 +13,7 @@ use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\Property;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Reflecta\Lens\Lens;
+use VeeWee\Reflecta\Lens\LensInterface;
 use function is_array;
 use function Psl\Dict\map_with_key;
 use function Psl\Fun\lazy;
@@ -25,7 +25,7 @@ use function VeeWee\Xml\Writer\Builder\value as buildValue;
 /**
  * @template TObj extends object
  *
- * @implements XmlEncoder<TObj|array, non-empty-string>
+ * @implements XmlEncoder<TObj|array, TObj, non-empty-string, Element|non-empty-string>
  */
 final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
 {
@@ -38,7 +38,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
     }
 
     /**
-     * @return Iso<TObj|array, non-empty-string>
+     * @return Iso<TObj|array, TObj, non-empty-string, Element|non-empty-string>
      */
     public function iso(Context $context): Iso
     {
@@ -105,12 +105,12 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                             return match(true) {
                                 $isAttribute => $value !== null ? (new AttributeBuilder(
                                     $type,
-                                    $iso->to($value)
+                                    (string) $iso->to($value)
                                 ))(...) : $defaultAction,
                                 $property->getName() === '_' => $value !== null
-                                    ? buildValue($iso->to($value))
+                                    ? buildValue((string) $iso->to($value))
                                     : (new NilAttributeBuilder())(...),
-                                default => raw($iso->to($value))
+                                default => raw((string) $iso->to($value))
                             };
                         }
                     )
@@ -125,7 +125,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
     private function from(Context $context, ObjectAccess $objectAccess, Element $data): object
     {
         $nodes = (new DocumentToLookupArrayReader())($data);
-        /** @var Iso<TObj, array<string, mixed>> $objectData */
+        /** @var Iso<TObj, TObj, array<string, mixed>, array<string, mixed>> $objectData */
         $objectData = object_data($this->className);
 
         return $objectData->from(
@@ -153,7 +153,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         );
     }
 
-    private static function runLens(Lens $lens, mixed $data, mixed $default = null): mixed
+    private static function runLens(LensInterface $lens, mixed $data, mixed $default = null): mixed
     {
         try {
             /** @var mixed */

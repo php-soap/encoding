@@ -4,18 +4,19 @@ namespace Soap\Encoding\Encoder\SoapEnc;
 
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
+use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns;
-use Stringable;
 use function Psl\Result\try_catch;
 
 final class SoapArrayAccess
 {
     /**
-     * @param XmlEncoder<mixed, Stringable|string> $itemEncoder
+     * @param XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null> $itemEncoder
      */
     public function __construct(
         public readonly string $xsiType,
