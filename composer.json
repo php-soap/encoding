@@ -39,7 +39,7 @@
         "php-soap/engine": "^2.20",
         "php-soap/wsdl": "^1.19",
         "php-soap/xml": "^1.10",
-        "php-soap/wsdl-reader": "^0.32"
+        "php-soap/wsdl-reader": "~0.32"
     },
     "require-dev": {
         "vimeo/psalm": "~6.13",
