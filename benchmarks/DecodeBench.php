@@ -41,6 +41,22 @@ class DecodeBench
         }
     }
 
+    #[Revs(100)]
+    #[Groups(['literal', 'php-soap', 'x1', 'sparse'])]
+    public function benchLiteralSparse_x1(): void
+    {
+        $this->literalDriver->decode('test', $this->literalSparseResponse);
+    }
+
+    #[Groups(['literal', 'php-soap', 'x500', 'sparse'])]
+    public function benchLiteralSparse_x500(): void
+    {
+        $response = $this->literalSparseResponse;
+        foreach ($this->items as $item) {
+            $this->literalDriver->decode('test', $response);
+        }
+    }
+
     // -- php-soap/encoding: encoded --
 
     #[Revs(100)]

@@ -13,9 +13,9 @@ use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\IsoInterface;
+use VeeWee\Reflecta\Lens\Lens;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
-use function VeeWee\Reflecta\Lens\index;
 use function VeeWee\Reflecta\Lens\optional;
 use function VeeWee\Reflecta\Lens\property;
 
@@ -137,10 +137,24 @@ final class ObjectAccess
         $lens = match(true) {
             $encoder instanceof Feature\DecoratingEncoder => self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
-            default => index($name),
+            default => self::createLookupLens($name),
         };
 
         return $shouldLensBeOptional ? optional($lens) : $lens;
+    }
+
+    /**
+     * Resolves absent nodes to null instead of throwing like index() does:
+     * absent optional elements and attributes are common in large responses,
+     * and building + catching an exception for each of them dominates decoding time.
+     *
+     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>
+     */
+    private static function createLookupLens(string $name): LensInterface
+    {
+        return Lens::readonly(
+            static fn (?array $data): mixed => $data[$name] ?? null
+        );
     }
 
     private static function shouldLensBeOptional(TypeMeta $meta): bool

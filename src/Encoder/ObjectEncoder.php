@@ -12,6 +12,7 @@ use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use Soap\Engine\Metadata\Model\Property;
+use stdClass;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function is_array;
@@ -125,32 +126,39 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
     private function from(Context $context, ObjectAccess $objectAccess, Element $data): object
     {
         $nodes = (new DocumentToLookupArrayReader())($data);
+        $values = map_with_key(
+            $objectAccess->properties,
+            static function (string $normalizePropertyName, Property $property) use ($objectAccess, $nodes): mixed {
+                $type = $property->getType();
+                $meta = $type->getMeta();
+
+                /** @var string|null $value */
+                $value = self::runLens(
+                    $objectAccess->decoderLenses[$normalizePropertyName],
+                    $nodes,
+                );
+                $iso = $objectAccess->isos[$normalizePropertyName];
+                $defaultValue = $meta->isList()->unwrapOr(false) ? [] : null;
+
+                /** @psalm-suppress PossiblyNullArgument */
+                return match(true) {
+                    $meta->isAttribute()->unwrapOr(false) => $iso->from($value),
+                    default => $value !== null ? $iso->from($value) : $defaultValue,
+                };
+            },
+        );
+
+        // stdClass has no declared properties: reflection-based hydration would build and catch
+        // an exception for every single property before falling back to a dynamic one.
+        if ($this->className === stdClass::class) {
+            /** @var TObj */
+            return (object) $values;
+        }
+
         /** @var Iso<TObj, TObj, array<string, mixed>, array<string, mixed>> $objectData */
         $objectData = object_data($this->className);
 
-        return $objectData->from(
-            map_with_key(
-                $objectAccess->properties,
-                static function (string $normalizePropertyName, Property $property) use ($objectAccess, $nodes): mixed {
-                    $type = $property->getType();
-                    $meta = $type->getMeta();
-
-                    /** @var string|null $value */
-                    $value = self::runLens(
-                        $objectAccess->decoderLenses[$normalizePropertyName],
-                        $nodes,
-                    );
-                    $iso = $objectAccess->isos[$normalizePropertyName];
-                    $defaultValue = $meta->isList()->unwrapOr(false) ? [] : null;
-
-                    /** @psalm-suppress PossiblyNullArgument */
-                    return match(true) {
-                        $meta->isAttribute()->unwrapOr(false) => $iso->from($value),
-                        default => $value !== null ? $iso->from($value) : $defaultValue,
-                    };
-                },
-            )
-        );
+        return $objectData->from($values);
     }
 
     private static function runLens(LensInterface $lens, mixed $data, mixed $default = null): mixed
