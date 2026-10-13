@@ -137,10 +137,25 @@ final class ObjectAccess
         $lens = match(true) {
             $encoder instanceof Feature\DecoratingEncoder => self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
-            default => index($name),
+            default => $property->getType()->getMeta()->isAttribute()->unwrapOr(false)
+                ? self::createAttributeDecoderLens($property)
+                : index($name),
         };
 
         return $shouldLensBeOptional ? optional($lens) : $lens;
+    }
+
+    /**
+     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>
+     */
+    private static function createAttributeDecoderLens(Property $property): LensInterface
+    {
+        $type = $property->getType();
+        $namespace = $type->getMeta()->isQualified()->unwrapOr(false)
+            ? $type->getXmlTargetNamespace()
+            : '';
+
+        return index('@{' . $namespace . '}' . $property->getName());
     }
 
     private static function shouldLensBeOptional(TypeMeta $meta): bool

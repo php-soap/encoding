@@ -8,6 +8,8 @@ use Dom\Node;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
 use VeeWee\Xml\Xmlns\Xmlns;
+use function array_key_exists;
+use function in_array;
 use function VeeWee\Xml\Dom\Predicate\is_element;
 
 /**
@@ -61,7 +63,19 @@ final class DocumentToLookupArrayReader
         $attributes = $root->attributes;
         foreach ($attributes as $attribute) {
             $key = $attribute->localName;
-            $nodes[$key] = $attribute->value;
+            $namespace = $attribute->namespaceURI ?? '';
+            $nodes['@{' . $namespace . '}' . $key] = $attribute->value;
+
+            // Retain legacy custom-lens keys without replacing child elements.
+            // Protocol attributes must not masquerade as schema element values.
+            if (!array_key_exists($key, $nodes) && !in_array($namespace, [
+                Xmlns::xsi()->value(),
+                'http://www.w3.org/2000/xmlns/',
+                'http://schemas.xmlsoap.org/soap/encoding/',
+                'http://www.w3.org/2003/05/soap-encoding',
+            ], true)) {
+                $nodes[$key] = $attribute->value;
+            }
         }
 
         return $nodes;
