@@ -95,11 +95,19 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                             $meta = $type->getMeta();
                             $isAttribute = $meta->isAttribute()->unwrapOr(false);
 
+                            /** @var object $data */
+                            $read = $objectAccess->encoderLenses[$normalizePropertyName]->tryGet($data);
+                            $mayBeAbsent = $isAttribute
+                                ? $meta->use()->unwrapOr('optional') === 'optional'
+                                : $meta->minOccurs()->unwrapOr(1) === 0;
+
+                            if ($read->isFailed() && $mayBeAbsent) {
+                                return $defaultAction;
+                            }
+
+                            // Preserve existing required-property fallback and explicit null values.
                             /** @var mixed $value */
-                            $value = self::runLens(
-                                $objectAccess->encoderLenses[$normalizePropertyName],
-                                $data
-                            );
+                            $value = $read->unwrapOr(null);
                             $iso = $objectAccess->isos[$normalizePropertyName];
 
                             return match(true) {

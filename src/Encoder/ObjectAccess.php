@@ -89,7 +89,7 @@ final class ObjectAccess
             $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $encoderLenses[$normalizedName] = self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder, $type, $property);
+            $encoderLenses[$normalizedName] = self::createEncoderLensForType($normalizedName, $encoder, $type, $property);
             $decoderLenses[$normalizedName] = self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder, $type, $property);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
 
@@ -109,19 +109,16 @@ final class ObjectAccess
      * @return LensInterface<object|null, object|null, mixed, mixed>
      */
     private static function createEncoderLensForType(
-        bool $shouldLensBeOptional,
         string $normalizedName,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
     ): LensInterface {
-        $lens = match (true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder->decoratedEncoder(), $type, $property),
+        return match (true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createEncoderLensForType($normalizedName, $encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectEncoderLens => $encoder::createObjectEncoderLens($type, $property),
             default => property($normalizedName)
         };
-
-        return $shouldLensBeOptional ? optional($lens) : $lens;
     }
 
     /**
