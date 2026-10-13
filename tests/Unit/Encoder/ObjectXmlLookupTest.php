@@ -34,6 +34,16 @@ final class ObjectXmlLookupTest extends TestCase
             '<testType xmlns:tns="https://test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="tns:testType"/>',
             (object) ['type' => null],
         ];
+        yield 'ordinary attribute does not invent missing child' => [
+            '<sequence><element name="type" type="xsd:string" minOccurs="0"/></sequence>',
+            '<testType type="attribute"/>',
+            (object) ['type' => null],
+        ];
+        yield 'simple content remains available' => [
+            '<simpleContent><extension base="xsd:string"><attribute name="label" type="xsd:string"/></extension></simpleContent>',
+            '<testType label="attribute">content</testType>',
+            (object) ['_' => 'content', 'label' => 'attribute'],
+        ];
         yield 'unqualified schema type attribute survives xsi:type' => [
             '<attribute name="type" type="xsd:string" use="required"/>',
             '<testType xmlns:tns="https://test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="schema" xsi:type="tns:testType"/>',

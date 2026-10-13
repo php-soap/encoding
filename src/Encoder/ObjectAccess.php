@@ -13,6 +13,7 @@ use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\IsoInterface;
+use VeeWee\Reflecta\Lens\Lens;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Lens\index;
@@ -139,7 +140,7 @@ final class ObjectAccess
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
             default => $property->getType()->getMeta()->isAttribute()->unwrapOr(false)
                 ? self::createAttributeDecoderLens($property)
-                : index($name),
+                : self::createElementDecoderLens($name),
         };
 
         return $shouldLensBeOptional ? optional($lens) : $lens;
@@ -156,6 +157,23 @@ final class ObjectAccess
             : '';
 
         return index('@{' . $namespace . '}' . $property->getName());
+    }
+
+    /**
+     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>
+     */
+    private static function createElementDecoderLens(string $name): LensInterface
+    {
+        if ($name === '_') {
+            return index($name);
+        }
+
+        return Lens::readonly(static function (array $nodes) use ($name): Element|ElementList|null {
+            /** @var mixed $value */
+            $value = $nodes[$name] ?? null;
+
+            return $value instanceof Element || $value instanceof ElementList ? $value : null;
+        });
     }
 
     private static function shouldLensBeOptional(TypeMeta $meta): bool
