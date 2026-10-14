@@ -8,20 +8,28 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
+use Soap\Encoding\Encoder\SimpleType\SimpleListEncoder;
+use Soap\Encoding\Encoder\SoapEnc\ApacheMapEncoder;
+use Soap\Encoding\Encoder\SoapEnc\SoapObjectEncoder;
 use Soap\Encoding\Test\Support\Throws\AssertsNoThrows;
+use Soap\Encoding\Test\Unit\ContextCreatorTrait;
+use Soap\Engine\Metadata\Model\TypeMeta;
+use Soap\Engine\Metadata\Model\XsdType;
 use function in_array;
+use function var_export;
 
 #[CoversNothing]
 #[Group('no-throws')]
 final class NoIntermediateThrowsTest extends TestCase
 {
     use AssertsNoThrows;
+    use ContextCreatorTrait;
 
     /**
-     * The untyped scalar decode and the engine type lookup for soap-enc arrays of a builtin item type still throw.
+     * The engine type lookup for soap-enc arrays of a builtin item type still throws.
      */
     private const STILL_THROWING = [
-        'decode untyped values',
         'decode soap-enc array of a builtin type',
     ];
 
@@ -34,6 +42,54 @@ final class NoIntermediateThrowsTest extends TestCase
         $operation();
 
         static::assertNoThrows($operation);
+    }
+
+    /**
+     * @param Closure(): mixed $decode
+     */
+    #[DataProvider('provideUntypedDecodes')]
+    public function test_it_decodes_untyped_values_without_throwing(Closure $decode, mixed $expected): void
+    {
+        static::assertEquals($expected, $decode());
+
+        static::assertNoThrows($decode);
+    }
+
+    /**
+     * @return iterable<string, array{decode: Closure(): mixed, expected: mixed}>
+     */
+    public static function provideUntypedDecodes(): iterable
+    {
+        $scalar = ScalarTypeEncoder::default()->iso(self::createContext(XsdType::any()));
+        foreach (['1.5' => 1.5, '1e3' => 1000.0, 'abc' => 'abc', '' => '', 'true' => true, 'false' => false, '12' => 12] as $value => $expected) {
+            $value = (string) $value;
+            yield 'scalar ' . var_export($value, true) => [
+                'decode' => static fn (): mixed => $scalar->from($value),
+                'expected' => $expected,
+            ];
+        }
+
+        $list = (new SimpleListEncoder(ScalarTypeEncoder::default()))->iso(self::createContext(
+            XsdType::any()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsList(true)->withIsSimple(true))
+        ));
+        yield 'simple list' => [
+            'decode' => static fn (): mixed => $list->from('1 1.5 abc true'),
+            'expected' => [1, 1.5, 'abc', true],
+        ];
+
+        $map = (new ApacheMapEncoder())->iso(self::createContext(XsdType::guess('Map')));
+        yield 'apache map values' => [
+            'decode' => static fn (): mixed => $map->from(
+                '<map><item><key>a</key><value>abc</value></item><item><key>b</key><value>1.5</value></item></map>'
+            ),
+            'expected' => ['a' => 'abc', 'b' => 1.5],
+        ];
+
+        $object = (new SoapObjectEncoder())->iso(self::createContext(XsdType::guess('Struct')));
+        yield 'soap-enc struct values' => [
+            'decode' => static fn (): mixed => $object->from('<obj><a>abc</a><b>1.5</b><c>false</c></obj>'),
+            'expected' => (object) ['a' => 'abc', 'b' => 1.5, 'c' => false],
+        ];
     }
 
     /**
