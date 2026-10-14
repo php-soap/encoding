@@ -16,7 +16,6 @@ use Soap\Encoding\Test\Support\Throws\AssertsNoThrows;
 use Soap\Encoding\Test\Unit\ContextCreatorTrait;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
-use function in_array;
 use function var_export;
 
 #[CoversNothing]
@@ -25,13 +24,6 @@ final class NoIntermediateThrowsTest extends TestCase
 {
     use AssertsNoThrows;
     use ContextCreatorTrait;
-
-    /**
-     * The engine type lookup for soap-enc arrays of a builtin item type still throws.
-     */
-    private const STILL_THROWING = [
-        'decode soap-enc array of a builtin type',
-    ];
 
     /**
      * @param Closure(): mixed $operation
@@ -97,10 +89,6 @@ final class NoIntermediateThrowsTest extends TestCase
      */
     public static function provideScenarios(): iterable
     {
-        foreach (IntermediateThrowScenariosTest::provideScenarios() as $name => $scenario) {
-            if (!in_array($name, self::STILL_THROWING, true)) {
-                yield $name => $scenario;
-            }
-        }
+        return IntermediateThrowScenariosTest::provideScenarios();
     }
 }
