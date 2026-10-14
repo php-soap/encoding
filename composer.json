@@ -52,6 +52,9 @@
         "guzzlehttp/guzzle": "^7.8",
         "phpbench/phpbench": "^1.6"
     },
+    "scripts": {
+        "test:throws": "@php -d xdebug.mode=develop vendor/bin/phpunit --group no-throws --fail-on-skipped"
+    },
     "config": {
         "allow-plugins": {
             "php-http/discovery": true
