@@ -46,17 +46,18 @@ final class ThrowEvent
     }
 
     /**
-     * The innermost file and line in src/ that led to this throw, without the function it called.
+     * The innermost file in src/ that led to this throw and the function it called there, without line numbers,
+     * so it stays the same when unrelated lines in that file move.
      */
-    public function srcSite(): ?string
+    public function srcCall(): ?string
     {
         if (self::isSrc($this->file)) {
-            return $this->site();
+            return self::relative($this->file);
         }
 
         $frame = $this->srcFrame();
 
-        return $frame !== null ? self::relative($frame->file).':'.$frame->line : null;
+        return $frame !== null ? self::relative($frame->file).' -> '.$frame->function : null;
     }
 
     private function srcFrame(): ?ThrowFrame

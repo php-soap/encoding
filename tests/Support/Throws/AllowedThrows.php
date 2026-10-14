@@ -10,6 +10,7 @@ use function sprintf;
 /**
  * The intermediate throws the suite makes on purpose, listed per test and site in allowed-throws.php.
  * Each entry allows exactly the listed number of throws, so a new throw in the same test still counts.
+ * The test is PHPUnit's test id, so a test with a data provider is listed as Class::method#data set name.
  *
  * @psalm-type Entry = array{test: string, throw: class-string<Throwable>, via: string, throws: int, reason: string}
  */
@@ -40,7 +41,7 @@ final class AllowedThrows
 
     public function allows(string $test, ThrowEvent $event): bool
     {
-        $key = self::key($test, $event->class, $event->srcSite() ?? '');
+        $key = self::key($test, $event->class, $event->srcCall() ?? '');
         if (!isset($this->entries[$key])) {
             return false;
         }

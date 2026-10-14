@@ -22,9 +22,9 @@ final class AllowedThrowsTest extends TestCase
     {
         $allowed = self::allowed(throws: 2);
 
-        static::assertTrue($allowed->allows(self::TEST, self::event(RuntimeException::class, 160)));
-        static::assertTrue($allowed->allows(self::TEST, self::event(RuntimeException::class, 160)));
-        static::assertFalse($allowed->allows(self::TEST, self::event(RuntimeException::class, 160)));
+        static::assertTrue($allowed->allows(self::TEST, self::event(RuntimeException::class)));
+        static::assertTrue($allowed->allows(self::TEST, self::event(RuntimeException::class)));
+        static::assertFalse($allowed->allows(self::TEST, self::event(RuntimeException::class)));
         static::assertSame(2, $allowed->allowed());
     }
 
@@ -32,20 +32,20 @@ final class AllowedThrowsTest extends TestCase
     {
         $allowed = self::allowed(throws: 1);
 
-        static::assertFalse($allowed->allows('Some\\Test::test_something_else', self::event(RuntimeException::class, 160)));
-        static::assertFalse($allowed->allows(self::TEST, self::event(LogicException::class, 160)));
-        static::assertFalse($allowed->allows(self::TEST, self::event(RuntimeException::class, 161)));
+        static::assertFalse($allowed->allows('Some\\Test::test_something_else', self::event(RuntimeException::class)));
+        static::assertFalse($allowed->allows(self::TEST, self::event(LogicException::class)));
+        static::assertFalse($allowed->allows(self::TEST, self::event(RuntimeException::class, 'Other\\Lens->get')));
         static::assertSame(0, $allowed->allowed());
     }
 
     public function test_it_reports_entries_of_tests_that_ran_without_throwing_as_listed(): void
     {
         $allowed = self::allowed(throws: 2);
-        $allowed->allows(self::TEST, self::event(RuntimeException::class, 160));
+        $allowed->allows(self::TEST, self::event(RuntimeException::class));
 
         static::assertSame([], $allowed->unused([]));
         static::assertSame(
-            [self::TEST.': RuntimeException via src/Encoder/ObjectEncoder.php:160 threw 1 of 2 times'],
+            [self::TEST.': RuntimeException via src/Encoder/ObjectEncoder.php -> Some\\Lens->get threw 1 of 2 times'],
             $allowed->unused([self::TEST => true]),
         );
     }
@@ -56,7 +56,7 @@ final class AllowedThrowsTest extends TestCase
             [
                 'test' => self::TEST,
                 'throw' => RuntimeException::class,
-                'via' => 'src/Encoder/ObjectEncoder.php:160',
+                'via' => 'src/Encoder/ObjectEncoder.php -> Some\\Lens->get',
                 'throws' => $throws,
                 'reason' => 'The fixture throws on purpose.',
             ],
@@ -66,13 +66,13 @@ final class AllowedThrowsTest extends TestCase
     /**
      * @param class-string<Throwable> $class
      */
-    private static function event(string $class, int $srcLine): ThrowEvent
+    private static function event(string $class, string $srcFunction = 'Some\\Lens->get'): ThrowEvent
     {
         $root = dirname(__DIR__, 4);
 
         return new ThrowEvent($class, 'message', $root.'/vendor/some/Thrower.php', 12, [
             new ThrowFrame('{main}', $root.'/vendor/bin/phpunit', 0),
-            new ThrowFrame('Some\\Lens->get', $root.'/src/Encoder/ObjectEncoder.php', $srcLine),
+            new ThrowFrame($srcFunction, $root.'/src/Encoder/ObjectEncoder.php', 160),
         ]);
     }
 }

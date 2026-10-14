@@ -121,6 +121,7 @@ final class ThrowAttributionExtension implements Extension
 
                 public function notify(ApplicationFinished $event): void
                 {
+                    // An extension cannot change PHPUnit's exit code, and this is the last event before PHPUnit exits.
                     if ($event->shellExitCode() === 0 && $this->attribution->failed()) {
                         exit(1);
                     }
