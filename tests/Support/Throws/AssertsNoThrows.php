@@ -33,7 +33,7 @@ trait AssertsNoThrows
         static::assertCount(
             0,
             $events,
-            sprintf("Expected no exceptions to be thrown, got %d:\n%s", count($events), implode("\n", $lines))
+            sprintf("Expected no exceptions to be thrown, got %d:\n%s", count($events), implode("\n", $lines)),
         );
     }
 }

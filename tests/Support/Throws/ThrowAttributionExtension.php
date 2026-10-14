@@ -21,6 +21,7 @@ use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
 use PHPUnit\TextUI\Configuration\Configuration;
+use RuntimeException;
 
 /**
  * Prints the intermediate throws of a suite run per site, see composer throws:report.
@@ -33,6 +34,10 @@ final class ThrowAttributionExtension implements Extension
 {
     public function bootstrap(Configuration $configuration, Facade $facade, ParameterCollection $parameters): void
     {
+        if (!ThrowCounter::isAvailable()) {
+            throw new RuntimeException('The throws report needs Xdebug with xdebug.mode=develop, run composer throws:report.');
+        }
+
         $attribution = new ThrowAttribution();
 
         $facade->registerSubscribers(

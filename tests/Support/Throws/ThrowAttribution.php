@@ -23,10 +23,13 @@ final class ThrowAttribution
     /** @var array<string, string>|null */
     private ?array $previousIni = null;
     private string $currentTest = '';
-    private bool $currentExpectsException = false;
+    private ?string $currentExclusion = null;
     private int $all = 0;
     private int $outsideSrc = 0;
-    private int $inTestsExpectingExceptions = 0;
+    /** @var array{expectException: int, catch: int} */
+    private array $excluded = ['expectException' => 0, 'catch' => 0];
+    /** @var array<string, list<string>> */
+    private array $fileLines = [];
     /** @var array<string, array{throws: int, tests: array<string, true>}> */
     private array $sites = [];
     /** @var array<string, true> */
@@ -37,7 +40,7 @@ final class ThrowAttribution
     public function testStarted(Test $test): void
     {
         $this->currentTest = $test->id();
-        $this->currentExpectsException = $test instanceof TestMethod && self::expectsException($test);
+        $this->currentExclusion = $test instanceof TestMethod ? $this->exclusion($test) : null;
         $this->previousIni ??= ThrowCounter::enable();
     }
 
@@ -45,8 +48,8 @@ final class ThrowAttribution
     {
         foreach (XdebugExceptionTraceParser::parse($output) as $event) {
             $this->all++;
-            if ($this->currentExpectsException) {
-                $this->inTestsExpectingExceptions++;
+            if ($this->currentExclusion !== null) {
+                $this->excluded[$this->currentExclusion]++;
                 continue;
             }
             if ($event->srcCaller() === null) {
@@ -88,13 +91,14 @@ final class ThrowAttribution
         $lines = [
             sprintf(
                 'Intermediate throws: %d in %d tests',
-                $this->all - $this->outsideSrc - $this->inTestsExpectingExceptions,
+                $this->all - $this->outsideSrc - $this->excluded['expectException'] - $this->excluded['catch'],
                 count($this->tests),
             ),
             sprintf(
-                'Not counted: %d outside src/, %d in tests that expect an exception (%d throws in total)',
+                'Not counted: %d outside src/, %d in tests using expectException(), %d in tests catching an exception themselves (%d throws in total)',
                 $this->outsideSrc,
-                $this->inTestsExpectingExceptions,
+                $this->excluded['expectException'],
+                $this->excluded['catch'],
                 $this->all,
             ),
         ];
@@ -112,23 +116,31 @@ final class ThrowAttribution
 
     /**
      * PHPUnit does not report expectException() as an event, so the test method body is checked instead.
-     * A test that catches one of the exceptions this package reports errors with counts as expecting one too.
+     * A test that catches one of the exceptions this package reports errors with is left out as well,
+     * and counted separately in the report so the effect of that heuristic stays visible.
+     *
+     * @return 'expectException'|'catch'|null
      */
-    private static function expectsException(TestMethod $test): bool
+    private function exclusion(TestMethod $test): ?string
     {
         $method = new ReflectionMethod($test->className(), $test->methodName());
         $file = $method->getFileName();
         $start = $method->getStartLine();
         $end = $method->getEndLine();
         if ($file === false || $start === false || $end === false) {
-            return false;
+            return null;
         }
 
-        $body = implode('', array_slice(file($file) ?: [], $start - 1, $end - $start + 1));
+        $this->fileLines[$file] ??= file($file) ?: [];
+        $body = implode('', array_slice($this->fileLines[$file], $start - 1, $end - $start + 1));
 
-        return preg_match(
-            '/\bexpectException\w*\s*\(|\bcatch\s*\(\s*\\\\?(?:[\w\\\\]*\\\\)?(?:EncodingException|RestrictionException|SoapFaultException|Throwable|Exception)(?![\w\\\\])/',
-            $body
-        ) === 1;
+        return match (true) {
+            preg_match('/\bexpectException\w*\s*\(/', $body) === 1 => 'expectException',
+            preg_match(
+                '/\bcatch\s*\(\s*\\\\?(?:[\w\\\\]*\\\\)?(?:EncodingException|RestrictionException|SoapFaultException|Throwable|Exception)(?![\w\\\\])/',
+                $body,
+            ) === 1 => 'catch',
+            default => null,
+        };
     }
 }

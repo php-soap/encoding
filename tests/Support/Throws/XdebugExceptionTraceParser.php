@@ -37,11 +37,14 @@ final class XdebugExceptionTraceParser
                     continue;
                 }
 
-                $events[] = new ThrowEvent($event['class'], $event['message'], $event['file'], $event['line'], $event['frames']);
+                $events[] = self::toEvent($event);
                 $event = null;
             }
 
-            if ($header !== null) {
+            $startsTrace = preg_match('/^([A-Za-z_\\\\][\w\\\\]*): /', $line, $match) === 1
+                && is_a($match[1], Throwable::class, true);
+
+            if ($header !== null && !$startsTrace) {
                 if ($line === 'Call Stack:') {
                     $event = self::parseHeader($header);
                     $header = null;
@@ -51,16 +54,24 @@ final class XdebugExceptionTraceParser
                 continue;
             }
 
-            if (preg_match('/^([A-Za-z_\\\\][\w\\\\]*): /', $line, $match) && is_a($match[1], Throwable::class, true)) {
+            if ($startsTrace) {
                 $header = $line;
             }
         }
 
         if ($event !== null) {
-            $events[] = new ThrowEvent($event['class'], $event['message'], $event['file'], $event['line'], $event['frames']);
+            $events[] = self::toEvent($event);
         }
 
         return $events;
+    }
+
+    /**
+     * @param array{class: class-string<Throwable>, message: string, file: string, line: int, frames: list<ThrowFrame>} $event
+     */
+    private static function toEvent(array $event): ThrowEvent
+    {
+        return new ThrowEvent($event['class'], $event['message'], $event['file'], $event['line'], $event['frames']);
     }
 
     /**
