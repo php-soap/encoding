@@ -141,6 +141,15 @@ final class IntermediateThrowScenariosTest extends TestCase
             ),
         ];
 
+        yield 'encode object of a class that does not declare the properties' => [
+            'operation' => static fn (): string => $literal->encode('test', [new class {
+                public int $id = 1;
+            }])->getRequest(),
+            'expected' => self::literalRequest(
+                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
+            ),
+        ];
+
         yield 'encode uninitialised typed properties' => [
             'operation' => static function () use ($typed): string {
                 $item = new Item();
