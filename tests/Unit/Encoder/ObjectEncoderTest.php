@@ -212,6 +212,50 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         static::assertEquals($expected, $actual);
     }
 
+    public function test_it_decodes_absent_elements_as_null(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes());
+
+        $actual = $encoder->iso($context)->from(Element::fromString('<user><hat /></user>'));
+
+        static::assertEquals(
+            (object)[
+                'active' => null,
+                'hat' => (object)[
+                    'color' => null,
+                ],
+            ],
+            $actual
+        );
+    }
+
+    public function test_it_decodes_absent_attributes_as_null(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true));
+
+        $actual = $encoder->iso($context)->from(Element::fromString('<user />'));
+
+        static::assertEquals(
+            (object)[
+                'active' => null,
+                'hat' => null,
+            ],
+            $actual
+        );
+    }
+
     public function test_it_can_encode_from_array(): void
     {
         $encoder = new ObjectEncoder(stdClass::class);
