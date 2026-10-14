@@ -20,6 +20,12 @@
             "email": "toonverwerft@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/veewee/reflecta"
+        }
+    ],
     "require": {
         "php": "~8.4.0 || ~8.5.0",
         "php-standard-library/collection": "^6.1",
@@ -34,7 +40,7 @@
         "php-standard-library/str": "^6.1",
         "php-standard-library/type": "^6.1",
         "php-standard-library/vec": "^6.1",
-        "veewee/reflecta": "^1.0.0",
+        "veewee/reflecta": "dev-feature/optional-lenses as 1.1.0",
         "veewee/xml": "^4.10",
         "php-soap/engine": "^2.20",
         "php-soap/wsdl": "^1.19",
