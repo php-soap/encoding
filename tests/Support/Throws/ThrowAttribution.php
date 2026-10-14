@@ -6,6 +6,7 @@ namespace Soap\Encoding\Test\Support\Throws;
 use PHPUnit\Event\Code\Test;
 use PHPUnit\Event\Code\TestMethod;
 use ReflectionMethod;
+use function array_keys;
 use function array_slice;
 use function count;
 use function file;
@@ -16,16 +17,20 @@ use function uasort;
 
 /**
  * Attributes the throws of a suite run to their sites, keeping only the intermediate ones:
- * thrown while the stack passes through src/, in a test that does not expect an exception.
+ * thrown while the stack passes through src/, in a test that does not expect an exception
+ * and not listed as deliberate in allowed-throws.php.
  */
 final class ThrowAttribution
 {
+    private const SHOWN_TESTS_PER_SITE = 3;
+
     /** @var array<string, string>|null */
     private ?array $previousIni = null;
     private string $currentTest = '';
     private ?string $currentExclusion = null;
     private int $all = 0;
     private int $outsideSrc = 0;
+    private int $intermediate = 0;
     /** @var array{expectException: int, catch: int} */
     private array $excluded = ['expectException' => 0, 'catch' => 0];
     /** @var array<string, list<string>> */
@@ -36,10 +41,18 @@ final class ThrowAttribution
     private array $tests = [];
     /** @var array<string, true> */
     private array $unsuccessfulTests = [];
+    /** @var array<string, true> */
+    private array $ranTests = [];
+
+    public function __construct(
+        private readonly AllowedThrows $allowedThrows,
+    ) {
+    }
 
     public function testStarted(Test $test): void
     {
         $this->currentTest = $test->id();
+        $this->ranTests[$this->currentTest] = true;
         $this->currentExclusion = $test instanceof TestMethod ? $this->exclusion($test) : null;
         $this->previousIni ??= ThrowCounter::enable();
     }
@@ -56,7 +69,11 @@ final class ThrowAttribution
                 $this->outsideSrc++;
                 continue;
             }
+            if ($this->allowedThrows->allows($this->currentTest, $event)) {
+                continue;
+            }
 
+            $this->intermediate++;
             $site = $event->describe();
             $this->sites[$site] ??= ['throws' => 0, 'tests' => []];
             $this->sites[$site]['throws']++;
@@ -83,32 +100,50 @@ final class ThrowAttribution
         }
     }
 
+    /**
+     * True when the run has intermediate throws, allowlist entries that no longer throw as listed,
+     * or failed tests, whose throws cannot be trusted.
+     */
+    public function failed(): bool
+    {
+        return $this->intermediate > 0
+            || $this->allowedThrows->unused($this->ranTests) !== []
+            || $this->unsuccessfulTests !== [];
+    }
+
     public function render(): string
     {
         $sites = $this->sites;
         uasort($sites, static fn (array $a, array $b): int => $b['throws'] <=> $a['throws']);
 
         $lines = [
+            sprintf('Intermediate throws: %d in %d tests', $this->intermediate, count($this->tests)),
             sprintf(
-                'Intermediate throws: %d in %d tests',
-                $this->all - $this->outsideSrc - $this->excluded['expectException'] - $this->excluded['catch'],
-                count($this->tests),
-            ),
-            sprintf(
-                'Not counted: %d outside src/, %d in tests using expectException(), %d in tests catching an exception themselves (%d throws in total)',
+                'Not counted: %d outside src/, %d in tests using expectException(), %d in tests catching an exception themselves, %d allowed in tests/Support/Throws/allowed-throws.php (%d throws in total)',
                 $this->outsideSrc,
                 $this->excluded['expectException'],
                 $this->excluded['catch'],
+                $this->allowedThrows->allowed(),
                 $this->all,
             ),
         ];
         if ($this->unsuccessfulTests !== []) {
             $lines[] = sprintf('Warning: %d tests failed or errored, run composer test to see them', count($this->unsuccessfulTests));
         }
+        foreach ($this->allowedThrows->unused($this->ranTests) as $unused) {
+            $lines[] = 'Allowed throw no longer thrown as listed, update allowed-throws.php: '.$unused;
+        }
         $lines[] = '';
         $lines[] = sprintf('%7s %6s  %s', 'throws', 'tests', 'site');
         foreach ($sites as $site => $count) {
             $lines[] = sprintf('%7d %6d  %s', $count['throws'], count($count['tests']), $site);
+            $tests = array_keys($count['tests']);
+            foreach (array_slice($tests, 0, self::SHOWN_TESTS_PER_SITE) as $test) {
+                $lines[] = sprintf('%15s  %s', '', $test);
+            }
+            if (count($tests) > self::SHOWN_TESTS_PER_SITE) {
+                $lines[] = sprintf('%15s  and %d more', '', count($tests) - self::SHOWN_TESTS_PER_SITE);
+            }
         }
 
         return implode("\n", $lines)."\n";

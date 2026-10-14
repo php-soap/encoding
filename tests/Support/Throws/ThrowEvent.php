@@ -40,9 +40,30 @@ final class ThrowEvent
             return $this->site();
         }
 
+        $frame = $this->srcFrame();
+
+        return $frame !== null ? self::relative($frame->file).':'.$frame->line.' -> '.$frame->function : null;
+    }
+
+    /**
+     * The innermost file and line in src/ that led to this throw, without the function it called.
+     */
+    public function srcSite(): ?string
+    {
+        if (self::isSrc($this->file)) {
+            return $this->site();
+        }
+
+        $frame = $this->srcFrame();
+
+        return $frame !== null ? self::relative($frame->file).':'.$frame->line : null;
+    }
+
+    private function srcFrame(): ?ThrowFrame
+    {
         foreach (array_reverse($this->frames) as $frame) {
             if (self::isSrc($frame->file)) {
-                return self::relative($frame->file).':'.$frame->line.' -> '.$frame->function;
+                return $frame;
             }
         }
 
