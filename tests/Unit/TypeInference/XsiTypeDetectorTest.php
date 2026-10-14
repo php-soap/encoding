@@ -7,14 +7,25 @@ use Dom\Element;
 use Dom\XMLDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Test\Unit\ContextCreatorTrait;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
+use Soap\Encoding\Xml\Node\Element as XmlElement;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 
 #[CoversClass(XsiTypeDetector::class)]
 final class XsiTypeDetectorTest extends TestCase
 {
     use ContextCreatorTrait;
+
+    private const ITEM_TYPE_SCHEMA = <<<EOXML
+        <complexType name="itemType">
+            <sequence>
+                <element name="id" type="xsd:int"/>
+            </sequence>
+        </complexType>
+        EOXML;
 
     public function test_it_returns_none_when_no_xsi_type_attribute(): void
     {
@@ -135,6 +146,58 @@ final class XsiTypeDetectorTest extends TestCase
         $result = XsiTypeDetector::detectXsdTypeFromXmlElement($context, $element);
 
         static::assertFalse($result->isSome());
+    }
+
+    public function test_it_decodes_a_complex_xsi_type_inside_an_any_type_slot(): void
+    {
+        $metadata = self::createMetadataFromWsdl(self::ITEM_TYPE_SCHEMA, 'type="tns:itemType"');
+        $context = self::createContextFromMetadata($metadata, 'itemType')
+            ->withType(XsdType::any()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true)));
+
+        $result = $this->decodeWithDetectedEncoder(
+            $context,
+            '<item xmlns:tns="https://test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="tns:itemType"><id>1</id></item>'
+        );
+
+        static::assertEquals((object) ['id' => 1], $result);
+    }
+
+    public function test_it_decodes_a_soap_enc_array_xsi_type_inside_an_any_type_slot(): void
+    {
+        $metadata = self::createMetadataFromWsdl(self::ITEM_TYPE_SCHEMA, 'type="tns:itemType"');
+        $context = self::createContextFromMetadata($metadata, 'itemType')
+            ->withType(XsdType::any()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true)));
+
+        $result = $this->decodeWithDetectedEncoder(
+            $context,
+            '<item xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"'
+            . ' xsi:type="SOAP-ENC:Array" SOAP-ENC:arrayType="xsd:int[2]"><item xsi:type="xsd:int">1</item><item xsi:type="xsd:int">2</item></item>'
+        );
+
+        static::assertSame([1, 2], $result);
+    }
+
+    public function test_it_decodes_a_simple_xsi_type_inside_a_complex_slot(): void
+    {
+        $metadata = self::createMetadataFromWsdl(self::ITEM_TYPE_SCHEMA, 'type="tns:itemType"');
+        $context = self::createContextFromMetadata($metadata, 'itemType');
+
+        $result = $this->decodeWithDetectedEncoder(
+            $context,
+            '<item xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">abc</item>'
+        );
+
+        static::assertSame('abc', $result);
+    }
+
+    private function decodeWithDetectedEncoder(Context $context, string $xml): mixed
+    {
+        $element = $this->createElement($xml);
+
+        return XsiTypeDetector::detectEncoderFromXmlElement($context, $element)
+            ->unwrap()
+            ->iso($context)
+            ->from(XmlElement::fromDOMElement($element));
     }
 
     private function createElement(string $xml): Element
