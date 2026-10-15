@@ -16,8 +16,9 @@ use function is_string;
 /**
  * @template T of mixed
  * @implements XmlEncoder<T, T, string, ElementList|Element|string>
+ * @implements Feature\DecoratingEncoder<T, T, string|null, ElementList|Element|string|null>
  */
-final class OptionalElementEncoder implements Feature\ElementAware, Feature\OptionalAware, XmlEncoder
+final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, Feature\OptionalAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<T, T, string|null, ElementList|Element|string|null> $elementEncoder
@@ -25,6 +26,14 @@ final class OptionalElementEncoder implements Feature\ElementAware, Feature\Opti
     public function __construct(
         private readonly XmlEncoder $elementEncoder
     ) {
+    }
+
+    /**
+     * @return XmlEncoder<T, T, string|null, ElementList|Element|string|null>
+     */
+    public function decoratedEncoder(): XmlEncoder
+    {
+        return $this->elementEncoder;
     }
 
     /**
