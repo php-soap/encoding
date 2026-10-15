@@ -211,13 +211,6 @@ for ($i = 0; $i < $N; $i++) {
 }
 printf("ElementLookup::fromElement:           %6.1fus/call\n", (hrtime(true) - $t0) / 1e3 / $N);
 
-// Step 4b: DocumentToLookupArrayReader, the legacy array on top of ElementLookup
-$t0 = hrtime(true);
-for ($i = 0; $i < $N; $i++) {
-    (new \Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader())($partElement);
-}
-printf("DocumentToLookupArrayReader:          %6.1fus/call\n", (hrtime(true) - $t0) / 1e3 / $N);
-
 // Step 5: object_data from (properties_set)
 $objectDataIso = \VeeWee\Reflecta\Iso\object_data(\stdClass::class);
 $propData = ['id' => 42, 'name' => 'Widget', 'description' => 'A widget', 'price' => 29.99, 'quantity' => 100, 'active' => true, 'sku' => 'WDG-001', 'category' => 'Electronics', 'address' => null];

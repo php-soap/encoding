@@ -3,26 +3,18 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Xml\Node;
 
-use Dom\Attr;
 use Dom\Element as DomElement;
 use Dom\Node;
-use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use VeeWee\Xml\Xmlns\Xmlns;
-use function array_key_exists;
 use function VeeWee\Xml\Dom\Predicate\is_element;
 
 /**
  * Read model of one XML element that is being decoded:
  * child elements by local name, attributes by namespace and local name, and the text content.
  * Attributes and child elements never stand in for each other.
- *
- * @psalm-import-type LookupArray from DocumentToLookupArrayReader
  */
 final readonly class ElementLookup
 {
-    private const SOAP_ENC_11 = 'http://schemas.xmlsoap.org/soap/encoding/';
-    private const SOAP_ENC_12 = 'http://www.w3.org/2003/05/soap-encoding';
-
     /**
      * @param array<string, Element|ElementList> $children Keyed by local name, in document order.
      */
@@ -95,44 +87,5 @@ final readonly class ElementLookup
         }
 
         return $this->root->textContent ?? '';
-    }
-
-    /**
-     * The element as one flat array, the shape that DocumentToLookupArrayReader returns:
-     * child elements by local name, the text under '_', and every other attribute by local name.
-     * A child element wins from an attribute with the same local name.
-     * Namespace declarations and xsi or soap-enc attributes are left out.
-     *
-     * @return LookupArray
-     */
-    public function toArray(): array
-    {
-        $nodes = $this->children;
-
-        $text = $this->text();
-        if ($text !== null) {
-            $nodes['_'] = $text;
-        }
-
-        /** @var iterable<Attr> $attributes */
-        $attributes = $this->root->attributes;
-        foreach ($attributes as $attribute) {
-            $key = $attribute->localName;
-            if (array_key_exists($key, $nodes) || self::isProtocolNamespace($attribute->namespaceURI)) {
-                continue;
-            }
-
-            $nodes[$key] = $attribute->value;
-        }
-
-        return $nodes;
-    }
-
-    private static function isProtocolNamespace(?string $namespace): bool
-    {
-        return match ($namespace) {
-            Xmlns::xmlns()->value(), Xmlns::xsi()->value(), self::SOAP_ENC_11, self::SOAP_ENC_12 => true,
-            default => false,
-        };
     }
 }

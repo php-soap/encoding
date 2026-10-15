@@ -136,55 +136,6 @@ final class ElementLookupTest extends TestCase
         static::assertSame('Record', $lookup->attribute('type', self::XSI));
     }
 
-    #[Test]
-    public function it_keeps_nonconflicting_attributes_in_the_array(): void
-    {
-        $lookup = self::lookup('<item label="text"/>');
-
-        static::assertSame('text', $lookup->toArray()['label']);
-        static::assertSame('text', $lookup->attribute('label'));
-    }
-
-    #[Test]
-    public function it_builds_the_legacy_array(): void
-    {
-        $lookup = self::lookup(
-            '<item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:enc="http://schemas.xmlsoap.org/soap/encoding/"'
-            . ' xmlns:enc12="http://www.w3.org/2003/05/soap-encoding" xmlns:a="urn:a"'
-            . ' xsi:type="T" enc:arrayType="x[1]" enc12:itemType="x" type="attr" label="l" a:code="c" a:label="other">'
-            . '<type>child</type><b>1</b><b>2</b>'
-            . '</item>'
-        );
-
-        $array = $lookup->toArray();
-
-        static::assertSame(['type', 'b', 'label', 'code'], array_keys($array));
-        static::assertSame($lookup->element('type'), $array['type']);
-        static::assertSame($lookup->element('b'), $array['b']);
-        static::assertSame('l', $array['label']);
-        static::assertSame('c', $array['code']);
-    }
-
-    /**
-     * @return iterable<string, array{string, array<string, string>}>
-     */
-    public static function legacy_text_cases(): iterable
-    {
-        yield 'text and attribute' => ['<item label="l">hello</item>', ['_' => 'hello', 'label' => 'l']];
-        yield 'empty element' => ['<item/>', ['_' => '']];
-        yield 'nil' => ['<item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>', []];
-    }
-
-    /**
-     * @param array<string, string> $expected
-     */
-    #[Test]
-    #[DataProvider('legacy_text_cases')]
-    public function it_puts_text_under_underscore_in_the_legacy_array(string $xml, array $expected): void
-    {
-        static::assertSame($expected, self::lookup($xml)->toArray());
-    }
-
     /**
      * @param non-empty-string $xml
      */
