@@ -30,6 +30,12 @@ final class ObjectEncoderNullElementTest extends TestCase
         </sequence>
         <attribute name="attribute" type="xsd:string"/>
     </complexType>
+    <complexType name="parentType">
+        <sequence>
+            <element name="child" type="tns:optionalType"/>
+            <element name="last" type="xsd:string" minOccurs="0"/>
+        </sequence>
+    </complexType>
     <complexType name="mixedType">
         <sequence>
             <element name="optional" type="xsd:string" minOccurs="0"/>
@@ -57,23 +63,45 @@ final class ObjectEncoderNullElementTest extends TestCase
     </complexType>
     XML;
 
-    /** @return iterable<string, array{string, array<string, mixed>, string}> */
+    /** @return iterable<string, array{string, object, string}> */
     public static function encoded_values(): iterable
     {
-        yield 'all optional elements null' => ['optionalType', [], '<optionalType></optionalType>'];
+        $optional = static fn (array $data): object => (object) [...['attribute' => null, 'first' => null, 'second' => null], ...$data];
+
+        yield 'all optional elements null' => ['optionalType', $optional([]), '<optionalType></optionalType>'];
+        yield 'all optional elements absent' => ['optionalType', (object) [], '<optionalType></optionalType>'];
         yield 'attribute and all optional elements null' => [
             'optionalType',
-            ['attribute' => 'a'],
+            $optional(['attribute' => 'a']),
             '<optionalType attribute="a"></optionalType>',
         ];
-        yield 'one optional element null' => [
+        yield 'first optional element null' => [
             'optionalType',
-            ['second' => 's'],
+            $optional(['second' => 's']),
             '<optionalType><second>s</second></optionalType>',
+        ];
+        yield 'last optional element null' => [
+            'optionalType',
+            $optional(['first' => 'f']),
+            '<optionalType><first>f</first></optionalType>',
+        ];
+        yield 'nested object with all optional elements null' => [
+            'parentType',
+            (object) ['child' => $optional([]), 'last' => null],
+            '<parentType><child></child></parentType>',
         ];
         yield 'mixed null elements' => [
             'mixedType',
-            ['required' => 'r'],
+            (object) [
+                'attribute' => null,
+                'optional' => null,
+                'optionalList' => null,
+                'optionalNillable' => null,
+                'requiredNillable' => null,
+                'required' => 'r',
+                'custom' => null,
+                'nullWriting' => null,
+            ],
             '<mixedType><optionalNillable xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'
                 . '<requiredNillable xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'
                 . '<required>r</required><custom>none</custom></mixedType>',
@@ -84,12 +112,9 @@ final class ObjectEncoderNullElementTest extends TestCase
      * An empty element keeps its separate end tag when its null optional elements write nothing.
      */
     #[Test, DataProvider('encoded_values')]
-    public function null_optional_elements_encode_byte_for_byte(string $typeName, array $data, string $expected): void
+    public function null_optional_elements_encode_byte_for_byte(string $typeName, object $data, string $expected): void
     {
-        $actual = (new ObjectEncoder(stdClass::class))->iso(self::context($typeName))->to((object) [
-            ...array_fill_keys(array_keys(ObjectAccess::forContext(self::context($typeName))->properties), null),
-            ...$data,
-        ]);
+        $actual = (new ObjectEncoder(stdClass::class))->iso(self::context($typeName))->to($data);
 
         static::assertSame($expected, $actual);
     }
