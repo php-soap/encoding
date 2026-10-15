@@ -5,7 +5,7 @@ namespace Soap\Encoding\Encoder;
 
 use Exception;
 use Soap\Encoding\Xml\Node\Element;
-use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
@@ -121,7 +121,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function from(Context $context, ObjectAccess $objectAccess, Element $data): object
     {
-        $nodes = (new DocumentToLookupArrayReader())($data);
+        $lookup = ElementLookup::fromElement($data);
         /** @var Iso<TObj, TObj, array<string, mixed>, array<string, mixed>> $objectData */
         $objectData = object_data($this->className);
 
@@ -130,7 +130,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
             /** @var string|null $value */
             $value = self::runLens(
                 $objectAccess->decoderLenses[$normalizePropertyName],
-                $nodes,
+                $lookup,
             );
 
             /**
