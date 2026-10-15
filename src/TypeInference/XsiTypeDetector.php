@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\TypeInference;
 
+use Closure;
 use Dom\Element;
 use Psl\Option\Option;
 use Soap\Encoding\Cache\ScopedCache;
@@ -20,6 +21,7 @@ use function is_bool;
 use function is_float;
 use function is_int;
 use function is_string;
+use function Psl\Option\from_nullable;
 use function Psl\Option\none;
 use function Psl\Option\some;
 use function sprintf;
@@ -76,17 +78,32 @@ final class XsiTypeDetector
      */
     public static function detectEncoderFromXmlElement(Context $context, Element $element): Option
     {
-        $qname = self::detectQNameFromXmlElement($context, $element);
-        if ($qname === null) {
-            return none();
-        }
+        return from_nullable(self::encoderDetectorForContext($context)($element));
+    }
 
-        [$namespaceUri, $localName] = $qname;
+    /**
+     * The slot part of the cache key only depends on the context,
+     * so an iso can resolve it once and reuse the detector for every element it decodes.
+     *
+     * @internal
+     *
+     * @return Closure(Element): (FixedIsoEncoder<mixed, mixed, string|null, XmlElement|ElementList|string|null>|null)
+     */
+    public static function encoderDetectorForContext(Context $context): Closure
+    {
+        $slotKey = self::slotKey($context->type->getMeta());
 
-        return some(
-            self::cache()->lookup(
+        return static function (Element $element) use ($context, $slotKey): ?FixedIsoEncoder {
+            $qname = self::detectQNameFromXmlElement($context, $element);
+            if ($qname === null) {
+                return null;
+            }
+
+            [$namespaceUri, $localName] = $qname;
+
+            return self::cache()->lookup(
                 $context->registry,
-                self::cacheKey($namespaceUri, $localName, $context->type->getMeta()),
+                $namespaceUri . '|' . $localName . '|' . $slotKey,
                 static function () use ($context, $namespaceUri, $localName): FixedIsoEncoder {
                     $type = self::withResolvedSimpleness($context, self::createXsdType($context, $namespaceUri, $localName));
                     $normalizedMeta = $type->getMeta()
@@ -102,8 +119,8 @@ final class XsiTypeDetector
                         )
                     );
                 }
-            )
-        );
+            );
+        };
     }
 
     /**
@@ -144,10 +161,9 @@ final class XsiTypeDetector
             ->withXmlNamespace($namespaceUri);
     }
 
-    private static function cacheKey(string $namespaceUri, string $localName, TypeMeta $meta): string
+    private static function slotKey(TypeMeta $meta): string
     {
-        return $namespaceUri . '|' . $localName
-            . '|' . ($meta->isElement()->unwrapOr(false) ? 'e' : '')
+        return ($meta->isElement()->unwrapOr(false) ? 'e' : '')
             . ($meta->isAttribute()->unwrapOr(false) ? 'a' : '')
             . ($meta->isNullable()->unwrapOr(false) ? 'n' : '')
             . ($meta->isList()->unwrapOr(false) ? 'l' : '')
