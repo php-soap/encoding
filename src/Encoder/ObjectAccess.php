@@ -26,13 +26,17 @@ final class ObjectAccess
      * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses
      * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos
+     * @param array<string, bool> $isAttribute
+     * @param array<string, list<never>|null> $decodeDefaults
      */
     public function __construct(
         public readonly array $properties,
         public readonly array $encoderLenses,
         public readonly array $decoderLenses,
         public readonly array $isos,
-        public readonly bool  $isAnyPropertyQualified
+        public readonly bool  $isAnyPropertyQualified,
+        public readonly array $isAttribute,
+        public readonly array $decodeDefaults,
     ) {
     }
 
@@ -76,6 +80,8 @@ final class ObjectAccess
         $encoderLenses = [];
         $decoderLenses = [];
         $isos = [];
+        $isAttribute = [];
+        $decodeDefaults = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -94,6 +100,8 @@ final class ObjectAccess
             $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
                 ?? optional_index($name);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
+            $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
+            $decodeDefaults[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -103,7 +111,9 @@ final class ObjectAccess
             $encoderLenses,
             $decoderLenses,
             $isos,
-            $isAnyPropertyQualified
+            $isAnyPropertyQualified,
+            $isAttribute,
+            $decodeDefaults,
         );
     }
 

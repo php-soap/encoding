@@ -256,6 +256,53 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         );
     }
 
+    public function test_it_decodes_absent_list_elements_as_empty_array(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->from(Element::fromString('<user active="true" />'));
+
+        static::assertEquals(
+            (object)[
+                'active' => true,
+                'hat' => [],
+            ],
+            $actual
+        );
+    }
+
+    public function test_it_decodes_mixed_attributes_and_list_elements(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->from(
+            Element::fromString('<user active="false"><hat><color>green</color></hat><hat><color>red</color></hat></user>')
+        );
+
+        static::assertEquals(
+            (object)[
+                'active' => false,
+                'hat' => [
+                    (object)['color' => 'green'],
+                    (object)['color' => 'red'],
+                ],
+            ],
+            $actual
+        );
+    }
+
     public function test_it_can_encode_from_array(): void
     {
         $encoder = new ObjectEncoder(stdClass::class);
@@ -280,6 +327,7 @@ final class ObjectEncoderTest extends AbstractEncoderTests
 
     public static function buildTypes(
         bool $activeAsAttribute = false,
+        bool $hatAsList = false,
     ): TypeCollection {
         return new TypeCollection(
             new Type(
@@ -321,6 +369,8 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                                 static fn (TypeMeta $meta): TypeMeta => $meta
                                     ->withIsQualified(true)
                                     ->withIsElement(true)
+                                    ->withIsList($hatAsList)
+                                    ->withIsRepeatingElement($hatAsList)
                             )
                     )
                 )

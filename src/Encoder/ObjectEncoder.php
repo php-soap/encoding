@@ -128,29 +128,25 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         /** @var Iso<TObj, TObj, array<string, mixed>, array<string, mixed>> $objectData */
         $objectData = object_data($this->className);
 
-        return $objectData->from(
-            map_with_key(
-                $objectAccess->properties,
-                static function (string $normalizePropertyName, Property $property) use ($objectAccess, $nodes): mixed {
-                    $type = $property->getType();
-                    $meta = $type->getMeta();
+        $result = [];
+        foreach ($objectAccess->isos as $normalizePropertyName => $iso) {
+            /** @var string|null $value */
+            $value = self::runLens(
+                $objectAccess->decoderLenses[$normalizePropertyName],
+                $nodes,
+            );
 
-                    /** @var string|null $value */
-                    $value = self::runLens(
-                        $objectAccess->decoderLenses[$normalizePropertyName],
-                        $nodes,
-                    );
-                    $iso = $objectAccess->isos[$normalizePropertyName];
-                    $defaultValue = $meta->isList()->unwrapOr(false) ? [] : null;
+            /**
+             * @var mixed
+             * @psalm-suppress PossiblyNullArgument
+             */
+            $result[$normalizePropertyName] = match(true) {
+                $objectAccess->isAttribute[$normalizePropertyName] => $iso->from($value),
+                default => $value !== null ? $iso->from($value) : $objectAccess->decodeDefaults[$normalizePropertyName],
+            };
+        }
 
-                    /** @psalm-suppress PossiblyNullArgument */
-                    return match(true) {
-                        $meta->isAttribute()->unwrapOr(false) => $iso->from($value),
-                        default => $value !== null ? $iso->from($value) : $defaultValue,
-                    };
-                },
-            )
-        );
+        return $objectData->from($result);
     }
 
     private static function runLens(LensInterface $lens, mixed $data, mixed $default = null): mixed
