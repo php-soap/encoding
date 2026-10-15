@@ -4,9 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Xml\Node;
 
 use Dom\Element as DomElement;
-use Dom\Node;
 use VeeWee\Xml\Xmlns\Xmlns;
-use function VeeWee\Xml\Dom\Predicate\is_element;
 
 /**
  * Read model of one XML element that is being decoded:
@@ -29,13 +27,7 @@ final readonly class ElementLookup
         $root = $xml->element();
         $children = [];
 
-        /** @var iterable<Node> $childNodes */
-        $childNodes = $root->childNodes;
-        foreach ($childNodes as $node) {
-            if (!is_element($node)) {
-                continue;
-            }
-
+        for ($node = $root->firstElementChild; $node !== null; $node = $node->nextElementSibling) {
             $key = $node->localName;
             $previous = $children[$key] ?? null;
             $current = Element::fromDOMElement($node);
