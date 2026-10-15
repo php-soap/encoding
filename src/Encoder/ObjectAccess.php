@@ -22,13 +22,17 @@ use function VeeWee\Reflecta\Lens\optional_property;
 final class ObjectAccess
 {
     /**
-     * @param array<string, Property> $properties
-     * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses
-     * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses
-     * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos
-     * @param array<string, bool> $isAttribute
-     * @param array<string, list<never>|null> $decodeDefaults
-     * @param array<string, bool> $omitWhenAbsent true when encoding leaves the element out for an absent property instead of writing xsi:nil
+     * Everything the object encoder needs per property of one type, worked out once and cached per type.
+     * Every array is keyed by the normalized PHP property name.
+     *
+     * @param array<string, Property> $properties The metadata properties, attributes first.
+     * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses Reads the property value from the PHP object on encode.
+     * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the lookup array of the element on decode.
+     * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
+     * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
+     * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
+     * @param array<string, list<never>|null> $decodeDefaultValues The value a property decodes to when its element is missing from the XML.
+     * @param array<string, bool> $omitWhenAbsent Whether encoding leaves the element out, instead of writing xsi:nil, when the property is absent from the PHP value.
      */
     public function __construct(
         public readonly array $properties,
@@ -37,7 +41,7 @@ final class ObjectAccess
         public readonly array $isos,
         public readonly bool  $isAnyPropertyQualified,
         public readonly array $isAttribute,
-        public readonly array $decodeDefaults,
+        public readonly array $decodeDefaultValues,
         public readonly array $omitWhenAbsent,
     ) {
     }
@@ -83,7 +87,7 @@ final class ObjectAccess
         $decoderLenses = [];
         $isos = [];
         $isAttribute = [];
-        $decodeDefaults = [];
+        $decodeDefaultValues = [];
         $omitWhenAbsent = [];
         $isAnyPropertyQualified = false;
 
@@ -104,7 +108,7 @@ final class ObjectAccess
                 ?? optional_index($name);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
-            $decodeDefaults[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
+            $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
             $omitWhenAbsent[$normalizedName] = $customEncoderLens === null && self::mayBeAbsent($name, $propertyTypeMeta);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
@@ -117,7 +121,7 @@ final class ObjectAccess
             $isos,
             $isAnyPropertyQualified,
             $isAttribute,
-            $decodeDefaults,
+            $decodeDefaultValues,
             $omitWhenAbsent,
         );
     }
