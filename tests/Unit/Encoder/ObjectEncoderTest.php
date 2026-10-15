@@ -303,6 +303,48 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         );
     }
 
+    public function test_it_skips_null_attributes_on_encode(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true));
+
+        $actual = $encoder->iso($context)->to((object)[
+            'active' => null,
+            'hat' => (object)['color' => 'green'],
+        ]);
+
+        static::assertSame('<user><hat><color>green</color></hat></user>', $actual);
+    }
+
+    public function test_it_encodes_mixed_attributes_and_list_elements(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->to((object)[
+            'active' => true,
+            'hat' => [
+                (object)['color' => 'green'],
+                (object)['color' => 'red'],
+            ],
+        ]);
+
+        static::assertSame(
+            '<user active="true"><hat><color>green</color></hat><hat><color>red</color></hat></user>',
+            $actual
+        );
+    }
+
     public function test_it_can_encode_from_array(): void
     {
         $encoder = new ObjectEncoder(stdClass::class);
