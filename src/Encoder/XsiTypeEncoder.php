@@ -63,8 +63,10 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function from(Context $context, IsoInterface $innerIso, Element $value): mixed
     {
+        // xsi:type is an attribute on the element itself, so an element without attributes cannot carry one.
         $iso = match (true) {
             $this->encoder instanceof Feature\DisregardXsiInformation => $innerIso,
+            !$value->element()->hasAttributes() => $innerIso,
             default => XsiTypeDetector::detectEncoderFromXmlElement($context, $value->element())
                 ->map(static fn (XmlEncoder $encoder): IsoInterface => $encoder->iso($context))
                 ->unwrapOr($innerIso),
