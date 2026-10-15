@@ -27,7 +27,7 @@ final class ObjectAccess
      * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos
      * @param array<string, bool> $isAttribute
-     * @param array<string, list<never>|null> $decodeDefaults
+     * @param array<string, list<never>|null> $decodeDefaultValues
      */
     public function __construct(
         public readonly array $properties,
@@ -36,7 +36,7 @@ final class ObjectAccess
         public readonly array $isos,
         public readonly bool  $isAnyPropertyQualified,
         public readonly array $isAttribute,
-        public readonly array $decodeDefaults,
+        public readonly array $decodeDefaultValues,
     ) {
     }
 
@@ -81,7 +81,7 @@ final class ObjectAccess
         $decoderLenses = [];
         $isos = [];
         $isAttribute = [];
-        $decodeDefaults = [];
+        $decodeDefaultValues = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -101,7 +101,7 @@ final class ObjectAccess
                 ?? optional_index($name);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
-            $decodeDefaults[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
+            $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -113,7 +113,7 @@ final class ObjectAccess
             $isos,
             $isAnyPropertyQualified,
             $isAttribute,
-            $decodeDefaults,
+            $decodeDefaultValues,
         );
     }
 
