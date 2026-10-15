@@ -22,7 +22,6 @@ use function is_int;
 use function is_string;
 use function Psl\Option\none;
 use function Psl\Option\some;
-use function Psl\Result\try_catch;
 use function sprintf;
 
 final class XsiTypeDetector
@@ -157,15 +156,12 @@ final class XsiTypeDetector
         $isSimple = match (true) {
             $registry->hasRegisteredComplexTypeForXsdType($type) => false,
             $registry->hasRegisteredSimpleTypeForXsdType($type) => true,
-            default => try_catch(
-                static fn (): bool => $context->metadata->getTypes()
-                    ->fetchByNameAndXmlNamespace($type->getXmlTypeName(), $type->getXmlNamespace())
-                    ->getXsdType()
-                    ->getMeta()
-                    ->isSimple()
-                    ->unwrapOr(false),
-                static fn (): ?bool => null,
-            ),
+            default => $context->metadata->getTypes()
+                ->findByNameAndXmlNamespace($type->getXmlTypeName(), $type->getXmlNamespace())
+                ?->getXsdType()
+                ->getMeta()
+                ->isSimple()
+                ->unwrapOr(false),
         };
 
         return match ($isSimple) {
