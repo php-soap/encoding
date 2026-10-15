@@ -1,0 +1,39 @@
+name: Throws
+
+on: [push, pull_request]
+jobs:
+    run:
+        runs-on: ${{ matrix.operating-system }}
+        strategy:
+            matrix:
+                operating-system: [ubuntu-latest]
+                php-versions: [ '8.4' ]
+            fail-fast: false
+        name: Intermediate throws on PHP ${{ matrix.php-versions }} @ ${{ matrix.operating-system }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@master
+            - name: Install PHP
+              uses: shivammathur/setup-php@master
+              with:
+                  php-version: ${{ matrix.php-versions }}
+                  tools: 'composer:v2'
+                  extensions: mbstring, posix, dom, soap
+                  coverage: xdebug
+            - name: Install dependencies
+              run: composer update --prefer-dist --no-progress --no-suggest
+            - name: Run the throw counting tests
+              run: composer test:throws
+            - name: Report and fail on intermediate throws over the whole suite
+              run: |
+                  status=0
+                  composer throws:report > throws-report.txt 2>&1 || status=$?
+                  cat throws-report.txt
+                  {
+                      echo '## Intermediate throws'
+                      echo
+                      echo '```'
+                      sed -n '/^Intermediate throws:/,$p' throws-report.txt
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  exit $status

@@ -23,6 +23,7 @@ trait ComplexTypeBenchTrait
     /** @var list<object> */
     protected array $items;
     protected SoapResponse $literalResponse;
+    protected SoapResponse $literalSparseResponse;
     protected SoapResponse $encodedResponse;
 
     protected BenchSoapClient $extSoapLiteral;
@@ -76,6 +77,13 @@ trait ComplexTypeBenchTrait
         );
         $this->encodedResponse = new SoapResponse(
             $this->encodedDriver->encode('test', [$this->singleItem])->getRequest()
+        );
+        // Real-world responses often leave most elements out: only 2 of the 12 elements are present here.
+        $this->literalSparseResponse = new SoapResponse(
+            '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">'
+            . '<SOAP-ENV:Body><ns1:testResponse xmlns:ns1="http://test-uri/">'
+            . '<testParam><id>42</id><address><city>Springfield</city></address></testParam>'
+            . '</ns1:testResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>'
         );
 
         // ext-soap
