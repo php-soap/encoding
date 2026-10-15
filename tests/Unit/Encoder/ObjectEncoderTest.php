@@ -345,6 +345,19 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         );
     }
 
+    public function test_it_encodes_the_text_value_of_a_simple_content_type(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $context = self::createContext(self::simpleContentType(), self::buildSimpleContentTypes());
+        $iso = $encoder->iso($context);
+
+        static::assertSame('<label lang="nl">hallo</label>', $iso->to((object)['_' => 'hallo', 'lang' => 'nl']));
+        static::assertSame(
+            '<label lang="nl" xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>',
+            $iso->to((object)['_' => null, 'lang' => 'nl'])
+        );
+    }
+
     public function test_it_can_encode_from_array(): void
     {
         $encoder = new ObjectEncoder(stdClass::class);
@@ -442,6 +455,43 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                                 ->withIsElement(true)
                                 ->withIsQualified(true)
                             )
+                    ),
+                )
+            )
+        );
+    }
+
+    private static function simpleContentType(): XsdType
+    {
+        return XsdType::create('label')
+            ->withXmlTypeName('label')
+            ->withXmlNamespace('https://test')
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('label');
+    }
+
+    private static function buildSimpleContentTypes(): TypeCollection
+    {
+        return new TypeCollection(
+            new Type(
+                self::simpleContentType()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true)),
+                new PropertyCollection(
+                    new Property(
+                        '_',
+                        XsdType::create('_')
+                            ->withXmlTypeName('string')
+                            ->withXmlNamespace(Xmlns::xsd()->value())
+                            ->withXmlNamespaceName('xsd')
+                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(true)->withIsNullable(true))
+                    ),
+                    new Property(
+                        'lang',
+                        XsdType::create('lang')
+                            ->withXmlTypeName('string')
+                            ->withXmlTargetNodeName('lang')
+                            ->withXmlNamespace(Xmlns::xsd()->value())
+                            ->withXmlNamespaceName('xsd')
+                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(true)->withIsAttribute(true))
                     ),
                 )
             )

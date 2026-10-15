@@ -126,14 +126,17 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                 $nodes,
             );
 
-            /**
-             * @var mixed
-             * @psalm-suppress PossiblyNullArgument
-             */
-            $result[$normalizePropertyName] = match(true) {
-                $objectAccess->isAttribute[$normalizePropertyName] => $iso->from($value),
-                default => $value !== null ? $iso->from($value) : $objectAccess->decodeDefaults[$normalizePropertyName],
-            };
+            if ($objectAccess->isAttribute[$normalizePropertyName]) {
+                /**
+                 * @var mixed
+                 * @psalm-suppress PossiblyNullArgument
+                 */
+                $result[$normalizePropertyName] = $iso->from($value);
+                continue;
+            }
+
+            /** @var mixed */
+            $result[$normalizePropertyName] = $value !== null ? $iso->from($value) : $objectAccess->decodeDefaults[$normalizePropertyName];
         }
 
         return $objectData->from($result);
