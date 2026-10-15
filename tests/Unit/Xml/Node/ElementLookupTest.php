@@ -100,20 +100,21 @@ final class ElementLookupTest extends TestCase
         yield 'exact namespace wins over a namesake' => ['<item xmlns:a="urn:a" id="1" a:id="2"/>', 'id', '', '1'];
         yield 'exact target namespace wins over a namesake' => ['<item xmlns:a="urn:a" id="1" a:id="2"/>', 'id', 'urn:a', '2'];
         yield 'two namespaces, same local name' => ['<item xmlns:a="urn:a" xmlns:b="urn:b" a:id="2" b:id="3"/>', 'id', 'urn:b', '3'];
-        yield 'single namesake in another namespace' => ['<item xml:lang="nl"/>', 'lang', '', 'nl'];
-        yield 'single unqualified namesake of a qualified attribute' => ['<item id="1"/>', 'id', 'urn:t', '1'];
-        yield 'ambiguous namesakes' => ['<item xmlns:a="urn:a" xmlns:b="urn:b" a:id="2" b:id="3"/>', 'id', '', null];
+        yield 'xml:lang by the xml namespace' => ['<item xml:lang="nl"/>', 'lang', 'http://www.w3.org/XML/1998/namespace', 'nl'];
+        yield 'wrong namespace: qualified attribute sent without namespace' => ['<item id="1"/>', 'id', 'urn:t', null];
+        yield 'wrong namespace: unqualified attribute sent in a namespace' => ['<item xmlns:a="urn:a" a:id="2"/>', 'id', '', null];
+        yield 'wrong namespace: xml:lang read without namespace' => ['<item xml:lang="nl"/>', 'lang', '', null];
         yield 'xmlns declaration is not an attribute' => ['<item xmlns:id="urn:id"/>', 'id', '', null];
-        yield 'xsi attribute is not a namesake' => ['<item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="T"/>', 'type', '', null];
-        yield 'soap-enc 1.1 attribute is not a namesake' => ['<item xmlns:enc="http://schemas.xmlsoap.org/soap/encoding/" enc:arrayType="x[1]"/>', 'arrayType', '', null];
-        yield 'soap-enc 1.2 attribute is not a namesake' => ['<item xmlns:enc="http://www.w3.org/2003/05/soap-encoding" enc:itemType="x"/>', 'itemType', '', null];
+        yield 'xsi attribute is not read without namespace' => ['<item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="T"/>', 'type', '', null];
+        yield 'soap-enc 1.1 attribute is not read without namespace' => ['<item xmlns:enc="http://schemas.xmlsoap.org/soap/encoding/" enc:arrayType="x[1]"/>', 'arrayType', '', null];
+        yield 'soap-enc 1.2 attribute is not read without namespace' => ['<item xmlns:enc="http://www.w3.org/2003/05/soap-encoding" enc:itemType="x"/>', 'itemType', '', null];
         yield 'xsi attribute by its own namespace' => ['<item xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="T"/>', 'type', self::XSI, 'T'];
         yield 'child element is not an attribute' => ['<item><id>1</id></item>', 'id', '', null];
     }
 
     #[Test]
     #[DataProvider('attribute_cases')]
-    public function it_reads_attributes_by_namespace_with_a_single_namesake_fallback(
+    public function it_reads_attributes_by_exact_namespace(
         string $xml,
         string $localName,
         string $namespace,

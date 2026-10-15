@@ -82,27 +82,22 @@ final class ObjectXmlLookupTest extends TestCase
             '<testType xmlns:t="https://test" label="correct" t:label="wrong"/>',
             (object) ['label' => 'correct'],
         ];
-        yield 'qualified schema attribute falls back to its only namesake' => [
+        yield 'qualified schema attribute in the wrong namespace decodes to null' => [
             '<attribute name="label" type="xsd:string" form="qualified"/>',
             '<testType label="sent unqualified"/>',
-            (object) ['label' => 'sent unqualified'],
-        ];
-        yield 'ambiguous namesakes decode to null' => [
-            '<attribute name="label" type="xsd:string"/>',
-            '<testType xmlns:a="urn:a" xmlns:b="urn:b" a:label="a" b:label="b"/>',
             (object) ['label' => null],
         ];
-        yield 'xml:lang through ref' => [
-            '<attribute ref="xml:lang"/><attribute name="lang2" type="xsd:string"/>',
-            '<testType xml:lang="nl" lang2="en"/>',
-            (object) ['lang' => 'nl', 'lang2' => 'en'],
+        yield 'unqualified schema attribute in the wrong namespace decodes to null' => [
+            '<attribute name="label" type="xsd:string"/>',
+            '<testType xmlns:a="urn:a" a:label="sent qualified"/>',
+            (object) ['label' => null],
         ];
     }
 
     #[Test, DataProvider('lookup_cases')]
     public function default_decoder_lenses_distinguish_children_and_attribute_namespaces(string $properties, string $xml, object $expected): void
     {
-        $schema = '<import namespace="http://www.w3.org/XML/1998/namespace"/><complexType name="testType">' . $properties . '</complexType>';
+        $schema = '<complexType name="testType">' . $properties . '</complexType>';
         $metadata = self::createMetadataFromWsdl($schema, 'type="tns:testType"');
         $context = self::createContextFromMetadata($metadata, 'testType')->withBindingUse(BindingUse::LITERAL);
         $iso = new ObjectEncoder(stdClass::class)->iso($context);

@@ -78,34 +78,11 @@ final readonly class ElementLookup
 
     /**
      * The value of the attribute in this namespace, where '' is the attribute without namespace.
-     * When that one is absent, the only other attribute with this local name is used,
-     * so a server that qualifies an attribute differently from its schema still decodes.
-     * Namespace declarations and xsi or soap-enc attributes never count as that other attribute.
-     * Null when absent or when the local name is ambiguous.
+     * Null when absent, also when an attribute with this local name exists in another namespace.
      */
     public function attribute(string $localName, string $namespace = ''): ?string
     {
-        $exact = $this->root->getAttributeNS($namespace, $localName);
-        if ($exact !== null) {
-            return $exact;
-        }
-
-        $found = null;
-        /** @var iterable<Attr> $attributes */
-        $attributes = $this->root->attributes;
-        foreach ($attributes as $attribute) {
-            if ($attribute->localName !== $localName || self::isProtocolNamespace($attribute->namespaceURI)) {
-                continue;
-            }
-
-            if ($found !== null) {
-                return null;
-            }
-
-            $found = $attribute->value;
-        }
-
-        return $found;
+        return $this->root->getAttributeNS($namespace, $localName);
     }
 
     /**
