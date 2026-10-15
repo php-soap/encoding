@@ -74,6 +74,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         /** @var object $data */
         $data = is_array($data) ? (object) $data : $data;
         $defaultAction = writeChildren([]);
+        $keptEmptyWrite = false;
 
         $children = [
             XsiAttributeBuilder::forEncodedValue(
@@ -89,6 +90,15 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                 $objectAccess->encoderLenses[$normalizePropertyName],
                 $data
             );
+            if ($value === null && $objectAccess->nullWritesNothing[$normalizePropertyName]) {
+                // Writing the empty string still closes the start tag, which turns <a/> into <a></a>.
+                // The first skipped element keeps that write, the later ones change nothing in the output.
+                if (!$keptEmptyWrite) {
+                    $children[] = raw('');
+                    $keptEmptyWrite = true;
+                }
+                continue;
+            }
             if ($value === null
                 && $objectAccess->omitWhenAbsent[$normalizePropertyName]
                 && !property_is_initialized($data, $normalizePropertyName)

@@ -33,6 +33,7 @@ final class ObjectAccess
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
      * @param array<string, list<never>|null> $decodeDefaultValues The value a property decodes to when its element is missing from the XML.
      * @param array<string, bool> $omitWhenAbsent Whether encoding leaves the element out, instead of writing xsi:nil, when the property is absent from the PHP value.
+     * @param array<string, bool> $nullWritesNothing Whether a null value encodes to an empty string for this element, so encoding can skip its iso.
      */
     public function __construct(
         public readonly array $properties,
@@ -43,6 +44,7 @@ final class ObjectAccess
         public readonly array $isAttribute,
         public readonly array $decodeDefaultValues,
         public readonly array $omitWhenAbsent,
+        public readonly array $nullWritesNothing,
     ) {
     }
 
@@ -89,6 +91,7 @@ final class ObjectAccess
         $isAttribute = [];
         $decodeDefaultValues = [];
         $omitWhenAbsent = [];
+        $nullWritesNothing = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -110,6 +113,7 @@ final class ObjectAccess
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
             $omitWhenAbsent[$normalizedName] = $customEncoderLens === null && self::mayBeAbsent($name, $propertyTypeMeta);
+            $nullWritesNothing[$normalizedName] = self::nullWritesNothing($name, $propertyTypeMeta, $encoder);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -123,7 +127,22 @@ final class ObjectAccess
             $isAttribute,
             $decodeDefaultValues,
             $omitWhenAbsent,
+            $nullWritesNothing,
         );
+    }
+
+    /**
+     * The optional element encoder turns null into an empty string for a nullable element that is not nillable.
+     * A custom encoder that handles null itself is never wrapped in it, so it keeps writing whatever it writes for null.
+     */
+    private static function nullWritesNothing(string $propertyName, TypeMeta $meta, XmlEncoder $encoder): bool
+    {
+        return $propertyName !== '_'
+            && !$meta->isAttribute()->unwrapOr(false)
+            && $meta->isNullable()->unwrapOr(false)
+            && !$meta->isNil()->unwrapOr(false)
+            && $encoder instanceof ErrorHandlingEncoder
+            && $encoder->decoratedEncoder() instanceof OptionalElementEncoder;
     }
 
     /**
