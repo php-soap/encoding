@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder\SimpleType;
 
-use Psl\Type;
+use Soap\Encoding\Coerce\Scalar;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Exception\RestrictionException;
@@ -41,36 +41,7 @@ final class ScalarTypeEncoder implements XmlEncoder
                 is_bool($value) => (new BoolTypeEncoder())->iso($context)->to($value),
                 default => throw RestrictionException::unsupportedValueType($context->type, $value)
             },
-            static function (string $value) use ($context): mixed {
-                try {
-                    return Type\int()->coerce($value);
-                } catch (Type\Exception\CoercionException) {
-                }
-
-                try {
-                    return Type\float()->coerce($value);
-                } catch (Type\Exception\CoercionException) {
-                }
-
-                try {
-                    return Type\converted(
-                        Type\string(),
-                        Type\bool(),
-                        static fn (string $value): bool => match ($value) {
-                            'true' => true,
-                            'false' => false,
-                            default => throw RestrictionException::unexpectedEnumType(
-                                $context->type,
-                                ['true', 'false'],
-                                $value
-                            )
-                        }
-                    )->coerce($value);
-                } catch (Type\Exception\CoercionException) {
-                }
-
-                return Type\string()->coerce($value);
-            }
+            Scalar::guess(...),
         ));
     }
 }

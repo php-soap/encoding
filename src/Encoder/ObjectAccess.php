@@ -15,9 +15,9 @@ use Soap\Engine\Metadata\Model\TypeMeta;
 use VeeWee\Reflecta\Iso\IsoInterface;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
-use function VeeWee\Reflecta\Lens\index;
 use function VeeWee\Reflecta\Lens\optional;
-use function VeeWee\Reflecta\Lens\property;
+use function VeeWee\Reflecta\Lens\optional_index;
+use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
 {
@@ -89,8 +89,10 @@ final class ObjectAccess
             $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $encoderLenses[$normalizedName] = self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder, $type, $property);
-            $decoderLenses[$normalizedName] = self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder, $type, $property);
+            $encoderLenses[$normalizedName] = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property)
+                ?? optional_property($normalizedName);
+            $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
+                ?? optional_index($name);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
@@ -106,39 +108,45 @@ final class ObjectAccess
     }
 
     /**
-     * @return LensInterface<object|null, object|null, mixed, mixed>
+     * @return LensInterface<object|null, object|null, mixed, mixed>|null
      */
-    private static function createEncoderLensForType(
+    private static function createCustomEncoderLens(
         bool $shouldLensBeOptional,
-        string $normalizedName,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
-    ): LensInterface {
+    ): ?LensInterface {
         $lens = match (true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createEncoderLensForType($shouldLensBeOptional, $normalizedName, $encoder->decoratedEncoder(), $type, $property),
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomEncoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectEncoderLens => $encoder::createObjectEncoderLens($type, $property),
-            default => property($normalizedName)
+            default => null,
         };
+
+        if ($lens === null) {
+            return null;
+        }
 
         return $shouldLensBeOptional ? optional($lens) : $lens;
     }
 
     /**
-     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>
+     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>|null
      */
-    private static function createDecoderLensForType(
+    private static function createCustomDecoderLens(
         bool $shouldLensBeOptional,
-        string $name,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
-    ): LensInterface {
+    ): ?LensInterface {
         $lens = match(true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createDecoderLensForType($shouldLensBeOptional, $name, $encoder->decoratedEncoder(), $type, $property),
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomDecoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
-            default => index($name),
+            default => null,
         };
+
+        if ($lens === null) {
+            return null;
+        }
 
         return $shouldLensBeOptional ? optional($lens) : $lens;
     }
