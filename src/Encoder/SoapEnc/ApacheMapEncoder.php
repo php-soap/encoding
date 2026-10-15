@@ -9,9 +9,9 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
-use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use function Psl\Dict\merge;
@@ -82,16 +82,16 @@ final class ApacheMapEncoder implements XmlEncoder
     {
         $element = $value->element();
         $xpath = $value->document()->xpath();
+        $valueContext = $context->withType(
+            XsdType::any()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true))
+        );
+        $valueIso = $context->registry->detectEncoderForContext($valueContext)->iso($valueContext);
 
         return readChildren($element)->reduce(
-            static function (array $map, DomElement $item) use ($context, $xpath): array {
+            static function (array $map, DomElement $item) use ($xpath, $valueIso): array {
                 $key = $xpath->evaluate('string(./key)', string(), $item);
                 /** @psalm-var mixed $value */
-                $value = ElementValueReader::forEncoder(
-                    $context->withType(XsdType::any()),
-                    ScalarTypeEncoder::default(),
-                    assert_element($xpath->querySingle('./value', $item))
-                );
+                $value = $valueIso->from(Element::fromDOMElement(assert_element($xpath->querySingle('./value', $item))));
 
                 return merge($map, [
                     $key => $value,

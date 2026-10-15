@@ -11,6 +11,7 @@ use Soap\Encoding\Encoder\FixedIsoEncoder;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Encoding\Xml\Node\Element as XmlElement;
 use Soap\Encoding\Xml\Node\ElementList;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns as SoapXmlns;
@@ -100,13 +101,14 @@ final class XsiTypeDetector
             return none();
         }
 
-        $type = $requestedXsiType->unwrap();
+        $requestedType = $requestedXsiType->unwrap();
 
         return some(
             self::cache()->lookup(
                 $context->registry,
-                self::cacheKey($type),
-                static function () use ($context, $type): FixedIsoEncoder {
+                self::cacheKey($requestedType),
+                static function () use ($context, $requestedType): FixedIsoEncoder {
+                    $type = self::withResolvedSimpleness($context, $requestedType);
                     $normalizedMeta = $type->getMeta()
                         ->withIsNullable(false)
                         ->withIsRepeatingElement(false);
@@ -133,7 +135,40 @@ final class XsiTypeDetector
             . ($meta->isAttribute()->unwrapOr(false) ? 'a' : '')
             . ($meta->isNullable()->unwrapOr(false) ? 'n' : '')
             . ($meta->isList()->unwrapOr(false) ? 'l' : '')
-            . ($meta->isQualified()->unwrapOr(false) ? 'q' : '');
+            . ($meta->isQualified()->unwrapOr(false) ? 'q' : '')
+            . $meta->isSimple()->map(static fn (bool $isSimple): string => $isSimple ? 's' : 'c')->unwrapOr('');
+    }
+
+    /**
+     * The detected type inherits the meta of the slot it was found in.
+     * Whether it is a simple or a complex type depends on the xsi:type itself though:
+     * an xsd:anyType slot can hold a struct and a complex slot can hold an xsd:string.
+     * An xsi:type that restates the declared type keeps the slot meta, which matters for wildcards like xsd:any.
+     */
+    private static function withResolvedSimpleness(Context $context, XsdType $type): XsdType
+    {
+        $slotType = $context->type;
+        if ($slotType->getXmlNamespace() === $type->getXmlNamespace() && $slotType->getXmlTypeName() === $type->getXmlTypeName()) {
+            return $type;
+        }
+
+        $registry = $context->registry;
+        $isSimple = match (true) {
+            $registry->hasRegisteredComplexTypeForXsdType($type) => false,
+            $registry->hasRegisteredSimpleTypeForXsdType($type) => true,
+            default => $context->metadata->getTypes()
+                ->findByNameAndXmlNamespace($type->getXmlTypeName(), $type->getXmlNamespace())
+                ?->getXsdType()
+                ->getMeta()
+                ->isSimple()
+                ->unwrapOr(false),
+        };
+
+        return match ($isSimple) {
+            null => $type,
+            true => $type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(true)->withIsElement(true)),
+            false => $type->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(false)),
+        };
     }
 
     /**

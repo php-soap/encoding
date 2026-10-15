@@ -9,9 +9,9 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\SimpleType\ScalarTypeEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
-use Soap\Encoding\Xml\Reader\ElementValueReader;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
+use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\Iso;
 use function Psl\Dict\merge;
@@ -73,16 +73,16 @@ final class SoapObjectEncoder implements XmlEncoder
     private function decodeArray(Context $context, Element $value): object
     {
         $element = $value->element();
+        $valueContext = $context->withType(
+            XsdType::any()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true))
+        );
+        $valueIso = $context->registry->detectEncoderForContext($valueContext)->iso($valueContext);
 
         return (object) readChildren($element)->reduce(
-            static function (array $map, DomElement $item) use ($context): array {
+            static function (array $map, DomElement $item) use ($valueIso): array {
                 $key = $item->localName;
                 /** @psalm-var mixed $value */
-                $value = ElementValueReader::forEncoder(
-                    $context->withType(XsdType::any()),
-                    ScalarTypeEncoder::default(),
-                    $item
-                );
+                $value = $valueIso->from(Element::fromDOMElement($item));
 
                 return merge($map, [
                     $key => $value,
