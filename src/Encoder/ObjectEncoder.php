@@ -15,6 +15,7 @@ use VeeWee\Reflecta\Lens\LensInterface;
 use function is_array;
 use function Psl\Fun\lazy;
 use function VeeWee\Reflecta\Iso\object_data;
+use function VeeWee\Reflecta\Reflect\property_is_initialized;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
@@ -70,9 +71,8 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function to(Context $context, ObjectAccess $objectAccess, object|array $data): string
     {
-        if (is_array($data)) {
-            $data = (object) $data;
-        }
+        /** @var object $data */
+        $data = is_array($data) ? (object) $data : $data;
         $defaultAction = writeChildren([]);
 
         $children = [
@@ -89,6 +89,13 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
                 $objectAccess->encoderLenses[$normalizePropertyName],
                 $data
             );
+            if ($value === null
+                && $objectAccess->omitWhenAbsent[$normalizePropertyName]
+                && !property_is_initialized($data, $normalizePropertyName)
+            ) {
+                continue;
+            }
+
             $iso = $objectAccess->isos[$normalizePropertyName];
 
             $children[] = match(true) {

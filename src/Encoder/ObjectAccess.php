@@ -28,6 +28,7 @@ final class ObjectAccess
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos
      * @param array<string, bool> $isAttribute
      * @param array<string, list<never>|null> $decodeDefaults
+     * @param array<string, bool> $omitWhenAbsent true when encoding leaves the element out for an absent property instead of writing xsi:nil
      */
     public function __construct(
         public readonly array $properties,
@@ -37,6 +38,7 @@ final class ObjectAccess
         public readonly bool  $isAnyPropertyQualified,
         public readonly array $isAttribute,
         public readonly array $decodeDefaults,
+        public readonly array $omitWhenAbsent,
     ) {
     }
 
@@ -82,6 +84,7 @@ final class ObjectAccess
         $isos = [];
         $isAttribute = [];
         $decodeDefaults = [];
+        $omitWhenAbsent = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -95,13 +98,14 @@ final class ObjectAccess
             $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $encoderLenses[$normalizedName] = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? optional_property($normalizedName);
+            $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
+            $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
             $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
                 ?? optional_index($name);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaults[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
+            $omitWhenAbsent[$normalizedName] = $customEncoderLens === null && self::mayBeAbsent($name, $propertyTypeMeta);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -114,7 +118,20 @@ final class ObjectAccess
             $isAnyPropertyQualified,
             $isAttribute,
             $decodeDefaults,
+            $omitWhenAbsent,
         );
+    }
+
+    /**
+     * Null and absent only encode differently for an optional nillable element: null writes xsi:nil, absent writes nothing.
+     * Every other element, attribute and the '_' text value encodes null and absent the same way.
+     */
+    private static function mayBeAbsent(string $propertyName, TypeMeta $meta): bool
+    {
+        return $propertyName !== '_'
+            && !$meta->isAttribute()->unwrapOr(false)
+            && $meta->isNil()->unwrapOr(false)
+            && $meta->minOccurs()->unwrapOr(1) === 0;
     }
 
     /**
