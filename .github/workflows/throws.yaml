@@ -24,3 +24,16 @@ jobs:
               run: composer update --prefer-dist --no-progress --no-suggest
             - name: Run the throw counting tests
               run: composer test:throws
+            - name: Report intermediate throws over the whole suite
+              run: |
+                  status=0
+                  composer throws:report > throws-report.txt 2>&1 || status=$?
+                  cat throws-report.txt
+                  {
+                      echo '## Intermediate throws'
+                      echo
+                      echo '```'
+                      sed -n '/^Intermediate throws:/,$p' throws-report.txt
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  exit $status
