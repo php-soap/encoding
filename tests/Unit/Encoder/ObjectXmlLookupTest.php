@@ -92,12 +92,17 @@ final class ObjectXmlLookupTest extends TestCase
             '<testType xmlns:a="urn:a" a:label="sent qualified"/>',
             (object) ['label' => null],
         ];
+        yield 'xml:lang through ref' => [
+            '<attribute ref="xml:lang"/><attribute name="lang2" type="xsd:string"/>',
+            '<testType xml:lang="nl" lang2="en" xmlns:a="urn:a" a:lang="other"/>',
+            (object) ['lang' => 'nl', 'lang2' => 'en'],
+        ];
     }
 
     #[Test, DataProvider('lookup_cases')]
     public function default_decoder_lenses_distinguish_children_and_attribute_namespaces(string $properties, string $xml, object $expected): void
     {
-        $schema = '<complexType name="testType">' . $properties . '</complexType>';
+        $schema = '<import namespace="http://www.w3.org/XML/1998/namespace"/><complexType name="testType">' . $properties . '</complexType>';
         $metadata = self::createMetadataFromWsdl($schema, 'type="tns:testType"');
         $context = self::createContextFromMetadata($metadata, 'testType')->withBindingUse(BindingUse::LITERAL);
         $iso = new ObjectEncoder(stdClass::class)->iso($context);
