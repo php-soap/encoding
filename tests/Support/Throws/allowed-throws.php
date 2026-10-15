@@ -13,7 +13,7 @@ return [
     [
         'test' => ObjectEncoderCustomLensTest::class.'::test_it_decodes_through_custom_lenses_that_throw_on_a_missing_element',
         'throw' => ArrayAccessException::class,
-        'via' => 'src/Encoder/ObjectAccess.php -> VeeWee\\Reflecta\\Lens\\Lens->get',
+        'via' => 'src/Encoder/ObjectEncoder.php -> VeeWee\\Reflecta\\Lens\\Lens->get',
         'throws' => 1,
         'reason' => 'The fixture is a third-party encoder whose decoder lens throws on a missing element, to prove custom lenses still get the optional() and runLens treatment.',
     ],

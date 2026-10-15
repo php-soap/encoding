@@ -7,6 +7,7 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use VeeWee\Reflecta\Iso\Iso;
@@ -18,7 +19,7 @@ use VeeWee\Reflecta\Lens\Lens;
  *
  * @implements XmlEncoder<string|null, string, string, Element|string>
  * @template-implements Feature\ProvidesObjectEncoderLens<object, object, mixed, mixed>
- * @template-implements Feature\ProvidesObjectDecoderLens<array, array, mixed, mixed>
+ * @template-implements Feature\ProvidesObjectDecoderLens<ElementLookup, ElementLookup, mixed, mixed>
  */
 final class XsiDetectedLensEncoder implements
     Feature\ProvidesObjectDecoderLens,
@@ -34,7 +35,7 @@ final class XsiDetectedLensEncoder implements
     }
 
     /**
-     * @return Lens<array, array, mixed, mixed>
+     * @return Lens<ElementLookup, ElementLookup, mixed, mixed>
      */
     public static function createObjectDecoderLens(Type $parentType, Property $currentProperty): Lens
     {

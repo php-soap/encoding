@@ -29,7 +29,7 @@ final class ObjectAccess
      *
      * @param array<string, Property> $properties The metadata properties, attributes first.
      * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses Reads the property value from the PHP object on encode.
-     * @param array<string, LensInterface<ElementLookup, ElementLookup, mixed, mixed>> $decoderLenses Reads the raw XML value from the element on decode.
+     * @param array<string, LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the element on decode.
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
      * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
@@ -106,10 +106,8 @@ final class ObjectAccess
 
             $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
             $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
-            $customDecoderLens = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property);
-            $decoderLenses[$normalizedName] = $customDecoderLens !== null
-                ? Lens::readonly(static fn (ElementLookup $lookup): mixed => $customDecoderLens->get($lookup->toArray()))
-                : self::createDecoderLens($name, $propertyType);
+            $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
+                ?? self::createDecoderLens($name, $propertyType);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
@@ -184,7 +182,7 @@ final class ObjectAccess
     }
 
     /**
-     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>|null
+     * @return LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>|null
      */
     private static function createCustomDecoderLens(
         bool $shouldLensBeOptional,
