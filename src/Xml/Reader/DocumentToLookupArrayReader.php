@@ -7,7 +7,6 @@ use Dom\Attr;
 use Dom\Node;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
-use VeeWee\Xml\Xmlns\Xmlns;
 use function VeeWee\Xml\Dom\Predicate\is_element;
 
 /**
@@ -16,6 +15,8 @@ use function VeeWee\Xml\Dom\Predicate\is_element;
  */
 final class DocumentToLookupArrayReader
 {
+    private const XSI_NAMESPACE = 'http://www.w3.org/2001/XMLSchema-instance';
+
     /**
      * @return LookupArray
      */
@@ -52,7 +53,7 @@ final class DocumentToLookupArrayReader
 
         // It might be possible that the child is a regular textNode.
         // In that case, we use '_' as the key and the value of the textNode as value.
-        if (!$nodes && $root->getAttributeNS(Xmlns::xsi()->value(), 'nil') !== 'true') {
+        if (!$nodes && $root->getAttributeNS(self::XSI_NAMESPACE, 'nil') !== 'true') {
             $nodes['_'] = $root->textContent ?? '';
         }
 
