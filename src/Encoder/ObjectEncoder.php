@@ -5,6 +5,7 @@ namespace Soap\Encoding\Encoder;
 
 use Exception;
 use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
@@ -127,11 +128,15 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
 
         $result = [];
         foreach ($objectAccess->isos as $normalizePropertyName => $iso) {
-            /** @var string|null $value */
-            $value = self::runLens(
-                $objectAccess->decoderLenses[$normalizePropertyName],
-                $lookup,
-            );
+            $read = $objectAccess->decodeReads[$normalizePropertyName];
+            /** @var Element|ElementList|string|null $value */
+            $value = $read === null
+                ? self::runLens($objectAccess->decoderLenses[$normalizePropertyName], $lookup)
+                : match ($read[0]) {
+                    ObjectAccess::DECODE_ELEMENT => $lookup->element($read[1]),
+                    ObjectAccess::DECODE_ATTRIBUTE => $lookup->attribute($read[1], $read[2]),
+                    ObjectAccess::DECODE_TEXT => $lookup->text(),
+                };
 
             /**
              * @var mixed

@@ -23,6 +23,10 @@ use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
 {
+    public const DECODE_ELEMENT = 0;
+    public const DECODE_ATTRIBUTE = 1;
+    public const DECODE_TEXT = 2;
+
     /**
      * Everything the object encoder needs per property of one type, worked out once and cached per type.
      * Every array is keyed by the normalized PHP property name.
@@ -35,6 +39,7 @@ final class ObjectAccess
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
      * @param array<string, list<never>|null> $decodeDefaultValues The value a property decodes to when its element is missing from the XML.
      * @param array<string, bool> $omitWhenAbsent Whether encoding leaves the element out, instead of writing xsi:nil, when the property is absent from the PHP value.
+     * @param array<string, array{self::DECODE_*, string, string}|null> $decodeReads How the built in decoder lens reads the property from the ElementLookup: what, local name and namespace. Null for a custom decoder lens.
      */
     public function __construct(
         public readonly array $properties,
@@ -45,6 +50,7 @@ final class ObjectAccess
         public readonly array $isAttribute,
         public readonly array $decodeDefaultValues,
         public readonly array $omitWhenAbsent,
+        public readonly array $decodeReads,
     ) {
     }
 
@@ -91,6 +97,7 @@ final class ObjectAccess
         $isAttribute = [];
         $decodeDefaultValues = [];
         $omitWhenAbsent = [];
+        $decodeReads = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -106,8 +113,10 @@ final class ObjectAccess
 
             $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
             $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
-            $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? self::createDecoderLens($name, $propertyType);
+            $customDecoderLens = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property);
+            $decodeRead = self::decodeRead($name, $propertyType);
+            $decoderLenses[$normalizedName] = $customDecoderLens ?? self::createDecoderLens($decodeRead);
+            $decodeReads[$normalizedName] = $customDecoderLens === null ? $decodeRead : null;
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
@@ -125,6 +134,7 @@ final class ObjectAccess
             $isAttribute,
             $decodeDefaultValues,
             $omitWhenAbsent,
+            $decodeReads,
         );
     }
 
@@ -163,22 +173,36 @@ final class ObjectAccess
     }
 
     /**
-     * @return LensInterface<ElementLookup, ElementLookup, mixed, mixed>
+     * @return array{self::DECODE_*, string, string}
      */
-    private static function createDecoderLens(string $name, XsdType $type): LensInterface
+    private static function decodeRead(string $name, XsdType $type): array
     {
         $meta = $type->getMeta();
         if ($meta->isAttribute()->unwrapOr(false)) {
-            $namespace = $meta->isQualified()->unwrapOr(false) ? $type->getXmlTargetNamespace() : '';
-
-            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace));
+            return [
+                self::DECODE_ATTRIBUTE,
+                $name,
+                $meta->isQualified()->unwrapOr(false) ? $type->getXmlTargetNamespace() : '',
+            ];
         }
 
-        if ($name === '_') {
-            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->text());
-        }
+        return [$name === '_' ? self::DECODE_TEXT : self::DECODE_ELEMENT, $name, ''];
+    }
 
-        return Lens::readonly(static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name));
+    /**
+     * @param array{self::DECODE_*, string, string} $read
+     *
+     * @return LensInterface<ElementLookup, ElementLookup, mixed, mixed>
+     */
+    private static function createDecoderLens(array $read): LensInterface
+    {
+        [$kind, $name, $namespace] = $read;
+
+        return match ($kind) {
+            self::DECODE_ATTRIBUTE => Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace)),
+            self::DECODE_TEXT => Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->text()),
+            self::DECODE_ELEMENT => Lens::readonly(static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name)),
+        };
     }
 
     /**
