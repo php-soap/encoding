@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Test\Unit\Encoder;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Context;
@@ -64,32 +65,45 @@ final class ObjectAccessDecodeReadTest extends TestCase
         );
     }
 
-    #[Test]
-    public function built_in_decoder_lenses_read_the_same_value_as_the_direct_read(): void
+    /** @return iterable<string, array{string, string}> */
+    public static function lookups(): iterable
     {
-        $mixed = ObjectAccess::forContext(self::context('mixedType'));
-        $mixedLookup = ElementLookup::fromElement(Element::fromString(
+        yield 'every property present' => [
+            'mixedType',
             '<mixedType xmlns:t="https://test" plain="p" t:qualified="q" xml:lang="nl">'
-            . '<element>e</element><list>1</list><list>2</list><custom>c</custom></mixedType>'
-        ));
-        $text = ObjectAccess::forContext(self::context('textType'));
-        $textLookup = ElementLookup::fromElement(Element::fromString('<textType plain="p">content</textType>'));
+                . '<element>e</element><list>1</list><list>2</list><custom>c</custom></mixedType>',
+        ];
+        yield 'every property absent' => ['mixedType', '<mixedType/>'];
+        yield 'attributes in the wrong namespace' => [
+            'mixedType',
+            '<mixedType xmlns:t="https://test" t:plain="p" qualified="q" lang="nl"/>',
+        ];
+        yield 'text present' => ['textType', '<textType plain="p">content</textType>'];
+        yield 'text nil' => [
+            'textType',
+            '<textType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+        ];
+        yield 'text with child elements' => ['textType', '<textType><child/></textType>'];
+    }
 
-        foreach ([[$mixed, $mixedLookup], [$text, $textLookup]] as [$access, $lookup]) {
-            foreach ($access->decodeReads as $property => $read) {
-                if ($read === null) {
-                    continue;
-                }
+    #[Test, DataProvider('lookups')]
+    public function built_in_decoder_lenses_read_the_same_value_as_the_direct_read(string $typeName, string $xml): void
+    {
+        $access = ObjectAccess::forContext(self::context($typeName));
+        $lookup = ElementLookup::fromElement(Element::fromString($xml));
 
-                $direct = match ($read[0]) {
-                    ObjectAccess::DECODE_ELEMENT => $lookup->element($read[1]),
-                    ObjectAccess::DECODE_ATTRIBUTE => $lookup->attribute($read[1], $read[2]),
-                    ObjectAccess::DECODE_TEXT => $lookup->text(),
-                };
-
-                static::assertNotNull($direct, $property);
-                static::assertSame($direct, $access->decoderLenses[$property]->get($lookup), $property);
+        foreach ($access->decodeReads as $property => $read) {
+            if ($read === null) {
+                continue;
             }
+
+            $direct = match ($read[0]) {
+                ObjectAccess::DECODE_ELEMENT => $lookup->element($read[1]),
+                ObjectAccess::DECODE_ATTRIBUTE => $lookup->attribute($read[1], $read[2]),
+                ObjectAccess::DECODE_TEXT => $lookup->text(),
+            };
+
+            static::assertSame($direct, $access->decoderLenses[$property]->get($lookup), $property);
         }
     }
 
