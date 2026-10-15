@@ -24,6 +24,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/veewee/reflecta"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/veewee/wsdl-reader"
         }
     ],
     "require": {
@@ -45,7 +49,7 @@
         "php-soap/engine": "^2.21",
         "php-soap/wsdl": "^1.19",
         "php-soap/xml": "^1.10",
-        "php-soap/wsdl-reader": "~0.32"
+        "php-soap/wsdl-reader": "dev-fix/qualified-attribute-refs as 0.34.0"
     },
     "require-dev": {
         "vimeo/psalm": "~6.13",
