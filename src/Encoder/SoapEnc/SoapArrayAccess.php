@@ -11,7 +11,6 @@ use Soap\Engine\Metadata\Model\XsdType;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use Soap\WsdlReader\Parser\Xml\QnameParser;
 use Soap\Xml\Xmlns;
-use function Psl\Result\try_catch;
 
 final class SoapArrayAccess
 {
@@ -38,16 +37,14 @@ final class SoapArrayAccess
         $itemNodeName = $meta->arrayNodeName()->unwrapOr(null);
         $xsiType = ltrim($nodePrefix . ':' . $nodeType, ':');
 
-        $xsdType = try_catch(
-            static fn (): XsdType => $context->metadata->getTypes()
-                ->fetchByNameAndXmlNamespace($nodeType, $namespace)
-                ->getXsdType(),
-            static fn (): XsdType => XsdType::any()
+        $xsdType = $context->metadata->getTypes()
+            ->findByNameAndXmlNamespace($nodeType, $namespace)
+            ?->getXsdType()
+            ?? XsdType::any()
                 ->copy($nodeType)
                 ->withXmlTypeName($nodeType)
                 ->withXmlNamespace($namespace)
-                ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true))
-        );
+                ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true));
 
         if ($context->bindingUse === BindingUse::ENCODED || $itemNodeName !== null) {
             $xsdType = $xsdType->withXmlTargetNodeName($itemNodeName ?? 'item');

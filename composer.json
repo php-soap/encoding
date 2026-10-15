@@ -36,7 +36,7 @@
         "php-standard-library/vec": "^6.1",
         "veewee/reflecta": "^1.1",
         "veewee/xml": "^4.10",
-        "php-soap/engine": "^2.20",
+        "php-soap/engine": "^2.21",
         "php-soap/wsdl": "^1.19",
         "php-soap/xml": "^1.10",
         "php-soap/wsdl-reader": "~0.32"

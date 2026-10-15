@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Support\Throws;
 
+use PHPUnit\Event\Application\Finished as ApplicationFinished;
+use PHPUnit\Event\Application\FinishedSubscriber as ApplicationFinishedSubscriber;
 use PHPUnit\Event\Test\Errored;
 use PHPUnit\Event\Test\ErroredSubscriber;
 use PHPUnit\Event\Test\Failed;
@@ -24,7 +26,7 @@ use PHPUnit\TextUI\Configuration\Configuration;
 use RuntimeException;
 
 /**
- * Prints the intermediate throws of a suite run per site, see composer throws:report.
+ * Prints the intermediate throws of a suite run per site and fails the run when there are any, see composer throws:report.
  *
  * Xdebug prints each exception trace into the output buffer of the running test, so every test that throws
  * counts as printing output. The composer script runs with --no-results and --do-not-fail-on-risky for that
@@ -38,7 +40,7 @@ final class ThrowAttributionExtension implements Extension
             throw new RuntimeException('The throws report needs Xdebug with xdebug.mode=develop, run composer throws:report.');
         }
 
-        $attribution = new ThrowAttribution();
+        $attribution = new ThrowAttribution(AllowedThrows::fromFile());
 
         $facade->registerSubscribers(
             new class($attribution) implements PreparationStartedSubscriber {
@@ -110,6 +112,19 @@ final class ThrowAttributionExtension implements Extension
                 {
                     $this->attribution->stopTracing();
                     print "\n".$this->attribution->render();
+                }
+            },
+            new class($attribution) implements ApplicationFinishedSubscriber {
+                public function __construct(private readonly ThrowAttribution $attribution)
+                {
+                }
+
+                public function notify(ApplicationFinished $event): void
+                {
+                    // An extension cannot change PHPUnit's exit code, and this is the last event before PHPUnit exits.
+                    if ($event->shellExitCode() === 0 && $this->attribution->failed()) {
+                        exit(1);
+                    }
                 }
             },
         );
