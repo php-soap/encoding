@@ -256,6 +256,108 @@ final class ObjectEncoderTest extends AbstractEncoderTests
         );
     }
 
+    public function test_it_decodes_absent_list_elements_as_empty_array(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->from(Element::fromString('<user active="true" />'));
+
+        static::assertEquals(
+            (object)[
+                'active' => true,
+                'hat' => [],
+            ],
+            $actual
+        );
+    }
+
+    public function test_it_decodes_mixed_attributes_and_list_elements(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->from(
+            Element::fromString('<user active="false"><hat><color>green</color></hat><hat><color>red</color></hat></user>')
+        );
+
+        static::assertEquals(
+            (object)[
+                'active' => false,
+                'hat' => [
+                    (object)['color' => 'green'],
+                    (object)['color' => 'red'],
+                ],
+            ],
+            $actual
+        );
+    }
+
+    public function test_it_skips_null_attributes_on_encode(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true));
+
+        $actual = $encoder->iso($context)->to((object)[
+            'active' => null,
+            'hat' => (object)['color' => 'green'],
+        ]);
+
+        static::assertSame('<user><hat><color>green</color></hat></user>', $actual);
+    }
+
+    public function test_it_encodes_mixed_attributes_and_list_elements(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $xsdType = XsdType::create('user')
+            ->withXmlNamespace("https://test")
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('user')
+            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsQualified(true));
+        $context = self::createContext($xsdType, self::buildTypes(activeAsAttribute: true, hatAsList: true));
+
+        $actual = $encoder->iso($context)->to((object)[
+            'active' => true,
+            'hat' => [
+                (object)['color' => 'green'],
+                (object)['color' => 'red'],
+            ],
+        ]);
+
+        static::assertSame(
+            '<user active="true"><hat><color>green</color></hat><hat><color>red</color></hat></user>',
+            $actual
+        );
+    }
+
+    public function test_it_encodes_the_text_value_of_a_simple_content_type(): void
+    {
+        $encoder = new ObjectEncoder(stdClass::class);
+        $context = self::createContext(self::simpleContentType(), self::buildSimpleContentTypes());
+        $iso = $encoder->iso($context);
+
+        static::assertSame('<label lang="nl">hallo</label>', $iso->to((object)['_' => 'hallo', 'lang' => 'nl']));
+        static::assertSame(
+            '<label lang="nl" xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>',
+            $iso->to((object)['_' => null, 'lang' => 'nl'])
+        );
+    }
+
     public function test_it_can_encode_from_array(): void
     {
         $encoder = new ObjectEncoder(stdClass::class);
@@ -280,6 +382,7 @@ final class ObjectEncoderTest extends AbstractEncoderTests
 
     public static function buildTypes(
         bool $activeAsAttribute = false,
+        bool $hatAsList = false,
     ): TypeCollection {
         return new TypeCollection(
             new Type(
@@ -321,6 +424,8 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                                 static fn (TypeMeta $meta): TypeMeta => $meta
                                     ->withIsQualified(true)
                                     ->withIsElement(true)
+                                    ->withIsList($hatAsList)
+                                    ->withIsRepeatingElement($hatAsList)
                             )
                     )
                 )
@@ -350,6 +455,43 @@ final class ObjectEncoderTest extends AbstractEncoderTests
                                 ->withIsElement(true)
                                 ->withIsQualified(true)
                             )
+                    ),
+                )
+            )
+        );
+    }
+
+    private static function simpleContentType(): XsdType
+    {
+        return XsdType::create('label')
+            ->withXmlTypeName('label')
+            ->withXmlNamespace('https://test')
+            ->withXmlNamespaceName('test')
+            ->withXmlTargetNodeName('label');
+    }
+
+    private static function buildSimpleContentTypes(): TypeCollection
+    {
+        return new TypeCollection(
+            new Type(
+                self::simpleContentType()->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsElement(true)),
+                new PropertyCollection(
+                    new Property(
+                        '_',
+                        XsdType::create('_')
+                            ->withXmlTypeName('string')
+                            ->withXmlNamespace(Xmlns::xsd()->value())
+                            ->withXmlNamespaceName('xsd')
+                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(true)->withIsNullable(true))
+                    ),
+                    new Property(
+                        'lang',
+                        XsdType::create('lang')
+                            ->withXmlTypeName('string')
+                            ->withXmlTargetNodeName('lang')
+                            ->withXmlNamespace(Xmlns::xsd()->value())
+                            ->withXmlNamespaceName('xsd')
+                            ->withMeta(static fn (TypeMeta $meta): TypeMeta => $meta->withIsSimple(true)->withIsAttribute(true))
                     ),
                 )
             )
