@@ -35,6 +35,13 @@ final class XsiTypeEncoderTest extends TestCase
         static::assertSame('32', $actual);
     }
 
+    public function test_it_decodes_an_element_with_attributes_but_no_xsi_type_through_the_inner_encoder(): void
+    {
+        $actual = $this->decode('<hello xmlns:xsd="http://www.w3.org/2001/XMLSchema">32</hello>');
+
+        static::assertSame('32', $actual);
+    }
+
     private function decode(string $xml): mixed
     {
         $encoder = new XsiTypeEncoder(new ElementEncoder(new StringTypeEncoder()));
