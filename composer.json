@@ -52,6 +52,10 @@
         "guzzlehttp/guzzle": "^7.8",
         "phpbench/phpbench": "^1.6"
     },
+    "scripts": {
+        "test:throws": "@php -d xdebug.mode=develop vendor/bin/phpunit --group no-throws --fail-on-skipped",
+        "throws:report": "@php -d xdebug.mode=develop vendor/bin/phpunit --no-progress --no-results --do-not-fail-on-risky --extension 'Soap\\Encoding\\Test\\Support\\Throws\\ThrowAttributionExtension'"
+    },
     "config": {
         "allow-plugins": {
             "php-http/discovery": true
