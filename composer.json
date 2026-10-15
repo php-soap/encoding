@@ -45,7 +45,7 @@
         "vimeo/psalm": "~6.13",
         "phpunit/phpunit": "~12.4",
         "php-cs-fixer/shim": "~3.88",
-        "symfony/var-dumper": "^7.0 || ^6.4",
+        "symfony/var-dumper": "^7.0 || ^6.4 || ^8.0",
         "php-standard-library/psalm-plugin": "^2.3",
         "php-soap/engine-integration-tests": "^1.12",
         "php-soap/psr18-transport": "^2.0",
