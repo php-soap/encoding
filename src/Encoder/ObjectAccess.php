@@ -104,14 +104,18 @@ final class ObjectAccess
 
             $customEncoderLens = self::createCustomEncoderLens($encoder, $type, $property);
             /** @var Closure(object): mixed $encodeReader */
-            $encodeReader = ($customEncoderLens ?? optional_property($normalizedName))->get(...);
+            $encodeReader = $customEncoderLens !== null
+                ? $customEncoderLens->get(...)
+                : optional_property($normalizedName)->get(...);
             $encodeReaders[$normalizedName] = $encodeReader;
+
             $customDecoderLens = self::createCustomDecoderLens($encoder, $type, $property);
             /** @var Closure(ElementLookup): mixed $decodeReader */
             $decodeReader = $customDecoderLens !== null
                 ? $customDecoderLens->get(...)
                 : self::createDecoderReader($name, $propertyType);
             $decodeReaders[$normalizedName] = $decodeReader;
+
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
