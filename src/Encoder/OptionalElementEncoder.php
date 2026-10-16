@@ -18,7 +18,7 @@ use function is_string;
  * @implements XmlEncoder<T, T, string, ElementList|Element|string>
  * @implements Feature\DecoratingEncoder<T, T, string|null, ElementList|Element|string|null>
  */
-final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, Feature\OptionalAware, XmlEncoder
+final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, Feature\NullValueAware, Feature\OptionalAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<T, T, string|null, ElementList|Element|string|null> $elementEncoder
@@ -36,6 +36,18 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
         return $this->elementEncoder;
     }
 
+    public function nullValueHandling(Context $context): NullValueHandling
+    {
+        $meta = $context->type->getMeta();
+
+        return match (true) {
+            !$meta->isNullable()->unwrapOr(false) => NullValueHandling::Write,
+            !$meta->isNil()->unwrapOr(false) => NullValueHandling::Skip,
+            $meta->minOccurs()->unwrapOr(1) === 0 => NullValueHandling::SkipWhenAbsent,
+            default => NullValueHandling::Write,
+        };
+    }
+
     /**
      * @return IsoInterface<T, T, string, ElementList|Element|string>
      */
@@ -51,6 +63,8 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
             return $elementIso;
         }
 
+        $xsiNamespace = Xmlns::xsi()->value();
+
         return new Iso(
             /**
              * @param T|null $raw
@@ -63,7 +77,7 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
             /**
              * @return T|null
              */
-            static function (ElementList|Element|string $xml) use ($elementIso, $isList) : mixed {
+            static function (ElementList|Element|string $xml) use ($elementIso, $isList, $xsiNamespace) : mixed {
                 if ($xml === '') {
                     return null;
                 }
@@ -79,7 +93,7 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
                     $parsedXml instanceof Element => $parsedXml->element(),
                     default => null
                 };
-                if ($documentElement && $documentElement->getAttributeNS(Xmlns::xsi()->value(), 'nil') === 'true') {
+                if ($documentElement && $documentElement->getAttributeNS($xsiNamespace, 'nil') === 'true') {
                     return null;
                 }
 

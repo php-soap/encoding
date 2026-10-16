@@ -67,6 +67,9 @@ final class IntermediateThrowScenariosTest extends TestCase
                 <attribute ref="enc12:arraySize" wsdl:arraySize="*"/>
             </restriction>
         </complexContent></complexType>
+        <complexType name="labelType">
+            <simpleContent><extension base="xsd:string"><attribute name="lang" type="xsd:string"/></extension></simpleContent>
+        </complexType>
         <complexType name="untypedValues"><sequence>
             <element name="integer"/>
             <element name="float"/>
@@ -146,6 +149,35 @@ final class IntermediateThrowScenariosTest extends TestCase
                 'active' => null,
                 'address' => null,
                 'tags' => ['a'],
+            ],
+        ];
+
+        yield 'decode present attributes next to an xsi:type and a namesake child' => [
+            'operation' => static fn (): mixed => $literal->decode(
+                'test',
+                self::response('<testParam xsi:type="tns:itemType" code="c" rank="2" name="attribute"><id>1</id><name>child</name></testParam>'),
+            ),
+            'expected' => (object) [
+                'code' => 'c',
+                'rank' => 2,
+                'id' => 1,
+                'name' => 'child',
+                'price' => null,
+                'active' => null,
+                'address' => null,
+                'tags' => [],
+            ],
+        ];
+
+        $label = self::driver('tns:labelType', 'literal');
+        yield 'decode simple content with and without its attribute' => [
+            'operation' => static fn (): mixed => [
+                $label->decode('test', self::response('<testParam lang="nl">hallo</testParam>')),
+                $label->decode('test', self::response('<testParam/>')),
+            ],
+            'expected' => [
+                (object) ['lang' => 'nl', '_' => 'hallo'],
+                (object) ['lang' => null, '_' => ''],
             ],
         ];
 
@@ -371,6 +403,29 @@ final class IntermediateThrowScenariosTest extends TestCase
                 self::response('<testParam xsi:type="SOAP-ENC:Struct"><a xsi:type="xsd:int">1</a><b>x</b></testParam>'),
             ),
             'expected' => (object) ['a' => 1, 'b' => 'x'],
+        ];
+
+        yield 'decode soap-enc struct member typed as a wsdl complex type' => [
+            'operation' => static fn (): mixed => $struct->decode(
+                'test',
+                self::response(
+                    '<testParam xsi:type="SOAP-ENC:Struct">'
+                    .'<member xsi:type="tns:itemType" code="c"><id>1</id><address><city>C</city></address></member>'
+                    .'</testParam>'
+                ),
+            ),
+            'expected' => (object) [
+                'member' => (object) [
+                    'code' => 'c',
+                    'rank' => null,
+                    'id' => 1,
+                    'name' => null,
+                    'price' => null,
+                    'active' => null,
+                    'address' => (object) ['street' => null, 'city' => 'C', 'zip' => null],
+                    'tags' => [],
+                ],
+            ],
         ];
 
         yield 'encode soap-enc struct' => [

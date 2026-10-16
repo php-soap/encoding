@@ -7,6 +7,7 @@ use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\Feature;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use VeeWee\Reflecta\Iso\Iso;
@@ -19,7 +20,7 @@ use function VeeWee\Reflecta\Lens\property;
  *
  * @implements XmlEncoder<string|null, string, string, Element|string>
  * @template-implements Feature\ProvidesObjectEncoderLens<object, object, mixed, mixed>
- * @template-implements Feature\ProvidesObjectDecoderLens<array, array, mixed, mixed>
+ * @template-implements Feature\ProvidesObjectDecoderLens<ElementLookup, ElementLookup, mixed, mixed>
  */
 final class ThrowingLensEncoder implements
     Feature\DisregardXsiInformation,
@@ -46,17 +47,17 @@ final class ThrowingLensEncoder implements
     }
 
     /**
-     * @return Lens<array, array, mixed, mixed>
+     * @return Lens<ElementLookup, ElementLookup, mixed, mixed>
      */
     public static function createObjectDecoderLens(Type $parentType, Property $currentProperty): Lens
     {
         $lens = index($currentProperty->getName());
 
-        /** @var Lens<array, array, mixed, mixed> */
-        return Lens::readonly(static function (array $data) use ($lens): mixed {
+        /** @var Lens<ElementLookup, ElementLookup, mixed, mixed> */
+        return Lens::readonly(static function (ElementLookup $lookup) use ($lens): mixed {
             self::$decoderLensReads++;
 
-            return $lens->get($data);
+            return $lens->get($lookup->children());
         });
     }
 
