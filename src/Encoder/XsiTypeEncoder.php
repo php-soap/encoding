@@ -78,7 +78,9 @@ final readonly class XsiTypeEncoder implements Feature\DecoratingEncoder, Featur
      */
     private function from(Context $context, IsoInterface $innerIso, ?Closure $detectEncoder, Element $value): mixed
     {
-        $iso = ($detectEncoder ? $detectEncoder($value->element()) : null)?->iso($context) ?? $innerIso;
+        // xsi:type is an attribute on the element itself, so an element without attributes cannot carry one.
+        $element = $value->element();
+        $iso = ($detectEncoder && $element->hasAttributes() ? $detectEncoder($element) : null)?->iso($context) ?? $innerIso;
 
         /** @psalm-suppress ImplicitToStringCast - Encoders accept string|Element in from() */
         return $iso->from($value);
