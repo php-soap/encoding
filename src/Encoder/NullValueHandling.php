@@ -3,22 +3,25 @@
 namespace Soap\Encoding\Encoder;
 
 /**
- * What an object encoder does with a property whose value is null.
+ * What ObjectEncoder does with a property that is null or absent from the PHP value.
+ * An absent property reads as null, unless the case below tells them apart.
  */
 enum NullValueHandling
 {
     /**
-     * Let the encoder write it.
+     * Pass null to the property's encoder and write what it returns.
+     * For a nillable element that is the element with xsi:nil="true".
      */
     case Write;
 
     /**
-     * The encoder writes nothing for null, so the element is left out.
+     * Write nothing for the property, so the element is left out.
      */
     case Skip;
 
     /**
-     * Leave the element out when the property is absent from the PHP value, behave like Write when it is set to null.
+     * Write nothing when the property is absent from the PHP value.
+     * When it is set to null, behave like Write.
      */
     case SkipWhenAbsent;
 }
