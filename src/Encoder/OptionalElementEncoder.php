@@ -63,6 +63,8 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
             return $elementIso;
         }
 
+        $xsiNamespace = Xmlns::xsi()->value();
+
         return new Iso(
             /**
              * @param T|null $raw
@@ -75,7 +77,7 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
             /**
              * @return T|null
              */
-            static function (ElementList|Element|string $xml) use ($elementIso, $isList) : mixed {
+            static function (ElementList|Element|string $xml) use ($elementIso, $isList, $xsiNamespace) : mixed {
                 if ($xml === '') {
                     return null;
                 }
@@ -91,7 +93,7 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
                     $parsedXml instanceof Element => $parsedXml->element(),
                     default => null
                 };
-                if ($documentElement && $documentElement->getAttributeNS(Xmlns::xsi()->value(), 'nil') === 'true') {
+                if ($documentElement && $documentElement->getAttributeNS($xsiNamespace, 'nil') === 'true') {
                     return null;
                 }
 

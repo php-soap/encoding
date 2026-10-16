@@ -12,16 +12,19 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\ErrorHandlingEncoder;
 use Soap\Encoding\Encoder\NullValueHandling;
 use Soap\Encoding\Encoder\ObjectAccess;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
 use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Exception\EncodingException;
 use Soap\Encoding\Test\Fixture\Encoder\NullLensEncoder;
 use Soap\Encoding\Test\Fixture\Encoder\ThrowingLensEncoder;
 use Soap\Encoding\Test\Unit\ContextCreatorTrait;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use stdClass;
+use VeeWee\Reflecta\Reflect\Exception\UnreflectableException;
 
 #[CoversClass(ObjectEncoder::class), CoversClass(ObjectAccess::class)]
 final class ObjectPropertyPresenceTest extends TestCase
@@ -133,21 +136,28 @@ final class ObjectPropertyPresenceTest extends TestCase
     /**
      * A custom lens may read something else than the property of that name, so its null is never taken for absence.
      */
-    #[Test, DataProvider('custom_lenses')]
-    public function custom_lens_reading_null_keeps_writing_nil(XmlEncoder $customEncoder): void
+    #[Test]
+    public function custom_lens_reading_null_keeps_writing_nil(): void
     {
-        $context = self::context('eligibilityType', $customEncoder);
+        $context = self::context('eligibilityType', new NullLensEncoder());
         $xml = (new ObjectEncoder(stdClass::class))->iso($context)->to((object) ['requiredNillable' => 'r']);
         $xpath = self::xpath($xml);
 
         static::assertSame('true', $xpath->evaluate('string(/*/custom/@xsi:nil)'));
     }
 
-    /** @return iterable<string, array{XmlEncoder}> */
-    public static function custom_lenses(): iterable
+    #[Test]
+    public function custom_lens_throwing_on_the_absent_property_fails_encoding(): void
     {
-        yield 'lens throws on the absent property' => [new ThrowingLensEncoder()];
-        yield 'lens returns null' => [new NullLensEncoder()];
+        $context = self::context('eligibilityType', new ThrowingLensEncoder());
+        $iso = (new ErrorHandlingEncoder(new ObjectEncoder(stdClass::class)))->iso($context);
+
+        try {
+            $iso->to((object) ['requiredNillable' => 'r']);
+            static::fail('Expected the throwing custom lens to fail encoding.');
+        } catch (EncodingException $exception) {
+            static::assertInstanceOf(UnreflectableException::class, $exception->getPrevious());
+        }
     }
 
     private static function withUnsetNote(): object

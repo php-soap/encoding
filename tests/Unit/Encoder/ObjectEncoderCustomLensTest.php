@@ -7,13 +7,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\AnyElementEncoder;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\ErrorHandlingEncoder;
 use Soap\Encoding\Encoder\ObjectAccess;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\EncoderRegistry;
+use Soap\Encoding\Exception\EncodingException;
 use Soap\Encoding\Test\Fixture\Encoder\ThrowingLensEncoder;
 use Soap\Encoding\Test\Unit\ContextCreatorTrait;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
 use stdClass;
+use VeeWee\Reflecta\ArrayAccess\Exception\ArrayAccessException;
+use VeeWee\Reflecta\Reflect\Exception\UnreflectableException;
 
 #[CoversClass(ObjectEncoder::class)]
 #[CoversClass(ObjectAccess::class)]
@@ -41,11 +45,15 @@ final class ObjectEncoderCustomLensTest extends TestCase
         ThrowingLensEncoder::$decoderLensReads = 0;
     }
 
-    public function test_it_decodes_through_custom_lenses_that_throw_on_a_missing_element(): void
+    public function test_it_fails_decoding_when_a_custom_lens_throws_on_a_missing_element(): void
     {
-        $actual = $this->iso()->from('<user><id>1</id><extra>x</extra></user>');
+        try {
+            $this->iso()->from('<user><id>1</id><extra>x</extra></user>');
+            static::fail('Expected the throwing custom lens to fail decoding.');
+        } catch (EncodingException $exception) {
+            static::assertInstanceOf(ArrayAccessException::class, $exception->getPrevious());
+        }
 
-        static::assertEquals((object) ['id' => 1, 'custom' => null, 'any' => ['<extra>x</extra>']], $actual);
         static::assertSame(1, ThrowingLensEncoder::$decoderLensReads);
     }
 
@@ -72,11 +80,15 @@ final class ObjectEncoderCustomLensTest extends TestCase
         static::assertEquals((object) ['id' => 1, 'custom' => 'c', 'any' => ['<type>x</type>']], $actual);
     }
 
-    public function test_it_encodes_through_custom_lenses_that_throw_on_a_missing_property(): void
+    public function test_it_fails_encoding_when_a_custom_lens_throws_on_a_missing_property(): void
     {
-        $actual = $this->iso()->to((object) ['id' => 1, 'any' => ['<extra>x</extra>']]);
+        try {
+            $this->iso()->to((object) ['id' => 1, 'any' => ['<extra>x</extra>']]);
+            static::fail('Expected the throwing custom lens to fail encoding.');
+        } catch (EncodingException $exception) {
+            static::assertInstanceOf(UnreflectableException::class, $exception->getPrevious());
+        }
 
-        static::assertSame('<user><id>1</id><extra>x</extra></user>', $actual);
         static::assertSame(1, ThrowingLensEncoder::$encoderLensReads);
     }
 
@@ -103,6 +115,6 @@ final class ObjectEncoderCustomLensTest extends TestCase
             self::buildNamespaces(),
         );
 
-        return (new ObjectEncoder(stdClass::class))->iso($context);
+        return (new ErrorHandlingEncoder(new ObjectEncoder(stdClass::class)))->iso($context);
     }
 }

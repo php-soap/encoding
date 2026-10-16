@@ -3,15 +3,14 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Exception;
 use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Reflecta\Lens\LensInterface;
 use function is_array;
 use function Psl\Fun\lazy;
 use function VeeWee\Reflecta\Iso\object_data;
@@ -85,10 +84,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         ];
         foreach ($objectAccess->properties as $normalizePropertyName => $property) {
             /** @var mixed $value */
-            $value = self::runLens(
-                $objectAccess->encoderLenses[$normalizePropertyName],
-                $data
-            );
+            $value = $objectAccess->encodeReaders[$normalizePropertyName]($data);
             if ($value === null && match ($objectAccess->onNull[$normalizePropertyName]) {
                 NullValueHandling::Write => false,
                 NullValueHandling::Skip => true,
@@ -128,11 +124,8 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
 
         $result = [];
         foreach ($objectAccess->isos as $normalizePropertyName => $iso) {
-            /** @var string|null $value */
-            $value = self::runLens(
-                $objectAccess->decoderLenses[$normalizePropertyName],
-                $lookup,
-            );
+            /** @var Element|ElementList|string|null $value */
+            $value = $objectAccess->decodeReaders[$normalizePropertyName]($lookup);
 
             /**
              * @var mixed
@@ -146,15 +139,5 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         }
 
         return $objectData->from($result);
-    }
-
-    private static function runLens(LensInterface $lens, mixed $data, mixed $default = null): mixed
-    {
-        try {
-            /** @var mixed */
-            return $lens->get($data);
-        } catch (Exception $e) {
-            return $default;
-        }
     }
 }

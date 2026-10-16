@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
+use Closure;
 use Soap\Encoding\Cache\ScopedCache;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
@@ -15,10 +16,8 @@ use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
 use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\IsoInterface;
-use VeeWee\Reflecta\Lens\Lens;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
-use function VeeWee\Reflecta\Lens\optional;
 use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
@@ -28,8 +27,8 @@ final class ObjectAccess
      * Every array is keyed by the normalized PHP property name.
      *
      * @param array<string, Property> $properties The metadata properties, attributes first.
-     * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses Reads the property value from the PHP object on encode.
-     * @param array<string, LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the element on decode.
+     * @param array<string, Closure(object): mixed> $encodeReaders Reads the property value from the PHP object on encode.
+     * @param array<string, Closure(ElementLookup): mixed> $decodeReaders Reads the raw XML value from the element on decode.
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
      * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
@@ -38,8 +37,8 @@ final class ObjectAccess
      */
     public function __construct(
         public readonly array $properties,
-        public readonly array $encoderLenses,
-        public readonly array $decoderLenses,
+        public readonly array $encodeReaders,
+        public readonly array $decodeReaders,
         public readonly array $isos,
         public readonly bool  $isAnyPropertyQualified,
         public readonly array $isAttribute,
@@ -85,8 +84,8 @@ final class ObjectAccess
         );
 
         $normalizedProperties = [];
-        $encoderLenses = [];
-        $decoderLenses = [];
+        $encodeReaders = [];
+        $decodeReaders = [];
         $isos = [];
         $isAttribute = [];
         $decodeDefaultValues = [];
@@ -101,13 +100,22 @@ final class ObjectAccess
             $normalizedName = PhpPropertyNameNormalizer::normalize($name);
 
             $encoder = $context->registry->detectEncoderForContext($propertyContext);
-            $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
-            $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
-            $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? self::createDecoderLens($name, $propertyType);
+            $customEncoderLens = self::createCustomEncoderLens($encoder, $type, $property);
+            /** @var Closure(object): mixed $encodeReader */
+            $encodeReader = $customEncoderLens !== null
+                ? $customEncoderLens->get(...)
+                : optional_property($normalizedName)->get(...);
+            $encodeReaders[$normalizedName] = $encodeReader;
+
+            $customDecoderLens = self::createCustomDecoderLens($encoder, $type, $property);
+            /** @var Closure(ElementLookup): mixed $decodeReader */
+            $decodeReader = $customDecoderLens !== null
+                ? $customDecoderLens->get(...)
+                : self::createDecoderReader($name, $propertyType);
+            $decodeReaders[$normalizedName] = $decodeReader;
+
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
@@ -118,8 +126,8 @@ final class ObjectAccess
 
         return new self(
             $normalizedProperties,
-            $encoderLenses,
-            $decoderLenses,
+            $encodeReaders,
+            $decodeReaders,
             $isos,
             $isAnyPropertyQualified,
             $isAttribute,
@@ -152,78 +160,48 @@ final class ObjectAccess
      * @return LensInterface<object|null, object|null, mixed, mixed>|null
      */
     private static function createCustomEncoderLens(
-        bool $shouldLensBeOptional,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
     ): ?LensInterface {
-        $lens = match (true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createCustomEncoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
+        return match (true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomEncoderLens($encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectEncoderLens => $encoder::createObjectEncoderLens($type, $property),
             default => null,
         };
-
-        if ($lens === null) {
-            return null;
-        }
-
-        return $shouldLensBeOptional ? optional($lens) : $lens;
     }
 
     /**
-     * @return LensInterface<ElementLookup, ElementLookup, mixed, mixed>
+     * @return Closure(ElementLookup): mixed
      */
-    private static function createDecoderLens(string $name, XsdType $type): LensInterface
+    private static function createDecoderReader(string $name, XsdType $type): Closure
     {
         $meta = $type->getMeta();
         if ($meta->isAttribute()->unwrapOr(false)) {
             $namespace = $meta->isQualified()->unwrapOr(false) ? $type->getXmlTargetNamespace() : '';
 
-            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace));
+            return static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace);
         }
 
         if ($name === '_') {
-            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->text());
+            return static fn (ElementLookup $lookup): ?string => $lookup->text();
         }
 
-        return Lens::readonly(static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name));
+        return static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name);
     }
 
     /**
      * @return LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>|null
      */
     private static function createCustomDecoderLens(
-        bool $shouldLensBeOptional,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
     ): ?LensInterface {
-        $lens = match(true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createCustomDecoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
+        return match(true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomDecoderLens($encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
             default => null,
         };
-
-        if ($lens === null) {
-            return null;
-        }
-
-        return $shouldLensBeOptional ? optional($lens) : $lens;
-    }
-
-    private static function shouldLensBeOptional(TypeMeta $meta): bool
-    {
-        if ($meta->isNullable()->unwrapOr(false)) {
-            return true;
-        }
-
-        if (
-            $meta->isAttribute()->unwrapOr(false) &&
-            $meta->use()->unwrapOr('optional') === 'optional'
-        ) {
-            return true;
-        }
-
-        return false;
     }
 }
