@@ -49,6 +49,24 @@ final class SoapEnvelopeWriterTest extends TestCase
         static::assertXmlStringEqualsXmlString($expected, $actual);
     }
 
+    public function test_it_writes_the_exact_envelope_bytes(): void
+    {
+        $writer = new SoapEnvelopeWriter(
+            SoapVersion::SOAP_11,
+            BindingUse::ENCODED,
+            some(EncodingStyle::SOAP_11),
+            raw('<Request>content</Request>')
+        );
+
+        static::assertSame(
+            '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">'
+            . '<SOAP-ENV:Body xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">'
+            . '<Request>content</Request>'
+            . '</SOAP-ENV:Body></SOAP-ENV:Envelope>',
+            $writer()
+        );
+    }
+
     public function test_it_can_fail_writing_with_encoding_exception(): void
     {
         $this->expectException(ExceptionInterface::class);
