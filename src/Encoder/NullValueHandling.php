@@ -18,7 +18,7 @@ enum NullValueHandling
     case Skip;
 
     /**
-     * Leave the element out when the property is absent from the PHP value, let the encoder write xsi:nil when it is set to null.
+     * Leave the element out when the property is absent from the PHP value, behave like Write when it is set to null.
      */
     case SkipWhenAbsent;
 }
