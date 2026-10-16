@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\NullValueHandling;
 use Soap\Encoding\Encoder\ObjectAccess;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\EncoderRegistry;
@@ -54,6 +55,11 @@ final class ObjectEncoderNullElementTest extends TestCase
                 <attribute name="attribute" type="xsd:string"/>
             </extension>
         </simpleContent>
+    </complexType>
+    <complexType name="nillableNullWritingType">
+        <sequence>
+            <element name="nullWriting" type="tns:nullWritingType" minOccurs="0" nillable="true"/>
+        </sequence>
     </complexType>
     <complexType name="customType">
         <simpleContent><extension base="xsd:string"/></simpleContent>
@@ -120,25 +126,36 @@ final class ObjectEncoderNullElementTest extends TestCase
     }
 
     #[Test]
-    public function only_default_optional_non_nillable_elements_write_nothing_for_null(): void
+    public function the_encoder_decides_what_null_does_for_an_element(): void
     {
         static::assertSame(
             [
-                'attribute' => false,
-                'optional' => true,
-                'optionalList' => false,
-                'optionalNillable' => false,
-                'requiredNillable' => false,
-                'required' => false,
-                'custom' => true,
-                'nullWriting' => false,
+                'attribute' => NullValueHandling::Write,
+                'optional' => NullValueHandling::Skip,
+                'optionalList' => NullValueHandling::Write,
+                'optionalNillable' => NullValueHandling::SkipWhenAbsent,
+                'requiredNillable' => NullValueHandling::Write,
+                'required' => NullValueHandling::Write,
+                'custom' => NullValueHandling::Skip,
+                'nullWriting' => NullValueHandling::Write,
             ],
-            ObjectAccess::forContext(self::context('mixedType'))->nullWritesNothing
+            ObjectAccess::forContext(self::context('mixedType'))->onNull
         );
         static::assertSame(
-            ['attribute' => false, '_' => false],
-            ObjectAccess::forContext(self::context('textType'))->nullWritesNothing
+            ['attribute' => NullValueHandling::Write, '_' => NullValueHandling::Write],
+            ObjectAccess::forContext(self::context('textType'))->onNull
         );
+    }
+
+    /**
+     * Only the encoder can tell that it leaves an absent value out, so an OptionalAware encoder that does not implement NullValueAware is called for it.
+     */
+    #[Test]
+    public function absent_optional_nillable_element_is_written_by_an_encoder_that_does_not_tell(): void
+    {
+        $actual = (new ObjectEncoder(stdClass::class))->iso(self::context('nillableNullWritingType'))->to((object) []);
+
+        static::assertSame('<nillableNullWritingType><custom>none</custom></nillableNullWritingType>', $actual);
     }
 
     private static function context(string $typeName): Context
