@@ -113,7 +113,7 @@ final class ObjectAccess
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
             $omitWhenAbsent[$normalizedName] = $customEncoderLens === null && self::mayBeAbsent($name, $propertyTypeMeta);
-            $nullWritesNothing[$normalizedName] = self::nullWritesNothing($name, $propertyTypeMeta, $encoder);
+            $nullWritesNothing[$normalizedName] = self::nullWritesNothing($name, $propertyTypeMeta, $encoder, $propertyContext);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -132,17 +132,14 @@ final class ObjectAccess
     }
 
     /**
-     * The optional element encoder turns null into an empty string for a nullable element that is not nillable.
-     * A custom encoder that handles null itself is never wrapped in it, so it keeps writing whatever it writes for null.
+     * The encoder decides whether null encodes to nothing; one that does not say so keeps its own null handling.
      */
-    private static function nullWritesNothing(string $propertyName, TypeMeta $meta, XmlEncoder $encoder): bool
+    private static function nullWritesNothing(string $propertyName, TypeMeta $meta, XmlEncoder $encoder, Context $context): bool
     {
         return $propertyName !== '_'
             && !$meta->isAttribute()->unwrapOr(false)
-            && $meta->isNullable()->unwrapOr(false)
-            && !$meta->isNil()->unwrapOr(false)
-            && $encoder instanceof ErrorHandlingEncoder
-            && $encoder->decoratedEncoder() instanceof OptionalElementEncoder;
+            && $encoder instanceof Feature\WritesNothingForNull
+            && $encoder->writesNothingForNull($context);
     }
 
     /**
