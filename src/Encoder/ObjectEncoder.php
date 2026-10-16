@@ -85,10 +85,11 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         foreach ($objectAccess->properties as $normalizePropertyName => $property) {
             /** @var mixed $value */
             $value = $objectAccess->encodeReaders[$normalizePropertyName]($data);
-            if ($value === null
-                && $objectAccess->omitWhenAbsent[$normalizePropertyName]
-                && !property_is_initialized($data, $normalizePropertyName)
-            ) {
+            if ($value === null && match ($objectAccess->onNull[$normalizePropertyName]) {
+                NullValueHandling::Write => false,
+                NullValueHandling::Skip => true,
+                NullValueHandling::SkipWhenAbsent => !property_is_initialized($data, $normalizePropertyName),
+            }) {
                 continue;
             }
 
