@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Test\Unit\Encoder;
 
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,6 +16,7 @@ use Soap\Encoding\Test\Unit\ContextCreatorTrait;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\WsdlReader\Model\Definitions\BindingUse;
+use function array_keys;
 
 #[CoversClass(ObjectAccess::class)]
 final class ObjectAccessDecodeReadTest extends TestCase
@@ -46,23 +48,14 @@ final class ObjectAccessDecodeReadTest extends TestCase
     XML;
 
     #[Test]
-    public function built_in_properties_decode_by_element_attribute_or_text_and_custom_lenses_by_their_lens(): void
+    public function every_property_decodes_through_a_plain_reader(): void
     {
-        static::assertSame(
-            [
-                'plain' => [ObjectAccess::DECODE_ATTRIBUTE, 'plain', ''],
-                'qualified' => [ObjectAccess::DECODE_ATTRIBUTE, 'qualified', 'https://test'],
-                'lang' => [ObjectAccess::DECODE_ATTRIBUTE, 'lang', 'http://www.w3.org/XML/1998/namespace'],
-                'element' => [ObjectAccess::DECODE_ELEMENT, 'element', ''],
-                'list' => [ObjectAccess::DECODE_ELEMENT, 'list', ''],
-                'custom' => null,
-            ],
-            ObjectAccess::forContext(self::context('mixedType'))->decodeReads
-        );
-        static::assertSame(
-            ['plain' => [ObjectAccess::DECODE_ATTRIBUTE, 'plain', ''], '_' => [ObjectAccess::DECODE_TEXT, '_', '']],
-            ObjectAccess::forContext(self::context('textType'))->decodeReads
-        );
+        $mixed = ObjectAccess::forContext(self::context('mixedType'))->decodeReaders;
+        $text = ObjectAccess::forContext(self::context('textType'))->decodeReaders;
+
+        static::assertSame(['plain', 'qualified', 'lang', 'element', 'list', 'custom'], array_keys($mixed));
+        static::assertSame(['plain', '_'], array_keys($text));
+        static::assertContainsOnlyInstancesOf(Closure::class, [...$mixed, ...$text]);
     }
 
     /** @return iterable<string, array{string, string}> */
@@ -87,23 +80,27 @@ final class ObjectAccessDecodeReadTest extends TestCase
     }
 
     #[Test, DataProvider('lookups')]
-    public function built_in_decoder_lenses_read_the_same_value_as_the_direct_read(string $typeName, string $xml): void
+    public function built_in_decoder_readers_read_the_same_value_as_the_direct_read(string $typeName, string $xml): void
     {
         $access = ObjectAccess::forContext(self::context($typeName));
         $lookup = ElementLookup::fromElement(Element::fromString($xml));
 
-        foreach ($access->decodeReads as $property => $read) {
-            if ($read === null) {
-                continue;
-            }
+        $direct = [
+            'mixedType' => [
+                'plain' => $lookup->attribute('plain', ''),
+                'qualified' => $lookup->attribute('qualified', 'https://test'),
+                'lang' => $lookup->attribute('lang', 'http://www.w3.org/XML/1998/namespace'),
+                'element' => $lookup->element('element'),
+                'list' => $lookup->element('list'),
+            ],
+            'textType' => [
+                'plain' => $lookup->attribute('plain', ''),
+                '_' => $lookup->text(),
+            ],
+        ][$typeName];
 
-            $direct = match ($read[0]) {
-                ObjectAccess::DECODE_ELEMENT => $lookup->element($read[1]),
-                ObjectAccess::DECODE_ATTRIBUTE => $lookup->attribute($read[1], $read[2]),
-                ObjectAccess::DECODE_TEXT => $lookup->text(),
-            };
-
-            static::assertSame($direct, $access->decoderLenses[$property]->get($lookup), $property);
+        foreach ($direct as $property => $expected) {
+            static::assertSame($expected, $access->decodeReaders[$property]($lookup), $property);
         }
     }
 
