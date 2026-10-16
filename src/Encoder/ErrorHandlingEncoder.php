@@ -16,7 +16,7 @@ use VeeWee\Reflecta\Iso\Iso;
  * @implements XmlEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn>
  * @implements Feature\DecoratingEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn>
  */
-final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncoder
+final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, Feature\NullValueAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<TDataIn, TDataOut, TXmlOut, TXmlIn> $encoder
@@ -32,6 +32,13 @@ final class ErrorHandlingEncoder implements Feature\DecoratingEncoder, XmlEncode
     public function decoratedEncoder(): XmlEncoder
     {
         return $this->encoder;
+    }
+
+    public function nullValueHandling(Context $context): NullValueHandling
+    {
+        return $this->encoder instanceof Feature\NullValueAware
+            ? $this->encoder->nullValueHandling($context)
+            : NullValueHandling::Write;
     }
 
     /**

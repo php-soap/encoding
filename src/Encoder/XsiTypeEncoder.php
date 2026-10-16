@@ -2,6 +2,7 @@
 
 namespace Soap\Encoding\Encoder;
 
+use Closure;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
@@ -11,8 +12,9 @@ use function Psl\Type\non_empty_string;
 
 /**
  * @implements XmlEncoder<mixed, mixed, string, Element|string>
+ * @implements Feature\DecoratingEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
  */
-final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
+final readonly class XsiTypeEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null> $encoder
@@ -23,20 +25,32 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
     }
 
     /**
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
+     */
+    public function decoratedEncoder(): XmlEncoder
+    {
+        return $this->encoder;
+    }
+
+    /**
      * @return Iso<mixed, mixed, string, Element|string>
      */
     public function iso(Context $context): Iso
     {
         $innerIso = $this->encoder->iso($context);
+        $detectEncoder = $this->encoder instanceof Feature\DisregardXsiInformation
+            ? null
+            : XsiTypeDetector::encoderDetectorForContext($context);
 
         return new Iso(
             function (mixed $value) use ($innerIso) : string {
                 return $this->to($innerIso, $value);
             },
-            function (string|Element $value) use ($context, $innerIso) : mixed {
+            function (string|Element $value) use ($context, $innerIso, $detectEncoder) : mixed {
                 return $this->from(
                     $context,
                     $innerIso,
+                    $detectEncoder,
                     ($value instanceof Element ? $value : Element::fromString(non_empty_string()->assert($value)))
                 );
             }
@@ -60,17 +74,13 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
 
     /**
      * @param IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null> $innerIso
+     * @param (Closure(\Dom\Element): (FixedIsoEncoder<mixed, mixed, string|null, Element|ElementList|string|null>|null))|null $detectEncoder
      */
-    private function from(Context $context, IsoInterface $innerIso, Element $value): mixed
+    private function from(Context $context, IsoInterface $innerIso, ?Closure $detectEncoder, Element $value): mixed
     {
         // xsi:type is an attribute on the element itself, so an element without attributes cannot carry one.
-        $iso = match (true) {
-            $this->encoder instanceof Feature\DisregardXsiInformation => $innerIso,
-            !$value->element()->hasAttributes() => $innerIso,
-            default => XsiTypeDetector::detectEncoderFromXmlElement($context, $value->element())
-                ->map(static fn (XmlEncoder $encoder): IsoInterface => $encoder->iso($context))
-                ->unwrapOr($innerIso),
-        };
+        $element = $value->element();
+        $iso = ($detectEncoder && $element->hasAttributes() ? $detectEncoder($element) : null)?->iso($context) ?? $innerIso;
 
         /** @psalm-suppress ImplicitToStringCast - Encoders accept string|Element in from() */
         return $iso->from($value);

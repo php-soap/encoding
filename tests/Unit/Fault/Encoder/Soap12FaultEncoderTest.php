@@ -13,6 +13,23 @@ use function VeeWee\Xml\Dom\Configurator\trim_spaces;
 #[CoversClass(Soap12Fault::class)]
 final class Soap12FaultEncoderTest extends AbstractFaultEncoderTests
 {
+    public function test_it_writes_the_exact_fault_bytes(): void
+    {
+        $actual = (new Soap12FaultEncoder())->iso()->to(new Soap12Fault(
+            code: 'env:Sender',
+            reason: 'a < b',
+            subCode: 'm:Invalid',
+            node: 'uri:node',
+            role: 'uri:role',
+            detail: '<env:Detail><element>value</element></env:Detail>',
+        ));
+
+        static::assertSame(
+            '<env:Fault xmlns:env="http://www.w3.org/2003/05/soap-envelope"><env:Code><env:Value>env:Sender</env:Value><env:Subcode><env:Value>m:Invalid</env:Value></env:Subcode></env:Code><env:Reason><env:Text>a &lt; b</env:Text></env:Reason><env:Node>uri:node</env:Node><env:Role>uri:role</env:Role><env:Detail><element>value</element></env:Detail></env:Fault>',
+            $actual
+        );
+    }
+
     public static function provideIsomorphicCases(): iterable
     {
         $baseConfig = [

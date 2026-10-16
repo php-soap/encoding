@@ -5,22 +5,20 @@ namespace Soap\Encoding\Xml\Writer;
 
 use Generator;
 use Soap\Encoding\Encoder\Context;
-use VeeWee\Xml\Writer\Writer;
+use VeeWee\Xml\Exception\RuntimeException;
 use XMLWriter;
-use function VeeWee\Xml\Writer\Mapper\memory_output;
 
 final class XsdTypeXmlElementWriter
 {
     /**
      * @param callable(XMLWriter): Generator<bool> $children
      *
+     * @throws RuntimeException
+     *
      * @return non-empty-string
      */
     public function __invoke(Context $context, callable $children): string
     {
-        /** @psalm-var non-empty-string */
-        return Writer::inMemory()
-            ->write(new ElementBuilder($context, $children(...)))
-            ->map(memory_output());
+        return (new InMemoryXmlWriter())(new ElementBuilder($context, $children(...)));
     }
 }

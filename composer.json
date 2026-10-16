@@ -34,12 +34,12 @@
         "php-standard-library/str": "^6.1",
         "php-standard-library/type": "^6.1",
         "php-standard-library/vec": "^6.1",
-        "veewee/reflecta": "^1.1",
-        "veewee/xml": "^4.10",
+        "veewee/reflecta": "^1.2",
+        "veewee/xml": "^4.14",
         "php-soap/engine": "^2.21",
         "php-soap/wsdl": "^1.19",
         "php-soap/xml": "^1.10",
-        "php-soap/wsdl-reader": "~0.32"
+        "php-soap/wsdl-reader": "~0.34"
     },
     "require-dev": {
         "vimeo/psalm": "~6.13",
@@ -53,8 +53,8 @@
         "phpbench/phpbench": "^1.6"
     },
     "scripts": {
-        "test:throws": "@php -d xdebug.mode=develop vendor/bin/phpunit --group no-throws --fail-on-skipped",
-        "throws:report": "@php -d xdebug.mode=develop vendor/bin/phpunit --no-progress --no-results --do-not-fail-on-risky --extension 'Soap\\Encoding\\Test\\Support\\Throws\\ThrowAttributionExtension'"
+        "test:throws": "@php -d xdebug.mode=develop -d zend.exception_ignore_args=1 vendor/bin/phpunit --group no-throws --fail-on-skipped",
+        "throws:report": "@php -d xdebug.mode=develop -d zend.exception_ignore_args=1 vendor/bin/phpunit --no-progress --no-results --do-not-fail-on-risky --extension 'Soap\\Encoding\\Test\\Support\\Throws\\ThrowAttributionExtension'"
     },
     "config": {
         "allow-plugins": {

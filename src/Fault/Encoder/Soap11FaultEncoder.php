@@ -5,10 +5,10 @@ namespace Soap\Encoding\Fault\Encoder;
 
 use Soap\Encoding\Fault\Soap11Fault;
 use Soap\Encoding\Restriction\WhitespaceRestriction;
+use Soap\Encoding\Xml\Writer\InMemoryXmlWriter;
 use Soap\Xml\Xmlns;
 use VeeWee\Reflecta\Iso\Iso;
 use VeeWee\Xml\Dom\Document;
-use VeeWee\Xml\Writer\Writer;
 use function Psl\invariant;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
 use function VeeWee\Xml\Writer\Builder\children;
@@ -16,7 +16,6 @@ use function VeeWee\Xml\Writer\Builder\element;
 use function VeeWee\Xml\Writer\Builder\namespaced_element;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value;
-use function VeeWee\Xml\Writer\Mapper\memory_output;
 
 /**
  * @implements SoapFaultEncoder<Soap11Fault>
@@ -41,9 +40,8 @@ final class Soap11FaultEncoder implements SoapFaultEncoder
     {
         $envNamespace = Xmlns::soap11Envelope()->value();
 
-        /** @var non-empty-string */
-        return Writer::inMemory()
-            ->write(children([
+        return (new InMemoryXmlWriter())(
+            children([
                 namespaced_element(
                     $envNamespace,
                     'env',
@@ -70,8 +68,8 @@ final class Soap11FaultEncoder implements SoapFaultEncoder
                         ...($fault->detail !== null ? [raw($fault->detail)] : []),
                     ])
                 )
-            ]))
-            ->map(memory_output());
+            ])
+        );
     }
 
     /**

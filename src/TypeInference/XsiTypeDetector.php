@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\TypeInference;
 
+use Closure;
 use Dom\Element;
 use Psl\Option\Option;
 use Soap\Encoding\Cache\ScopedCache;
@@ -20,6 +21,7 @@ use function is_bool;
 use function is_float;
 use function is_int;
 use function is_string;
+use function Psl\Option\from_nullable;
 use function Psl\Option\none;
 use function Psl\Option\some;
 use function sprintf;
@@ -63,32 +65,12 @@ final class XsiTypeDetector
      */
     public static function detectXsdTypeFromXmlElement(Context $context, Element $element): Option
     {
-        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type') ?? $element->getAttribute('xsi:type');
-        if ($xsiType === null || $xsiType === '') {
+        $qname = self::detectQNameFromXmlElement($context, $element);
+        if ($qname === null) {
             return none();
         }
 
-        [$prefix, $localName] = (new QnameParser)($xsiType);
-        if (!$localName) {
-            return none();
-        }
-
-        $namespaceUri = $prefix
-            ? $element->lookupNamespaceURI($prefix) ?? $context->namespaces->lookupNamespaceFromName($prefix)->unwrapOr(null)
-            : $element->lookupNamespaceURI(null) ?? $element->namespaceURI;
-
-        if ($namespaceUri === null || $namespaceUri === '') {
-            return none();
-        }
-
-        return some(
-            // We create a new type based on the detected xsi:type, but we keep the meta information of the original type.
-            // This way we can still detect if the type is nullable, a union, used on an element, ...
-            $context->type
-                ->copy($localName)
-                ->withXmlTypeName($localName)
-                ->withXmlNamespace($namespaceUri)
-        );
+        return some(self::createXsdType($context, $qname[0], $qname[1]));
     }
 
     /**
@@ -96,19 +78,34 @@ final class XsiTypeDetector
      */
     public static function detectEncoderFromXmlElement(Context $context, Element $element): Option
     {
-        $requestedXsiType = self::detectXsdTypeFromXmlElement($context, $element);
-        if (!$requestedXsiType->isSome()) {
-            return none();
-        }
+        return from_nullable(self::encoderDetectorForContext($context)($element));
+    }
 
-        $requestedType = $requestedXsiType->unwrap();
+    /**
+     * The slot part of the cache key only depends on the context,
+     * so an iso can resolve it once and reuse the detector for every element it decodes.
+     *
+     * @internal
+     *
+     * @return Closure(Element): (FixedIsoEncoder<mixed, mixed, string|null, XmlElement|ElementList|string|null>|null)
+     */
+    public static function encoderDetectorForContext(Context $context): Closure
+    {
+        $slotKey = self::slotKey($context->type->getMeta());
 
-        return some(
-            self::cache()->lookup(
+        return static function (Element $element) use ($context, $slotKey): ?FixedIsoEncoder {
+            $qname = self::detectQNameFromXmlElement($context, $element);
+            if ($qname === null) {
+                return null;
+            }
+
+            [$namespaceUri, $localName] = $qname;
+
+            return self::cache()->lookup(
                 $context->registry,
-                self::cacheKey($requestedType),
-                static function () use ($context, $requestedType): FixedIsoEncoder {
-                    $type = self::withResolvedSimpleness($context, $requestedType);
+                $namespaceUri . '|' . $localName . '|' . $slotKey,
+                static function () use ($context, $namespaceUri, $localName): FixedIsoEncoder {
+                    $type = self::withResolvedSimpleness($context, self::createXsdType($context, $namespaceUri, $localName));
                     $normalizedMeta = $type->getMeta()
                         ->withIsNullable(false)
                         ->withIsRepeatingElement(false);
@@ -122,16 +119,51 @@ final class XsiTypeDetector
                         )
                     );
                 }
-            )
-        );
+            );
+        };
     }
 
-    private static function cacheKey(XsdType $type): string
+    /**
+     * @return array{non-empty-string, non-empty-string}|null
+     */
+    private static function detectQNameFromXmlElement(Context $context, Element $element): ?array
     {
-        $meta = $type->getMeta();
+        $xsiType = $element->getAttributeNS(Xmlns::xsi()->value(), 'type') ?? $element->getAttribute('xsi:type');
+        if ($xsiType === null || $xsiType === '') {
+            return null;
+        }
 
-        return $type->getXmlNamespace() . '|' . $type->getXmlTypeName()
-            . '|' . ($meta->isElement()->unwrapOr(false) ? 'e' : '')
+        [$prefix, $localName] = (new QnameParser)($xsiType);
+        if (!$localName) {
+            return null;
+        }
+
+        $namespaceUri = $prefix
+            ? $element->lookupNamespaceURI($prefix) ?? $context->namespaces->lookupNamespaceFromName($prefix)->unwrapOr(null)
+            : $element->lookupNamespaceURI(null) ?? $element->namespaceURI;
+
+        if ($namespaceUri === null || $namespaceUri === '') {
+            return null;
+        }
+
+        return [$namespaceUri, $localName];
+    }
+
+    /**
+     * We create a new type based on the detected xsi:type, but we keep the meta information of the original type.
+     * This way we can still detect if the type is nullable, a union, used on an element, ...
+     */
+    private static function createXsdType(Context $context, string $namespaceUri, string $localName): XsdType
+    {
+        return $context->type
+            ->copy($localName)
+            ->withXmlTypeName($localName)
+            ->withXmlNamespace($namespaceUri);
+    }
+
+    private static function slotKey(TypeMeta $meta): string
+    {
+        return ($meta->isElement()->unwrapOr(false) ? 'e' : '')
             . ($meta->isAttribute()->unwrapOr(false) ? 'a' : '')
             . ($meta->isNullable()->unwrapOr(false) ? 'n' : '')
             . ($meta->isList()->unwrapOr(false) ? 'l' : '')

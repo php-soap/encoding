@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace Soap\Encoding\Encoder;
 
-use Exception;
 use Soap\Encoding\Xml\Node\Element;
-use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
+use Soap\Encoding\Xml\Node\ElementList;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use VeeWee\Reflecta\Iso\Iso;
-use VeeWee\Reflecta\Lens\LensInterface;
 use function is_array;
 use function Psl\Fun\lazy;
 use function VeeWee\Reflecta\Iso\object_data;
+use function VeeWee\Reflecta\Reflect\property_is_initialized;
 use function VeeWee\Xml\Writer\Builder\children as writeChildren;
 use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
@@ -70,9 +70,8 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function to(Context $context, ObjectAccess $objectAccess, object|array $data): string
     {
-        if (is_array($data)) {
-            $data = (object) $data;
-        }
+        /** @var object $data */
+        $data = is_array($data) ? (object) $data : $data;
         $defaultAction = writeChildren([]);
 
         $children = [
@@ -85,10 +84,15 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         ];
         foreach ($objectAccess->properties as $normalizePropertyName => $property) {
             /** @var mixed $value */
-            $value = self::runLens(
-                $objectAccess->encoderLenses[$normalizePropertyName],
-                $data
-            );
+            $value = $objectAccess->encodeReaders[$normalizePropertyName]($data);
+            if ($value === null && match ($objectAccess->onNull[$normalizePropertyName]) {
+                NullValueHandling::Write => false,
+                NullValueHandling::Skip => true,
+                NullValueHandling::SkipWhenAbsent => !property_is_initialized($data, $normalizePropertyName),
+            }) {
+                continue;
+            }
+
             $iso = $objectAccess->isos[$normalizePropertyName];
 
             $children[] = match(true) {
@@ -114,17 +118,14 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function from(Context $context, ObjectAccess $objectAccess, Element $data): object
     {
-        $nodes = (new DocumentToLookupArrayReader())($data);
+        $lookup = ElementLookup::fromElement($data);
         /** @var Iso<TObj, TObj, array<string, mixed>, array<string, mixed>> $objectData */
         $objectData = object_data($this->className);
 
         $result = [];
         foreach ($objectAccess->isos as $normalizePropertyName => $iso) {
-            /** @var string|null $value */
-            $value = self::runLens(
-                $objectAccess->decoderLenses[$normalizePropertyName],
-                $nodes,
-            );
+            /** @var Element|ElementList|string|null $value */
+            $value = $objectAccess->decodeReaders[$normalizePropertyName]($lookup);
 
             /**
              * @var mixed
@@ -138,15 +139,5 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
         }
 
         return $objectData->from($result);
-    }
-
-    private static function runLens(LensInterface $lens, mixed $data, mixed $default = null): mixed
-    {
-        try {
-            /** @var mixed */
-            return $lens->get($data);
-        } catch (Exception $e) {
-            return $default;
-        }
     }
 }
