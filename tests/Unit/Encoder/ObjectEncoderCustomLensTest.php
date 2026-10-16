@@ -57,6 +57,21 @@ final class ObjectEncoderCustomLensTest extends TestCase
         static::assertSame(1, ThrowingLensEncoder::$decoderLensReads);
     }
 
+    public function test_it_gives_custom_lenses_the_child_when_an_attribute_has_the_same_name(): void
+    {
+        $actual = $this->iso()->from('<user custom="attribute"><id>1</id><custom>c</custom></user>');
+
+        static::assertEquals((object) ['id' => 1, 'custom' => 'c', 'any' => []], $actual);
+        static::assertSame(1, ThrowingLensEncoder::$decoderLensReads);
+    }
+
+    public function test_it_keeps_any_children_when_an_attribute_has_the_same_name(): void
+    {
+        $actual = $this->iso()->from('<user type="attribute"><id>1</id><custom>c</custom><type>x</type></user>');
+
+        static::assertEquals((object) ['id' => 1, 'custom' => 'c', 'any' => ['<type>x</type>']], $actual);
+    }
+
     public function test_it_encodes_through_custom_lenses_that_throw_on_a_missing_property(): void
     {
         $actual = $this->iso()->to((object) ['id' => 1, 'any' => ['<extra>x</extra>']]);

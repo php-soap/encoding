@@ -32,6 +32,10 @@ final class Schema038Test extends AbstractCompatibilityTests
         ];
     }
 
+    /**
+     * ext-soap writes int="123" without namespace. A global attribute is always qualified in XSD,
+     * so the reference to tns:int is written in the target namespace instead.
+     */
     protected function expectXml(): string
     {
         return <<<XML
@@ -40,7 +44,7 @@ final class Schema038Test extends AbstractCompatibilityTests
                            xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
             <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                 <tns:test>
-                    <testParam int="123" xsi:type="tns:testType">
+                    <testParam tns:int="123" xsi:type="tns:testType">
                         <str xsi:type="xsd:string">str</str>
                     </testParam>
                 </tns:test>

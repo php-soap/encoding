@@ -4,7 +4,7 @@ namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
-use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use VeeWee\Reflecta\Iso\Iso;
@@ -21,9 +21,7 @@ use function Psl\Type\vec;
 /**
  * @implements XmlEncoder<array|string|null, array<array-key, string>|string|null, string, ElementList|string>
  *
- * @psalm-import-type LookupArray from DocumentToLookupArrayReader
- *
- * @template-implements Feature\ProvidesObjectDecoderLens<LookupArray, LookupArray, ElementList, ElementList>
+ * @template-implements Feature\ProvidesObjectDecoderLens<ElementLookup, ElementLookup, ElementList, ElementList>
  */
 final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAware, Feature\ProvidesObjectDecoderLens, XmlEncoder
 {
@@ -32,32 +30,27 @@ final class AnyElementEncoder implements Feature\ListAware, Feature\OptionalAwar
      * It will contain all the XML tags available in the object that is surrounding the 'any' property.
      * Properties that are already known by the object, will be omitted.
      *
-     * @return Lens<LookupArray, LookupArray, ElementList, ElementList>
+     * @return Lens<ElementLookup, ElementLookup, ElementList, ElementList>
      */
     public static function createObjectDecoderLens(Type $parentType, Property $currentProperty): Lens
     {
-        $omittedKeys = reduce(
+        $omittedKeys = array_flip(reduce(
             $parentType->getProperties(),
             static fn (array $omit, Property $property): array => [
                 ...$omit,
                 ...($property->getName() !== $currentProperty->getName() ? [$property->getName()] : []),
             ],
             []
-        );
+        ));
 
-        /**
-         * @param LookupArray $data
-         * @return LookupArray
-         */
-        $omit = static fn (array $data): array => diff_by_key($data, array_flip($omittedKeys));
-
-        /** @var Lens<LookupArray, LookupArray, ElementList, ElementList> */
+        /** @var Lens<ElementLookup, ElementLookup, ElementList, ElementList> */
         return Lens::readonly(
-            /**
-             * @psalm-suppress MixedArgumentTypeCoercion - Psalm gets confused about the result of omit.
-             * @param LookupArray $data
-             */
-            static fn (array $data): ElementList => ElementList::fromLookupArray($omit($data))
+            static function (ElementLookup $lookup) use ($omittedKeys): ElementList {
+                /** @var array<string, Element|ElementList> $children */
+                $children = diff_by_key($lookup->children(), $omittedKeys);
+
+                return ElementList::fromLookupArray($children);
+            }
         );
     }
 

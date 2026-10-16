@@ -6,7 +6,6 @@ namespace Soap\Encoding\Xml\Node;
 use Closure;
 use Countable;
 use Dom\Element as DomElement;
-use Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader;
 use Stringable;
 use VeeWee\Xml\Dom\Document;
 use function count;
@@ -14,9 +13,6 @@ use function Psl\Iter\reduce;
 use function Psl\Vec\map;
 use function VeeWee\Xml\Dom\Locator\Element\children as readChildren;
 
-/**
- * @psalm-import-type LookupArray from DocumentToLookupArrayReader
- */
 final class ElementList implements Countable, Stringable
 {
     /** @var list<Element> */
@@ -31,11 +27,9 @@ final class ElementList implements Countable, Stringable
     }
 
     /**
-     * Can be used to parse a nested array structure to a full flattened ElementList.
+     * Flattens elements and lists of elements into one list. Strings are simple values and are skipped.
      *
-     * @see \Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader::__invoke
-     *
-     * @param LookupArray $data
+     * @param array<array-key, string|Element|ElementList> $data
      */
     public static function fromLookupArray(array $data): self
     {

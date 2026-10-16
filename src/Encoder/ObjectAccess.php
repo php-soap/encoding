@@ -9,14 +9,16 @@ use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
+use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\IsoInterface;
+use VeeWee\Reflecta\Lens\Lens;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Lens\optional;
-use function VeeWee\Reflecta\Lens\optional_index;
 use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
@@ -27,7 +29,7 @@ final class ObjectAccess
      *
      * @param array<string, Property> $properties The metadata properties, attributes first.
      * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses Reads the property value from the PHP object on encode.
-     * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the lookup array of the element on decode.
+     * @param array<string, LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the element on decode.
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
      * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
@@ -105,7 +107,7 @@ final class ObjectAccess
             $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
             $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
             $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? optional_index($name);
+                ?? self::createDecoderLens($name, $propertyType);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
@@ -161,7 +163,26 @@ final class ObjectAccess
     }
 
     /**
-     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>|null
+     * @return LensInterface<ElementLookup, ElementLookup, mixed, mixed>
+     */
+    private static function createDecoderLens(string $name, XsdType $type): LensInterface
+    {
+        $meta = $type->getMeta();
+        if ($meta->isAttribute()->unwrapOr(false)) {
+            $namespace = $meta->isQualified()->unwrapOr(false) ? $type->getXmlTargetNamespace() : '';
+
+            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace));
+        }
+
+        if ($name === '_') {
+            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->text());
+        }
+
+        return Lens::readonly(static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name));
+    }
+
+    /**
+     * @return LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>|null
      */
     private static function createCustomDecoderLens(
         bool $shouldLensBeOptional,
