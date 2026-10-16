@@ -2,6 +2,7 @@
 
 namespace Soap\Encoding\Encoder;
 
+use Closure;
 use Soap\Encoding\TypeInference\XsiTypeDetector;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
@@ -37,15 +38,19 @@ final readonly class XsiTypeEncoder implements Feature\DecoratingEncoder, Featur
     public function iso(Context $context): Iso
     {
         $innerIso = $this->encoder->iso($context);
+        $detectEncoder = $this->encoder instanceof Feature\DisregardXsiInformation
+            ? null
+            : XsiTypeDetector::encoderDetectorForContext($context);
 
         return new Iso(
             function (mixed $value) use ($innerIso) : string {
                 return $this->to($innerIso, $value);
             },
-            function (string|Element $value) use ($context, $innerIso) : mixed {
+            function (string|Element $value) use ($context, $innerIso, $detectEncoder) : mixed {
                 return $this->from(
                     $context,
                     $innerIso,
+                    $detectEncoder,
                     ($value instanceof Element ? $value : Element::fromString(non_empty_string()->assert($value)))
                 );
             }
@@ -69,15 +74,11 @@ final readonly class XsiTypeEncoder implements Feature\DecoratingEncoder, Featur
 
     /**
      * @param IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null> $innerIso
+     * @param (Closure(\Dom\Element): (FixedIsoEncoder<mixed, mixed, string|null, Element|ElementList|string|null>|null))|null $detectEncoder
      */
-    private function from(Context $context, IsoInterface $innerIso, Element $value): mixed
+    private function from(Context $context, IsoInterface $innerIso, ?Closure $detectEncoder, Element $value): mixed
     {
-        $iso = match (true) {
-            $this->encoder instanceof Feature\DisregardXsiInformation => $innerIso,
-            default => XsiTypeDetector::detectEncoderFromXmlElement($context, $value->element())
-                ->map(static fn (XmlEncoder $encoder): IsoInterface => $encoder->iso($context))
-                ->unwrapOr($innerIso),
-        };
+        $iso = ($detectEncoder ? $detectEncoder($value->element()) : null)?->iso($context) ?? $innerIso;
 
         /** @psalm-suppress ImplicitToStringCast - Encoders accept string|Element in from() */
         return $iso->from($value);
