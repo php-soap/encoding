@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Closure;
-use Exception;
 use Soap\Encoding\Cache\ScopedCache;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
@@ -19,7 +18,6 @@ use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\IsoInterface;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
-use function VeeWee\Reflecta\Lens\optional;
 use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
@@ -29,8 +27,8 @@ final class ObjectAccess
      * Every array is keyed by the normalized PHP property name.
      *
      * @param array<string, Property> $properties The metadata properties, attributes first.
-     * @param array<string, Closure(object): mixed> $encodeReaders Reads the property value from the PHP object on encode, null when the lens fails.
-     * @param array<string, Closure(ElementLookup): mixed> $decodeReaders Reads the raw XML value from the element on decode, null when a custom decoder lens fails.
+     * @param array<string, Closure(object): mixed> $encodeReaders Reads the property value from the PHP object on encode.
+     * @param array<string, Closure(ElementLookup): mixed> $decodeReaders Reads the raw XML value from the element on decode.
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
      * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
@@ -102,19 +100,18 @@ final class ObjectAccess
             $normalizedName = PhpPropertyNameNormalizer::normalize($name);
 
             $encoder = $context->registry->detectEncoderForContext($propertyContext);
-            $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
+            $customEncoderLens = self::createCustomEncoderLens($encoder, $type, $property);
             /** @var Closure(object): mixed $encodeReader */
-            $encodeReader = $customEncoderLens !== null
-                ? self::readOrNull($customEncoderLens)
-                : optional_property($normalizedName)->get(...);
+            $encodeReader = ($customEncoderLens ?? optional_property($normalizedName))->get(...);
             $encodeReaders[$normalizedName] = $encodeReader;
-            $customDecoderLens = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property);
-            $decodeReaders[$normalizedName] = $customDecoderLens !== null
-                ? self::readOrNull($customDecoderLens)
+            $customDecoderLens = self::createCustomDecoderLens($encoder, $type, $property);
+            /** @var Closure(ElementLookup): mixed $decodeReader */
+            $decodeReader = $customDecoderLens !== null
+                ? $customDecoderLens->get(...)
                 : self::createDecoderReader($name, $propertyType);
+            $decodeReaders[$normalizedName] = $decodeReader;
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
@@ -151,41 +148,14 @@ final class ObjectAccess
      * @return LensInterface<object|null, object|null, mixed, mixed>|null
      */
     private static function createCustomEncoderLens(
-        bool $shouldLensBeOptional,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
     ): ?LensInterface {
-        $lens = match (true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createCustomEncoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
+        return match (true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomEncoderLens($encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectEncoderLens => $encoder::createObjectEncoderLens($type, $property),
             default => null,
-        };
-
-        if ($lens === null) {
-            return null;
-        }
-
-        return $shouldLensBeOptional ? optional($lens) : $lens;
-    }
-
-    /**
-     * Custom lenses may throw on a missing value, the encoder treats that as null.
-     *
-     * @template S
-     *
-     * @param LensInterface<S, S, mixed, mixed> $lens
-     *
-     * @return Closure(S): mixed
-     */
-    private static function readOrNull(LensInterface $lens): Closure
-    {
-        return static function (mixed $data) use ($lens): mixed {
-            try {
-                return $lens->get($data);
-            } catch (Exception) {
-                return null;
-            }
         };
     }
 
@@ -212,37 +182,14 @@ final class ObjectAccess
      * @return LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>|null
      */
     private static function createCustomDecoderLens(
-        bool $shouldLensBeOptional,
         XmlEncoder $encoder,
         Type $type,
         Property $property,
     ): ?LensInterface {
-        $lens = match(true) {
-            $encoder instanceof Feature\DecoratingEncoder => self::createCustomDecoderLens($shouldLensBeOptional, $encoder->decoratedEncoder(), $type, $property),
+        return match(true) {
+            $encoder instanceof Feature\DecoratingEncoder => self::createCustomDecoderLens($encoder->decoratedEncoder(), $type, $property),
             $encoder instanceof Feature\ProvidesObjectDecoderLens => $encoder::createObjectDecoderLens($type, $property),
             default => null,
         };
-
-        if ($lens === null) {
-            return null;
-        }
-
-        return $shouldLensBeOptional ? optional($lens) : $lens;
-    }
-
-    private static function shouldLensBeOptional(TypeMeta $meta): bool
-    {
-        if ($meta->isNullable()->unwrapOr(false)) {
-            return true;
-        }
-
-        if (
-            $meta->isAttribute()->unwrapOr(false) &&
-            $meta->use()->unwrapOr('optional') === 'optional'
-        ) {
-            return true;
-        }
-
-        return false;
     }
 }
