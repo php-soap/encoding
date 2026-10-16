@@ -113,7 +113,10 @@ trait ComplexTypeBenchTrait
         $this->extSoapEncoded->__soapCall('test', ['testParam' => $this->singleItem]);
     }
 
-    private function buildPhpSoapDriver(string $use): Driver
+    /**
+     * @param string $occurs extra attributes for every element of addressType and itemType, for example minOccurs="0"
+     */
+    private function buildPhpSoapDriver(string $use, string $occurs = ''): Driver
     {
         $encodingStyle = $use === 'encoded'
             ? ' encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"'
@@ -134,22 +137,22 @@ trait ComplexTypeBenchTrait
            <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
             <complexType name="addressType">
                 <sequence>
-                    <element name="street" type="xsd:string"/>
-                    <element name="city" type="xsd:string"/>
-                    <element name="zip" type="xsd:string"/>
+                    <element name="street" type="xsd:string"{$occurs}/>
+                    <element name="city" type="xsd:string"{$occurs}/>
+                    <element name="zip" type="xsd:string"{$occurs}/>
                 </sequence>
             </complexType>
             <complexType name="itemType">
                 <sequence>
-                    <element name="id" type="xsd:int"/>
-                    <element name="name" type="xsd:string"/>
-                    <element name="description" type="xsd:string"/>
-                    <element name="price" type="xsd:float"/>
-                    <element name="quantity" type="xsd:int"/>
-                    <element name="active" type="xsd:boolean"/>
-                    <element name="sku" type="xsd:string"/>
-                    <element name="category" type="xsd:string"/>
-                    <element name="address" type="tns:addressType"/>
+                    <element name="id" type="xsd:int"{$occurs}/>
+                    <element name="name" type="xsd:string"{$occurs}/>
+                    <element name="description" type="xsd:string"{$occurs}/>
+                    <element name="price" type="xsd:float"{$occurs}/>
+                    <element name="quantity" type="xsd:int"{$occurs}/>
+                    <element name="active" type="xsd:boolean"{$occurs}/>
+                    <element name="sku" type="xsd:string"{$occurs}/>
+                    <element name="category" type="xsd:string"{$occurs}/>
+                    <element name="address" type="tns:addressType"{$occurs}/>
                 </sequence>
             </complexType>
           </schema>

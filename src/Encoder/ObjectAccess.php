@@ -9,14 +9,16 @@ use Soap\Encoding\Normalizer\PhpPropertyNameNormalizer;
 use Soap\Encoding\TypeInference\ComplexTypeBuilder;
 use Soap\Encoding\Xml\Node\Element;
 use Soap\Encoding\Xml\Node\ElementList;
+use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Engine\Metadata\Model\Property;
 use Soap\Engine\Metadata\Model\Type;
 use Soap\Engine\Metadata\Model\TypeMeta;
+use Soap\Engine\Metadata\Model\XsdType;
 use VeeWee\Reflecta\Iso\IsoInterface;
+use VeeWee\Reflecta\Lens\Lens;
 use VeeWee\Reflecta\Lens\LensInterface;
 use function Psl\Vec\sort_by;
 use function VeeWee\Reflecta\Lens\optional;
-use function VeeWee\Reflecta\Lens\optional_index;
 use function VeeWee\Reflecta\Lens\optional_property;
 
 final class ObjectAccess
@@ -27,11 +29,12 @@ final class ObjectAccess
      *
      * @param array<string, Property> $properties The metadata properties, attributes first.
      * @param array<string, LensInterface<object|null, object|null, mixed, mixed>> $encoderLenses Reads the property value from the PHP object on encode.
-     * @param array<string, LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the lookup array of the element on decode.
+     * @param array<string, LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>> $decoderLenses Reads the raw XML value from the element on decode.
      * @param array<string, IsoInterface<mixed, mixed, string|null, Element|ElementList|string|null>> $isos Converts between the PHP value and its XML form.
      * @param bool $isAnyPropertyQualified Whether at least one property is namespace qualified.
      * @param array<string, bool> $isAttribute Whether the property is an XML attribute instead of a child element.
      * @param array<string, list<never>|null> $decodeDefaultValues The value a property decodes to when its element is missing from the XML.
+     * @param array<string, bool> $omitWhenAbsent Whether encoding leaves the element out, instead of writing xsi:nil, when the property is absent from the PHP value.
      */
     public function __construct(
         public readonly array $properties,
@@ -41,6 +44,7 @@ final class ObjectAccess
         public readonly bool  $isAnyPropertyQualified,
         public readonly array $isAttribute,
         public readonly array $decodeDefaultValues,
+        public readonly array $omitWhenAbsent,
     ) {
     }
 
@@ -86,6 +90,7 @@ final class ObjectAccess
         $isos = [];
         $isAttribute = [];
         $decodeDefaultValues = [];
+        $omitWhenAbsent = [];
         $isAnyPropertyQualified = false;
 
         foreach ($sortedProperties as $property) {
@@ -99,13 +104,14 @@ final class ObjectAccess
             $shouldLensBeOptional = self::shouldLensBeOptional($propertyTypeMeta);
             $normalizedProperties[$normalizedName] = $property;
 
-            $encoderLenses[$normalizedName] = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? optional_property($normalizedName);
+            $customEncoderLens = self::createCustomEncoderLens($shouldLensBeOptional, $encoder, $type, $property);
+            $encoderLenses[$normalizedName] = $customEncoderLens ?? optional_property($normalizedName);
             $decoderLenses[$normalizedName] = self::createCustomDecoderLens($shouldLensBeOptional, $encoder, $type, $property)
-                ?? optional_index($name);
+                ?? self::createDecoderLens($name, $propertyType);
             $isos[$normalizedName] = $encoder->iso($propertyContext);
             $isAttribute[$normalizedName] = $propertyTypeMeta->isAttribute()->unwrapOr(false);
             $decodeDefaultValues[$normalizedName] = $propertyTypeMeta->isList()->unwrapOr(false) ? [] : null;
+            $omitWhenAbsent[$normalizedName] = $customEncoderLens === null && self::mayBeAbsent($name, $propertyTypeMeta);
 
             $isAnyPropertyQualified = $isAnyPropertyQualified || $propertyTypeMeta->isQualified()->unwrapOr(false);
         }
@@ -118,7 +124,20 @@ final class ObjectAccess
             $isAnyPropertyQualified,
             $isAttribute,
             $decodeDefaultValues,
+            $omitWhenAbsent,
         );
+    }
+
+    /**
+     * Null and absent only encode differently for an optional nillable element: null writes xsi:nil, absent writes nothing.
+     * Every other element, attribute and the '_' text value encodes null and absent the same way.
+     */
+    private static function mayBeAbsent(string $propertyName, TypeMeta $meta): bool
+    {
+        return $propertyName !== '_'
+            && !$meta->isAttribute()->unwrapOr(false)
+            && $meta->isNil()->unwrapOr(false)
+            && $meta->minOccurs()->unwrapOr(1) === 0;
     }
 
     /**
@@ -144,7 +163,26 @@ final class ObjectAccess
     }
 
     /**
-     * @return LensInterface<array<array-key, mixed>|null, array<array-key, mixed>|null, mixed, mixed>|null
+     * @return LensInterface<ElementLookup, ElementLookup, mixed, mixed>
+     */
+    private static function createDecoderLens(string $name, XsdType $type): LensInterface
+    {
+        $meta = $type->getMeta();
+        if ($meta->isAttribute()->unwrapOr(false)) {
+            $namespace = $meta->isQualified()->unwrapOr(false) ? $type->getXmlTargetNamespace() : '';
+
+            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->attribute($name, $namespace));
+        }
+
+        if ($name === '_') {
+            return Lens::readonly(static fn (ElementLookup $lookup): ?string => $lookup->text());
+        }
+
+        return Lens::readonly(static fn (ElementLookup $lookup): Element|ElementList|null => $lookup->element($name));
+    }
+
+    /**
+     * @return LensInterface<ElementLookup|null, ElementLookup|null, mixed, mixed>|null
      */
     private static function createCustomDecoderLens(
         bool $shouldLensBeOptional,

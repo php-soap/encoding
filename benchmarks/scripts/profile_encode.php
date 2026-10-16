@@ -204,12 +204,12 @@ for ($i = 0; $i < $N; $i++) {
 }
 printf("typeIso->from(\$element) (no parse):   %6.1fus/call\n", (hrtime(true) - $t0) / 1e3 / $N);
 
-// Step 4: Just DocumentToLookupArrayReader
+// Step 4: ElementLookup, what ObjectEncoder decodes from
 $t0 = hrtime(true);
 for ($i = 0; $i < $N; $i++) {
-    (new \Soap\Encoding\Xml\Reader\DocumentToLookupArrayReader())($partElement);
+    \Soap\Encoding\Xml\Node\ElementLookup::fromElement($partElement);
 }
-printf("DocumentToLookupArrayReader:          %6.1fus/call\n", (hrtime(true) - $t0) / 1e3 / $N);
+printf("ElementLookup::fromElement:           %6.1fus/call\n", (hrtime(true) - $t0) / 1e3 / $N);
 
 // Step 5: object_data from (properties_set)
 $objectDataIso = \VeeWee\Reflecta\Iso\object_data(\stdClass::class);

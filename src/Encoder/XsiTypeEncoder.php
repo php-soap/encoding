@@ -11,8 +11,9 @@ use function Psl\Type\non_empty_string;
 
 /**
  * @implements XmlEncoder<mixed, mixed, string, Element|string>
+ * @implements Feature\DecoratingEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
  */
-final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
+final readonly class XsiTypeEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null> $encoder
@@ -20,6 +21,14 @@ final readonly class XsiTypeEncoder implements Feature\ElementAware, XmlEncoder
     public function __construct(
         private XmlEncoder $encoder
     ) {
+    }
+
+    /**
+     * @return XmlEncoder<mixed, mixed, string|null, Element|ElementList|string|null>
+     */
+    public function decoratedEncoder(): XmlEncoder
+    {
+        return $this->encoder;
     }
 
     /**
