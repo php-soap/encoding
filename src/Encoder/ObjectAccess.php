@@ -137,13 +137,13 @@ final class ObjectAccess
         Context $context,
         bool $hasCustomEncoderLens,
     ): NullValueHandling {
-        if ($propertyName === '_' || $meta->isAttribute()->unwrapOr(false) || !$encoder instanceof Feature\NullValueAware) {
-            return NullValueHandling::Write;
-        }
-
-        $handling = $encoder->nullValueHandling($context);
-
-        return $hasCustomEncoderLens && $handling === NullValueHandling::SkipWhenAbsent ? NullValueHandling::Write : $handling;
+        return match (true) {
+            $propertyName === '_' => NullValueHandling::Write,
+            $meta->isAttribute()->unwrapOr(false) => NullValueHandling::Write,
+            !$encoder instanceof Feature\NullValueAware => NullValueHandling::Write,
+            $hasCustomEncoderLens && $encoder->nullValueHandling($context) === NullValueHandling::SkipWhenAbsent => NullValueHandling::Write,
+            default => $encoder->nullValueHandling($context),
+        };
     }
 
     /**
