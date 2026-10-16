@@ -18,7 +18,7 @@ use function is_string;
  * @implements XmlEncoder<T, T, string, ElementList|Element|string>
  * @implements Feature\DecoratingEncoder<T, T, string|null, ElementList|Element|string|null>
  */
-final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, Feature\OptionalAware, XmlEncoder
+final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature\ElementAware, Feature\NullValueAware, Feature\OptionalAware, XmlEncoder
 {
     /**
      * @param XmlEncoder<T, T, string|null, ElementList|Element|string|null> $elementEncoder
@@ -34,6 +34,18 @@ final class OptionalElementEncoder implements Feature\DecoratingEncoder, Feature
     public function decoratedEncoder(): XmlEncoder
     {
         return $this->elementEncoder;
+    }
+
+    public function nullValueHandling(Context $context): NullValueHandling
+    {
+        $meta = $context->type->getMeta();
+
+        return match (true) {
+            !$meta->isNullable()->unwrapOr(false) => NullValueHandling::Write,
+            !$meta->isNil()->unwrapOr(false) => NullValueHandling::Skip,
+            $meta->minOccurs()->unwrapOr(1) === 0 => NullValueHandling::SkipWhenAbsent,
+            default => NullValueHandling::Write,
+        };
     }
 
     /**

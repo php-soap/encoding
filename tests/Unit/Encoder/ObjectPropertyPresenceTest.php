@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
 use Soap\Encoding\Encoder\Context;
+use Soap\Encoding\Encoder\NullValueHandling;
 use Soap\Encoding\Encoder\ObjectAccess;
 use Soap\Encoding\Encoder\ObjectEncoder;
 use Soap\Encoding\Encoder\XmlEncoder;
@@ -112,21 +113,21 @@ final class ObjectPropertyPresenceTest extends TestCase
     #[Test]
     public function only_optional_nillable_elements_with_the_default_lens_are_left_out_when_absent(): void
     {
-        $eligibility = ObjectAccess::forContext(self::context('eligibilityType', new ThrowingLensEncoder()))->omitWhenAbsent;
-        $text = ObjectAccess::forContext(self::context('textType'))->omitWhenAbsent;
+        $eligibility = ObjectAccess::forContext(self::context('eligibilityType', new ThrowingLensEncoder()))->onNull;
+        $text = ObjectAccess::forContext(self::context('textType'))->onNull;
 
         static::assertSame(
             [
-                'attribute' => false,
-                'optionalNillable' => true,
-                'optionalNillableList' => true,
-                'requiredNillable' => false,
-                'optional' => false,
-                'custom' => false,
+                'attribute' => NullValueHandling::Write,
+                'optionalNillable' => NullValueHandling::SkipWhenAbsent,
+                'optionalNillableList' => NullValueHandling::SkipWhenAbsent,
+                'requiredNillable' => NullValueHandling::Write,
+                'optional' => NullValueHandling::Skip,
+                'custom' => NullValueHandling::Write,
             ],
             $eligibility
         );
-        static::assertSame(['attribute' => false, '_' => false], $text);
+        static::assertSame(['attribute' => NullValueHandling::Write, '_' => NullValueHandling::Write], $text);
     }
 
     /**
