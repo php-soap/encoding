@@ -15,7 +15,7 @@ require_once \dirname(__DIR__) . '/vendor/autoload.php';
 // Load the XSD with the goetas-webservices/xsd-reader package and transform it to a metadata object:
 $xsd = Document::fromXmlFile($file = __DIR__.'/calc.xsd');
 $reader = new SchemaReader();
-$schema = $reader->readNode($xsd->locateDocumentElement(), $file);
+$schema = $reader->readNode($xsd->toUnsafeLegacyDocument()->documentElement, $file);
 $namespaces = NamespacesParser::tryParse($xsd);
 $types = (new SchemaToTypesConverter())(
     $schema,
