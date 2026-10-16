@@ -68,12 +68,12 @@ final class ObjectEncoderNullElementTest extends TestCase
     {
         $optional = static fn (array $data): object => (object) [...['attribute' => null, 'first' => null, 'second' => null], ...$data];
 
-        yield 'all optional elements null' => ['optionalType', $optional([]), '<optionalType></optionalType>'];
-        yield 'all optional elements absent' => ['optionalType', (object) [], '<optionalType></optionalType>'];
+        yield 'all optional elements null' => ['optionalType', $optional([]), '<optionalType/>'];
+        yield 'all optional elements absent' => ['optionalType', (object) [], '<optionalType/>'];
         yield 'attribute and all optional elements null' => [
             'optionalType',
             $optional(['attribute' => 'a']),
-            '<optionalType attribute="a"></optionalType>',
+            '<optionalType attribute="a"/>',
         ];
         yield 'first optional element null' => [
             'optionalType',
@@ -88,7 +88,7 @@ final class ObjectEncoderNullElementTest extends TestCase
         yield 'nested object with all optional elements null' => [
             'parentType',
             (object) ['child' => $optional([]), 'last' => null],
-            '<parentType><child></child></parentType>',
+            '<parentType><child/></parentType>',
         ];
         yield 'mixed null elements' => [
             'mixedType',
