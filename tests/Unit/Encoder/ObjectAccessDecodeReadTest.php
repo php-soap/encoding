@@ -58,6 +58,19 @@ final class ObjectAccessDecodeReadTest extends TestCase
         static::assertContainsOnlyInstancesOf(Closure::class, [...$mixed, ...$text]);
     }
 
+    #[Test]
+    public function custom_property_decodes_through_its_custom_lens(): void
+    {
+        $access = ObjectAccess::forContext(self::context('mixedType'));
+        $lookup = ElementLookup::fromElement(Element::fromString('<mixedType><custom>c</custom></mixedType>'));
+        ThrowingLensEncoder::$decoderLensReads = 0;
+
+        $actual = $access->decodeReaders['custom']($lookup);
+
+        static::assertSame($lookup->element('custom'), $actual);
+        static::assertSame(1, ThrowingLensEncoder::$decoderLensReads);
+    }
+
     /** @return iterable<string, array{string, string}> */
     public static function lookups(): iterable
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Soap\Encoding\Encoder;
 
 use Soap\Encoding\Xml\Node\Element;
+use Soap\Encoding\Xml\Node\ElementList;
 use Soap\Encoding\Xml\Node\ElementLookup;
 use Soap\Encoding\Xml\Writer\AttributeBuilder;
 use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
@@ -122,7 +123,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
 
         $result = [];
         foreach ($objectAccess->isos as $normalizePropertyName => $iso) {
-            /** @var string|null $value */
+            /** @var Element|ElementList|string|null $value */
             $value = $objectAccess->decodeReaders[$normalizePropertyName]($lookup);
 
             /**
