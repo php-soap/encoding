@@ -7,8 +7,6 @@ use Dom\Element;
 use Soap\Encoding\Encoder\Context;
 use Soap\Encoding\Encoder\XmlEncoder;
 use VeeWee\Reflecta\Iso\IsoInterface;
-use function Psl\Type\string;
-use function VeeWee\Xml\Dom\Locator\Node\value as readValue;
 
 final class ElementValueReader
 {
@@ -30,9 +28,7 @@ final class ElementValueReader
      */
     public static function forEncoder(Context $context, XmlEncoder $encoder, Element $element): mixed
     {
-        return $encoder->iso($context)->from(
-            readValue($element, string())
-        );
+        return $encoder->iso($context)->from($element->substitutedNodeValue);
     }
 
     /**
@@ -41,8 +37,6 @@ final class ElementValueReader
      */
     public static function forIso(IsoInterface $iso, Element $element): mixed
     {
-        return $iso->from(
-            readValue($element, string())
-        );
+        return $iso->from($element->substitutedNodeValue);
     }
 }
