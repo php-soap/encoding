@@ -11,6 +11,7 @@ use Soap\Encoding\Driver;
 use Soap\Encoding\EncoderRegistry;
 use Soap\Encoding\Test\Fixture\Model\Address;
 use Soap\Encoding\Test\Fixture\Model\Item;
+use Soap\Encoding\Test\Fixture\Model\PrivateAddressItem;
 use Soap\Engine\HttpBinding\SoapResponse;
 use Soap\Wsdl\Loader\CallbackLoader;
 use Soap\WsdlReader\Metadata\Wsdl1MetadataProvider;
@@ -151,14 +152,14 @@ final class IntermediateThrowScenariosTest extends TestCase
         yield 'encode stdClass with absent properties' => [
             'operation' => static fn (): string => $literal->encode('test', [(object) ['id' => 1]])->getRequest(),
             'expected' => self::literalRequest(
-                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
+                '<testParam><id>1</id></testParam>'
             ),
         ];
 
         yield 'encode sparse array input' => [
             'operation' => static fn (): string => $literal->encode('test', [['id' => 1, 'address' => ['city' => 'C']]])->getRequest(),
             'expected' => self::literalRequest(
-                '<testParam><id>1</id><address><city>C</city><zip xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></address></testParam>'
+                '<testParam><id>1</id><address><city>C</city></address></testParam>'
             ),
         ];
 
@@ -167,7 +168,7 @@ final class IntermediateThrowScenariosTest extends TestCase
                 public int $id = 1;
             }])->getRequest(),
             'expected' => self::literalRequest(
-                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
+                '<testParam><id>1</id></testParam>'
             ),
         ];
 
@@ -179,7 +180,36 @@ final class IntermediateThrowScenariosTest extends TestCase
                 return $typed->encode('test', [$item])->getRequest();
             },
             'expected' => self::literalRequest(
-                '<testParam><id>42</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
+                '<testParam><id>42</id></testParam>'
+            ),
+        ];
+
+        yield 'encode explicit null of an optional nillable property' => [
+            'operation' => static fn (): string => $literal->encode('test', [(object) ['id' => 1, 'address' => null]])->getRequest(),
+            'expected' => self::literalRequest(
+                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
+            ),
+        ];
+
+        yield 'encode unset declared property' => [
+            'operation' => static function () use ($typed): string {
+                $address = new Address();
+                $address->city = 'C';
+                unset($address->zip);
+                $item = new Item();
+                $item->id = 42;
+                $item->address = $address;
+
+                return $typed->encode('test', [$item])->getRequest();
+            },
+            'expected' => self::literalRequest('<testParam><id>42</id><address><city>C</city></address></testParam>'),
+        ];
+
+        yield 'encode private parent property holding null' => [
+            'operation' => static fn (): string => $literal->encode('test', [new class extends PrivateAddressItem {
+            }])->getRequest(),
+            'expected' => self::literalRequest(
+                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>'
             ),
         ];
 
@@ -225,6 +255,23 @@ final class IntermediateThrowScenariosTest extends TestCase
                 .'<city xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">C</city>'
                 .'<zip xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1000</zip>'
                 .'</item></testParam>'
+            ),
+        ];
+
+        yield 'encode soap-enc array items with an absent, a null and a present optional nillable property' => [
+            'operation' => static fn (): string => $addressArray->encode('test', [[
+                (object) ['city' => 'C'],
+                (object) ['city' => 'C', 'zip' => null],
+                (object) ['city' => 'C', 'zip' => '1000'],
+            ]])->getRequest(),
+            'expected' => self::encodedRequest(
+                '<testParam xmlns:tns="http://test-uri/" xsi:type="tns:addressArray" SOAP-ENC:arrayType="tns:addressType[3]" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+                .'<item xmlns:tns="http://test-uri/" xsi:type="tns:addressType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><city xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">C</city></item>'
+                .'<item xmlns:tns="http://test-uri/" xsi:type="tns:addressType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><city xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">C</city>'
+                .'<zip xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></item>'
+                .'<item xmlns:tns="http://test-uri/" xsi:type="tns:addressType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><city xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">C</city>'
+                .'<zip xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1000</zip></item>'
+                .'</testParam>'
             ),
         ];
 
@@ -387,7 +434,7 @@ final class IntermediateThrowScenariosTest extends TestCase
         yield 'encode soap 1.2 literal envelope' => [
             'operation' => static fn (): string => $soap12Literal->encode('test', [(object) ['id' => 1]])->getRequest(),
             'expected' => self::literalRequest(
-                '<testParam><id>1</id><address xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></testParam>',
+                '<testParam><id>1</id></testParam>',
                 soap12: true,
             ),
         ];
