@@ -42,7 +42,7 @@
         "php-soap/wsdl-reader": "~0.34"
     },
     "require-dev": {
-        "vimeo/psalm": "~6.13",
+        "vimeo/psalm": "~6.13 || ~7.0",
         "phpunit/phpunit": "~12.4",
         "php-cs-fixer/shim": "~3.88",
         "symfony/var-dumper": "^7.0 || ^6.4 || ^8.0",
