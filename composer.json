@@ -21,7 +21,7 @@
         }
     ],
     "require": {
-        "php": "~8.4.0 || ~8.5.0",
+        "php": "~8.4.0 || ~8.5.0 || ~8.6.0",
         "php-standard-library/collection": "^6.1",
         "php-standard-library/dict": "^6.1",
         "php-standard-library/encoding": "^6.1",
