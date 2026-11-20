@@ -51,9 +51,10 @@ final readonly class MatchingValueEncoder implements XmlEncoder
             default => [$matchedEncoderInfo[0], $matchedEncoderInfo[1] ?? $this->defaultEncoder],
         };
 
-        /** @psalm-suppress RedundantConditionGivenDocblockType - This gives better feedback to people using this encoder */
         // Ensure that the encoderDetector returns valid data.
+        /** @psalm-suppress RedundantConditionGivenDocblockType - This gives better feedback to people using this encoder */
         invariant($context instanceof Context, 'The MatchingValueEncoder::$encoderDetector callable must return a Context or an array with a Context as first element.');
+        /** @psalm-suppress RedundantConditionGivenDocblockType - This gives better feedback to people using this encoder */
         invariant($encoder instanceof XmlEncoder, 'The MatchingValueEncoder::$encoderDetector callable must return a Context or an array with a Context as first element and an optional XmlEncoder as second element.');
 
         return $encoder->iso($context)->to($value);
