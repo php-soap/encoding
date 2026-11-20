@@ -159,7 +159,7 @@ final class EncoderRegistry
                 ),
 
                 // Apache Map
-                $qNameFormatter(ApacheMapDetector::NAMESPACE, 'Map') => new SoapEnc\ApacheMapEncoder(),
+                $qNameFormatter(ApacheMapDetector::NAMESPACE_URI, 'Map') => new SoapEnc\ApacheMapEncoder(),
 
                 // Special XSD cases
                 $qNameFormatter($xsd, 'any') => new AnyElementEncoder(),

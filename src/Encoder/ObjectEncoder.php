@@ -11,7 +11,7 @@ use Soap\Encoding\Xml\Writer\NilAttributeBuilder;
 use Soap\Encoding\Xml\Writer\XsdTypeXmlElementWriter;
 use Soap\Encoding\Xml\Writer\XsiAttributeBuilder;
 use VeeWee\Reflecta\Iso\Iso;
-use function is_array;
+use function is_object;
 use function Psl\Fun\lazy;
 use function VeeWee\Reflecta\Iso\object_data;
 use function VeeWee\Reflecta\Reflect\property_is_initialized;
@@ -20,7 +20,7 @@ use function VeeWee\Xml\Writer\Builder\raw;
 use function VeeWee\Xml\Writer\Builder\value as buildValue;
 
 /**
- * @template TObj extends object
+ * @template TObj of object
  *
  * @implements XmlEncoder<TObj|array, TObj, non-empty-string, Element|non-empty-string>
  */
@@ -70,8 +70,7 @@ final class ObjectEncoder implements Feature\ElementAware, XmlEncoder
      */
     private function to(Context $context, ObjectAccess $objectAccess, object|array $data): string
     {
-        /** @var object $data */
-        $data = is_array($data) ? (object) $data : $data;
+        $data = is_object($data) ? $data : (object) $data;
         $defaultAction = writeChildren([]);
 
         $children = [
