@@ -176,8 +176,12 @@ final class ObjectPropertyPresenceTest extends TestCase
             public ?string $note = null;
         };
 
+        $thrown = [];
+
         return (new ReflectionClass($class))->newLazyGhost(
-            static fn (): never => throw new RuntimeException('The initializer fails.')
+            static function () use (&$thrown): never {
+                throw $thrown[] = new RuntimeException('The initializer fails.');
+            }
         );
     }
 
